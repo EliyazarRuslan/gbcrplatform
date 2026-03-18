@@ -281,7 +281,6 @@ function CreateInspectionModal({
   onCreated: (id: number) => void;
 }) {
   const [form, setForm] = useState({
-    vehicle_assetnum: '',
     vehicle_regno: '',
     inspection_type: 'pre_rental',
     booking_id: '',
@@ -291,8 +290,8 @@ function CreateInspectionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.vehicle_assetnum.trim()) {
-      setError('Vehicle Asset No is required');
+    if (!form.vehicle_regno.trim()) {
+      setError('Vehicle Reg No is required');
       return;
     }
 
@@ -300,11 +299,11 @@ function CreateInspectionModal({
     setError('');
 
     try {
-      const body: Record<string, string | undefined> = {
-        vehicle_assetnum: form.vehicle_assetnum.trim(),
+      const body: Record<string, string> = {
+        vehicle_assetnum: form.vehicle_regno.trim(),
+        vehicle_regno: form.vehicle_regno.trim(),
         inspection_type: form.inspection_type,
       };
-      if (form.vehicle_regno.trim()) body.vehicle_regno = form.vehicle_regno.trim();
       if (form.booking_id.trim()) body.booking_id = form.booking_id.trim();
 
       const res = await fetch('/api/inspections', {
@@ -328,7 +327,7 @@ function CreateInspectionModal({
 
   return (
     <Modal open={true} onClose={onClose} title="New Inspection" size="md">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
             {error}
@@ -336,17 +335,10 @@ function CreateInspectionModal({
         )}
 
         <Input
-          label="Vehicle Asset No"
-          required
-          value={form.vehicle_assetnum}
-          onChange={(e) => setForm({ ...form, vehicle_assetnum: e.target.value })}
-          placeholder="e.g. V001"
-        />
-
-        <Input
           label="Vehicle Reg No"
+          required
           value={form.vehicle_regno}
-          onChange={(e) => setForm({ ...form, vehicle_regno: e.target.value })}
+          onChange={(e) => setForm({ ...form, vehicle_regno: e.target.value.toUpperCase() })}
           placeholder="e.g. SBA1234A"
         />
 
