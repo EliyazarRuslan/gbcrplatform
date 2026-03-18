@@ -1,75 +1,110 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMaxPool } from '@/lib/maxdb';
+import { getMaxPool, sql } from '@/lib/maxdb';
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const pool = await getMaxPool();
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '50');
+    const pageSize = parseInt(searchParams.get('pageSize') || '50');
     const search = searchParams.get('search') || '';
     const status = searchParams.get('status') || '';
-    const customer = searchParams.get('customer') || '';
-    const type = searchParams.get('type') || '';
-    const statsOnly = searchParams.get('statsOnly') === 'true';
+    const category = searchParams.get('category') || '';
+    const offset = (page - 1) * pageSize;
 
-    // Stats query
+    // Stats
     const statsResult = await pool.request().query(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN a.status = 'HIRED OUT' THEN 1 ELSE 0 END) as hiredOut,
-        SUM(CASE WHEN a.status = 'NOT READY' THEN 1 ELSE 0 END) as notReady,
-        SUM(CASE WHEN a.status = 'IDLE' THEN 1 ELSE 0 END) as idle,
-        SUM(CASE WHEN a.status = 'BOOKED' THEN 1 ELSE 0 END) as booked,
-        SUM(CASE WHEN a.status IN ('IN SERVICE','LIMITING SERVICE') THEN 1 ELSE 0 END) as inService,
-        SUM(CASE WHEN a.status = 'DECOMMISSIONED' THEN 1 ELSE 0 END) as decommissioned
-      FROM asset a
-      WHERE a.siteid IN ('GBE','HAPL','MV')
-        AND a.assetnum LIKE 'V%'
+        SUM(CASE WHEN STATUS = 'HIRED OUT' THEN 1 ELSE 0 END) as hiredOut,
+        SUM(CASE WHEN STATUS = 'NOT READY' THEN 1 ELSE 0 END) as notReady,
+        SUM(CASE WHEN STATUS = 'IDLE' THEN 1 ELSE 0 END) as idle,
+        SUM(CASE WHEN STATUS = 'BOOKED' THEN 1 ELSE 0 END) as booked
+      FROM ASSET
+      WHERE SITEID = 'GBCR'
+        AND STATUS NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
     `);
     const stats = statsResult.recordset[0];
-    stats.utilizationRate = stats.total > 0 ? ((stats.hiredOut / stats.total) * 100) : 0;
+    stats.utilizationRate = stats.total > 0
+      ? parseFloat(((stats.hiredOut / stats.total) * 100).toFixed(1))
+      : 0;
 
-    if (statsOnly) {
-      return NextResponse.json({ stats });
-    }
+    // Build WHERE
+    const conditions: string[] = [
+      "a.SITEID = 'GBCR'",
+      "a.STATUS NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')",
+    ];
+    const listReq = pool.request();
 
-    // Build WHERE clause
-    let where = "a.siteid IN ('GBE','HAPL','MV') AND a.assetnum LIKE 'V%'";
     if (search) {
-      where += ` AND (a.assetnum LIKE '%${search.replace(/'/g, "''")}%' OR a.description LIKE '%${search.replace(/'/g, "''")}%' OR a.serialnum LIKE '%${search.replace(/'/g, "''")}%' OR a.gb_assetregistrationno LIKE '%${search.replace(/'/g, "''")}%')`;
+      conditions.push(`(a.ASSETNUM LIKE @search OR a.DESCRIPTION LIKE @search OR a.gb_registrationno LIKE @search OR a.gb_vehiclemodel LIKE @search)`);
+      listReq.input('search', sql.NVarChar, `%${search}%`);
     }
-    if (status) where += ` AND a.status = '${status.replace(/'/g, "''")}'`;
-    if (customer) where += ` AND a.pluspcustomer = '${customer.replace(/'/g, "''")}'`;
-    if (type) where += ` AND a.gb_product = '${type.replace(/'/g, "''")}'`;
+    if (status) {
+      conditions.push('a.STATUS = @status');
+      listReq.input('status', sql.NVarChar, status);
+    }
+    if (category) {
+      conditions.push('vo.category_id = @category');
+      listReq.input('category', sql.Int, parseInt(category));
+    }
 
-    const offset = (page - 1) * limit;
-    const countResult = await pool.request().query(`SELECT COUNT(*) as total FROM asset a WHERE ${where}`);
-    const totalCount = countResult.recordset[0].total;
+    const whereClause = conditions.join(' AND ');
 
-    const result = await pool.request().query(`
+    // Count (separate request object to avoid duplicate input names)
+    const countReq = pool.request();
+    if (search) countReq.input('search', sql.NVarChar, `%${search}%`);
+    if (status) countReq.input('status', sql.NVarChar, status);
+    if (category) countReq.input('category', sql.Int, parseInt(category));
+
+    const countResult = await countReq.query(`
+      SELECT COUNT(*) as total
+      FROM ASSET a
+      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM = vo.assetnum
+      WHERE ${whereClause}
+    `);
+    const total = countResult.recordset[0].total;
+
+    // List
+    listReq.input('offset', sql.Int, offset);
+    listReq.input('pageSize', sql.Int, pageSize);
+    const result = await listReq.query(`
       SELECT
-        a.assetnum, a.description, a.status,
-        a.siteid, a.pluspcustomer, a.serialnum,
-        a.gb_assetregistrationno as gb_regno,
-        a.gb_franchisecode as gb_make,
-        a.gb_vehiclemodel as gb_model,
-        a.gb_product as gb_vehicletype,
-        a.changedate, a.installdate, a.purchaseprice,
-        a.totdowntime, a.totunchargedcost, a.totalcost
-      FROM asset a
-      WHERE ${where}
-      ORDER BY a.changedate DESC
-      OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
+        a.ASSETNUM as assetnum,
+        a.DESCRIPTION as description,
+        a.STATUS as status,
+        a.gb_registrationno as registration_no,
+        a.gb_vehiclemodel as model,
+        a.gb_bodycolor as colour,
+        a.gb_fueltype as fuel_type,
+        a.gb_transmission as transmission,
+        a.gb_yearmfg as year_mfg,
+        a.gb_vehiclechassisno as chassis_no,
+        a.PLUSPCUSTOMER as customer_code,
+        a.CHANGEDATE as change_date,
+        vo.category_id,
+        vc.name as category_name,
+        vo.availability_override,
+        vo.override_reason,
+        vo.notes
+      FROM ASSET a
+      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM = vo.assetnum
+      LEFT JOIN GBCR_Platform.dbo.vehicle_categories vc ON vo.category_id = vc.id
+      WHERE ${whereClause}
+      ORDER BY a.CHANGEDATE DESC
+      OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
     `);
 
     return NextResponse.json({
-      stats,
-      vehicles: result.recordset,
-      pagination: { page, limit, total: totalCount, pages: Math.ceil(totalCount / limit) },
+      success: true,
+      data: {
+        stats,
+        vehicles: result.recordset,
+        pagination: { page, pageSize, total },
+      },
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Fleet API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch fleet data' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch fleet data' }, { status: 500 });
   }
 }
