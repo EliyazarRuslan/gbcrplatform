@@ -8,18 +8,18 @@ export async function PUT(request: NextRequest) {
     const authUser = await getUserFromRequest(request);
 
     if (!authUser) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
     const body = await request.json();
     const { currentPassword, newPassword } = body;
 
     if (!currentPassword || !newPassword) {
-      return NextResponse.json({ error: 'currentPassword and newPassword are required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'currentPassword and newPassword are required' }, { status: 400 });
     }
 
     if (typeof newPassword !== 'string' || newPassword.length < 8) {
-      return NextResponse.json({ error: 'New password must be at least 8 characters' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'New password must be at least 8 characters' }, { status: 400 });
     }
 
     const pool = await getPool();
@@ -30,7 +30,7 @@ export async function PUT(request: NextRequest) {
     const user = result.recordset[0];
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
     const passwordMatch = await comparePassword(currentPassword, user.password_hash);
@@ -44,7 +44,7 @@ export async function PUT(request: NextRequest) {
         newValues: { reason: 'Current password incorrect' },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       });
-      return NextResponse.json({ error: 'Current password is incorrect' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Current password is incorrect' }, { status: 400 });
     }
 
     const newPasswordHash = await hashPassword(newPassword);
@@ -68,9 +68,9 @@ export async function PUT(request: NextRequest) {
       ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
     });
 
-    return NextResponse.json({ message: 'Password changed successfully' });
+    return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Change password error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

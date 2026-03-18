@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const password: string | undefined = body.password;
 
     if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: 'Email and password are required' }, { status: 400 });
     }
 
     const pool = await getPool();
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
         newValues: { email, reason: 'User not found' },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       });
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
     }
 
     if (user.status !== 'active') {
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         newValues: { reason: `Account status: ${user.status}` },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       });
-      return NextResponse.json({ error: 'Account is not active' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Account is not active' }, { status: 401 });
     }
 
     const passwordMatch = await comparePassword(password, user.password_hash);
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         newValues: { reason: 'Invalid password' },
         ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
       });
-      return NextResponse.json({ error: 'Invalid email or password' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
     }
 
     // Update last_login_at and updated_at
@@ -86,12 +86,13 @@ export async function POST(request: NextRequest) {
     });
 
     const response = NextResponse.json({
-      user: {
+      success: true,
+      data: {
         id: user.id,
         email: user.email,
-        fullName: user.full_name,
+        full_name: user.full_name,
         role: user.role,
-        branchId: user.branch_id,
+        branch_id: user.branch_id,
         mustChangePassword: Boolean(user.must_change_password),
       },
     });
@@ -99,6 +100,6 @@ export async function POST(request: NextRequest) {
     return setTokenCookie(response, token);
   } catch (err) {
     console.error('Login error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

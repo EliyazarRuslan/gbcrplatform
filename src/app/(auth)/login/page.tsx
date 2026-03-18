@@ -27,7 +27,7 @@ function LoginForm() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.message || 'Invalid email or password.');
+        setError(json.error || 'Invalid email or password.');
         return;
       }
 

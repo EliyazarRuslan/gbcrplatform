@@ -16,12 +16,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const response = NextResponse.json({ message: 'Logged out successfully' });
+    const response = NextResponse.json({ success: true });
     return clearTokenCookie(response);
   } catch (err) {
     console.error('Logout error:', err);
     // Clear cookie even on error
-    const response = NextResponse.json({ message: 'Logged out' });
+    const response = NextResponse.json({ success: true });
     return clearTokenCookie(response);
   }
 }

@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const authUser = await getUserFromRequest(request);
 
     if (!authUser) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
     }
 
     const pool = await getPool();
@@ -35,27 +35,28 @@ export async function GET(request: NextRequest) {
     const user = result.recordset[0];
 
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({
-      user: {
+      success: true,
+      data: {
         id: user.id,
         email: user.email,
-        fullName: user.full_name,
+        full_name: user.full_name,
         phone: user.phone,
         role: user.role,
-        branchId: user.branch_id,
-        branchName: user.branch_name ?? null,
+        branch_id: user.branch_id,
+        branch_name: user.branch_name ?? null,
         status: user.status,
         mustChangePassword: Boolean(user.must_change_password),
-        lastLoginAt: user.last_login_at,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
+        last_login_at: user.last_login_at,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
       },
     });
   } catch (err) {
     console.error('Me route error:', err);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

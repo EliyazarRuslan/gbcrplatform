@@ -38,7 +38,7 @@ export default function ChangePasswordPage() {
       const json = await res.json();
 
       if (!res.ok || !json.success) {
-        setError(json.message || 'Failed to change password. Please try again.');
+        setError(json.error || 'Failed to change password. Please try again.');
         return;
       }
 
