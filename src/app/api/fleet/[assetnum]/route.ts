@@ -1,81 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getMaxPool } from '@/lib/maxdb';
+import { getPool, sql } from '@/lib/db';
+import { getMaxPool, sql as maxSql } from '@/lib/maxdb';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ assetnum: string }> }) {
   try {
     const { assetnum } = await params;
-    const pool = await getMaxPool();
+    const maxPool = await getMaxPool();
 
-    // Vehicle info
-    const vehicleResult = await pool.request().query(`
-      SELECT a.assetnum, a.description, a.status,
-        a.siteid, a.pluspcustomer, a.serialnum,
-        a.gb_assetregistrationno as gb_regno,
-        a.gb_franchisecode as gb_make,
-        a.gb_vehiclemodel as gb_model,
-        a.gb_product as gb_vehicletype,
-        a.changedate, a.installdate, a.purchaseprice,
-        a.totdowntime, a.totunchargedcost, a.totalcost
-      FROM asset a WHERE a.assetnum = '${assetnum.replace(/'/g, "''")}'
-    `);
-    if (vehicleResult.recordset.length === 0) {
-      return NextResponse.json({ error: 'Vehicle not found' }, { status: 404 });
+    const result = await maxPool.request()
+      .input('assetnum', maxSql.VarChar(30), assetnum)
+      .input('siteid', maxSql.VarChar(10), 'GBCR')
+      .query(`
+        SELECT
+          a.assetnum,
+          a.description,
+          a.status,
+          a.siteid,
+          a.pluspcustomer        AS customer_code,
+          a.gb_assetregistrationno AS registration_no,
+          a.gb_franchisecode     AS model,
+          a.gb_vehiclemodel      AS colour,
+          a.gb_product           AS fuel_type,
+          a.gb_transmission      AS transmission,
+          a.gb_enginecapacity    AS engine_capacity,
+          a.gb_yearmfg           AS year_mfg,
+          a.serialnum            AS chassis_no,
+          a.gb_insurer           AS insurer,
+          a.gb_policyno          AS policy_no,
+          a.gb_policyexpiry      AS policy_expiry,
+          a.gb_coeexpiry         AS coe_expiry,
+          a.gb_seating           AS seating,
+          a.gb_tonnage           AS tonnage,
+          a.installdate          AS install_date,
+          a.purchaseprice        AS purchase_price,
+          a.changedate           AS change_date,
+          vo.id                  AS override_id,
+          vo.category_id,
+          vc.name                AS category_name,
+          vo.availability_override,
+          vo.override_reason,
+          vo.notes
+        FROM asset a
+        LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON vo.assetnum = a.assetnum
+        LEFT JOIN GBCR_Platform.dbo.vehicle_categories vc ON vc.id = vo.category_id
+        WHERE a.assetnum = @assetnum
+          AND a.siteid = @siteid
+      `);
+
+    if (result.recordset.length === 0) {
+      return NextResponse.json({ success: false, error: 'Vehicle not found' }, { status: 404 });
     }
-    const vehicle = vehicleResult.recordset[0];
 
-    // Work orders
-    const woResult = await pool.request().query(`
-      SELECT TOP 50 wonum, description, status, worktype, reportdate, actfinish,
-        pluspcustomer, estdur
-      FROM workorder
-      WHERE assetnum = '${assetnum.replace(/'/g, "''")}'
-      ORDER BY reportdate DESC
-    `);
+    const vehicle = result.recordset[0];
 
-    // Labor costs
-    const laborResult = await pool.request().query(`
-      SELECT ISNULL(SUM(linecost), 0) as totalLabor
-      FROM labtrans
-      WHERE refwo IN (SELECT wonum FROM workorder WHERE assetnum = '${assetnum.replace(/'/g, "''")}')
-    `);
-
-    // Material costs
-    const matResult = await pool.request().query(`
-      SELECT ISNULL(SUM(ABS(linecost)), 0) as totalMaterial
-      FROM matusetrans
-      WHERE assetnum = '${assetnum.replace(/'/g, "''")}'
-        AND issuetype = 'ISSUE'
-    `);
-
-    // Revenue from billing
-    const revResult = await pool.request().query(`
-      SELECT ISNULL(SUM(bl.linecost), 0) as totalRevenue
-      FROM pluspbillline bl
-      INNER JOIN workorder wo ON bl.refwo = wo.wonum
-      WHERE wo.assetnum = '${assetnum.replace(/'/g, "''")}'
-    `);
-
-    // Last service date
-    const lastServiceResult = await pool.request().query(`
-      SELECT TOP 1 actfinish
-      FROM workorder
-      WHERE assetnum = '${assetnum.replace(/'/g, "''")}'
-        AND worktype IN ('PM','CM','SR')
-        AND actfinish IS NOT NULL
-      ORDER BY actfinish DESC
-    `);
-
-    return NextResponse.json({
-      ...vehicle,
-      laborCost: laborResult.recordset[0].totalLabor,
-      materialCost: matResult.recordset[0].totalMaterial,
-      totalRevenue: revResult.recordset[0].totalRevenue,
-      workOrderCount: woResult.recordset.length,
-      lastServiceDate: lastServiceResult.recordset[0]?.actfinish || null,
-      workOrders: woResult.recordset,
-    });
+    return NextResponse.json({ success: true, data: vehicle });
   } catch (error: unknown) {
     console.error('Vehicle detail error:', error);
-    return NextResponse.json({ error: 'Failed to fetch vehicle details' }, { status: 500 });
+    return NextResponse.json({ success: false, error: 'Failed to fetch vehicle details' }, { status: 500 });
   }
 }
