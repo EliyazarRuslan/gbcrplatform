@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     const listReq = pool.request();
 
     if (search) {
-      conditions.push(`(a.ASSETNUM LIKE @search OR a.DESCRIPTION LIKE @search OR a.gb_registrationno LIKE @search OR a.gb_vehiclemodel LIKE @search)`);
+      conditions.push(`(a.ASSETNUM LIKE @search OR a.DESCRIPTION LIKE @search OR a.gb_assetregistrationno LIKE @search OR a.gb_vehiclemodel LIKE @search)`);
       listReq.input('search', sql.NVarChar, `%${search}%`);
     }
     if (status) {
@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
         a.ASSETNUM as assetnum,
         a.DESCRIPTION as description,
         a.STATUS as status,
-        a.gb_registrationno as registration_no,
+        a.gb_assetregistrationno as registration_no,
         a.gb_vehiclemodel as model,
         a.gb_bodycolor as colour,
         a.gb_fueltype as fuel_type,

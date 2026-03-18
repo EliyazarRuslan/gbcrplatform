@@ -17,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
           a.status,
           a.siteid,
           a.pluspcustomer        AS customer_code,
-          a.gb_registrationno   AS registration_no,
+          a.gb_assetregistrationno   AS registration_no,
           a.gb_vehiclemodel     AS model,
           a.gb_bodycolor        AS colour,
           a.gb_fueltype         AS fuel_type,
