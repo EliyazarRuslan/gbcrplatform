@@ -85,7 +85,7 @@ export default function BookingsPage() {
       </div>
 
       {loading ? <SkeletonTable rows={8} cols={8} /> : (
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-neutral-200 overflow-visible">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50">
