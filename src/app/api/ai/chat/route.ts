@@ -13,10 +13,11 @@ async function getFleetContext(): Promise<string> {
         SUM(CASE WHEN status = 'NOT READY' THEN 1 ELSE 0 END) as notReady,
         SUM(CASE WHEN status = 'IDLE' THEN 1 ELSE 0 END) as idle,
         SUM(CASE WHEN status = 'BOOKED' THEN 1 ELSE 0 END) as booked
-      FROM asset WHERE siteid IN ('GBE','HAPL','MV') AND assetnum LIKE 'V%'
+      FROM asset WHERE siteid = 'GBCR'
     `);
     const s = stats.recordset[0];
-    return `Current fleet: ${s.total} total vehicles. ${s.hiredOut} hired out, ${s.notReady} not ready, ${s.idle} idle, ${s.booked} booked. Utilization: ${((s.hiredOut/s.total)*100).toFixed(1)}%.`;
+    const total = s.total || 1;
+    return `Current GBCR fleet: ${s.total} total vehicles. ${s.hiredOut} hired out, ${s.notReady} not ready, ${s.idle} idle, ${s.booked} booked. Utilization: ${((s.hiredOut / total) * 100).toFixed(1)}%.`;
   } catch {
     return 'Fleet data unavailable.';
   }

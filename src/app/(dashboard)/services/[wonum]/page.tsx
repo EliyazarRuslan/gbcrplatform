@@ -26,7 +26,7 @@ export default function WODetailPage({ params }: { params: Promise<{ wonum: stri
   }, [wonum]);
 
   if (loading) return <div className="space-y-4"><SkeletonCard /><SkeletonCard /></div>;
-  if (!wo) return <div className="text-center py-12 text-neutral-500">Work order not found</div>;
+  if (!wo || !wo.wonum) return <div className="text-center py-12 text-neutral-500">Work order not found</div>;
 
   return (
     <div className="space-y-6 animate-fade-in">

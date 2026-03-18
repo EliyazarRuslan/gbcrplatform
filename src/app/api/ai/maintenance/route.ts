@@ -9,12 +9,12 @@ export async function GET() {
       SELECT TOP 50
         a.assetnum, a.gb_assetregistrationno as gb_regno, a.description, a.status, a.installdate,
         a.totalcost, a.purchaseprice,
-        (SELECT TOP 1 actfinish FROM workorder WHERE assetnum = a.assetnum AND worktype IN ('PM','CM') AND actfinish IS NOT NULL ORDER BY actfinish DESC) as lastService,
-        (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND worktype IN ('CM','EM') AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as repairCount12mo,
-        (SELECT ISNULL(SUM(actlabcost + actmatcost), 0) FROM workorder WHERE assetnum = a.assetnum AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as costLast12mo,
-        (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND status IN ('APPR','WMATL','INPRG')) as openWOs
+        (SELECT TOP 1 actfinish FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND worktype IN ('PM','CM') AND actfinish IS NOT NULL ORDER BY actfinish DESC) as lastService,
+        (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND worktype IN ('CM','EM') AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as repairCount12mo,
+        (SELECT ISNULL(SUM(actlabcost + actmatcost), 0) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as costLast12mo,
+        (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND status IN ('APPR','WMATL','INPRG')) as openWOs
       FROM asset a
-      WHERE a.siteid IN ('GBE','HAPL','MV') AND a.assetnum LIKE 'V%'
+      WHERE a.siteid = 'GBCR'
         AND a.status NOT IN ('DECOMMISSIONED')
       ORDER BY a.totalcost DESC
     `);
@@ -74,6 +74,6 @@ export async function GET() {
     return NextResponse.json(scores);
   } catch (error: unknown) {
     console.error('Maintenance prediction error:', error);
-    return NextResponse.json({ error: 'Failed to generate predictions' }, { status: 500 });
+    return NextResponse.json([]);
   }
 }

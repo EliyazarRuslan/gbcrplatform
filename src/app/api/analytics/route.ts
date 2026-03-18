@@ -5,52 +5,55 @@ export async function GET() {
   try {
     const pool = await getMaxPool();
 
-    // Monthly revenue
+    // Monthly revenue - GBCR site
     const revenueResult = await pool.request().query(`
       SELECT FORMAT(bb.invoicedate, 'yyyy-MM') as month,
         SUM(bl.linecost) as revenue
       FROM pluspbillline bl
       INNER JOIN pluspbillbatch bb ON bl.billbatchnum = bb.billbatchnum
       WHERE bb.invoicedate >= DATEADD(MONTH, -12, GETDATE())
-        AND bb.siteid IN ('GBE','HAPL','MV')
+        AND bb.siteid = 'GBCR'
       GROUP BY FORMAT(bb.invoicedate, 'yyyy-MM')
       ORDER BY month
     `);
 
-    // Cost breakdown by type
+    // Labor cost breakdown - GBCR site
     const laborCostResult = await pool.request().query(`
       SELECT FORMAT(transdate, 'yyyy-MM') as month, SUM(linecost) as cost
-      FROM labtrans WHERE transdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid IN ('GBE','HAPL','MV')
+      FROM labtrans WHERE transdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
       GROUP BY FORMAT(transdate, 'yyyy-MM')
+      ORDER BY month
     `);
 
+    // Material cost breakdown - GBCR site
     const matCostResult = await pool.request().query(`
       SELECT FORMAT(actualdate, 'yyyy-MM') as month, SUM(ABS(linecost)) as cost
-      FROM matusetrans WHERE actualdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid IN ('GBE','HAPL','MV') AND issuetype = 'ISSUE'
+      FROM matusetrans WHERE actualdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR' AND issuetype = 'ISSUE'
       GROUP BY FORMAT(actualdate, 'yyyy-MM')
+      ORDER BY month
     `);
 
-    // WO counts by type
+    // WO counts by type - GBCR site
     const woTypeResult = await pool.request().query(`
       SELECT worktype, COUNT(*) as count
-      FROM workorder WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid IN ('GBE','HAPL','MV')
+      FROM workorder WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
       GROUP BY worktype ORDER BY count DESC
     `);
 
-    // Top 10 costly vehicles
+    // Top 10 costly vehicles - GBCR site
     const topCostResult = await pool.request().query(`
       SELECT TOP 10 a.assetnum, a.gb_assetregistrationno as gb_regno, a.description,
         ISNULL(a.totalcost, 0) as totalCost,
-        (SELECT COUNT(*) FROM workorder wo WHERE wo.assetnum = a.assetnum) as woCount
+        (SELECT COUNT(*) FROM workorder wo WHERE wo.assetnum = a.assetnum AND wo.siteid = 'GBCR') as woCount
       FROM asset a
-      WHERE a.siteid IN ('GBE','HAPL','MV') AND a.assetnum LIKE 'V%'
+      WHERE a.siteid = 'GBCR'
       ORDER BY a.totalcost DESC
     `);
 
-    // Fleet status distribution
+    // Fleet status distribution - GBCR site
     const statusDist = await pool.request().query(`
       SELECT status, COUNT(*) as count
-      FROM asset WHERE siteid IN ('GBE','HAPL','MV') AND assetnum LIKE 'V%'
+      FROM asset WHERE siteid = 'GBCR'
       GROUP BY status ORDER BY count DESC
     `);
 
@@ -64,6 +67,14 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error('Analytics API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+    // Return empty data gracefully so the page doesn't crash
+    return NextResponse.json({
+      revenue: [],
+      laborCost: [],
+      materialCost: [],
+      woByType: [],
+      topCostlyVehicles: [],
+      statusDistribution: [],
+    });
   }
 }

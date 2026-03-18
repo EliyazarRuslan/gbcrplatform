@@ -6,18 +6,18 @@ export async function GET() {
     const pool = await getMaxPool();
     const anomalies: { type: string; entity: string; severity: string; description: string; value: number }[] = [];
 
-    // Cost spikes: vehicles with costs > 2 std dev above mean
+    // Cost spikes: vehicles with costs > 2 std dev above mean - GBCR site
     const costResult = await pool.request().query(`
       WITH VehicleCosts AS (
         SELECT a.assetnum, a.gb_assetregistrationno as gb_regno, ISNULL(a.totalcost, 0) as totalcost
-        FROM asset a WHERE a.siteid IN ('GBE','HAPL','MV') AND a.assetnum LIKE 'V%' AND a.totalcost > 0
+        FROM asset a WHERE a.siteid = 'GBCR' AND a.totalcost > 0
       ),
       Stats AS (
         SELECT AVG(totalcost) as avgCost, STDEV(totalcost) as stdCost FROM VehicleCosts
       )
       SELECT vc.assetnum, vc.gb_regno, vc.totalcost, s.avgCost, s.stdCost
       FROM VehicleCosts vc CROSS JOIN Stats s
-      WHERE vc.totalcost > s.avgCost + 2 * s.stdCost
+      WHERE s.stdCost > 0 AND vc.totalcost > s.avgCost + 2 * s.stdCost
       ORDER BY vc.totalcost DESC
     `);
     costResult.recordset.forEach((r: Record<string, unknown>) => {
@@ -30,14 +30,14 @@ export async function GET() {
       });
     });
 
-    // Excessive repair frequency
+    // Excessive repair frequency - GBCR site
     const repairResult = await pool.request().query(`
       SELECT a.assetnum, a.gb_assetregistrationno as gb_regno, COUNT(*) as repairCount
       FROM workorder wo
-      INNER JOIN asset a ON wo.assetnum = a.assetnum
+      INNER JOIN asset a ON wo.assetnum = a.assetnum AND wo.siteid = a.siteid
       WHERE wo.worktype IN ('CM','EM')
         AND wo.reportdate >= DATEADD(MONTH, -6, GETDATE())
-        AND a.siteid IN ('GBE','HAPL','MV') AND a.assetnum LIKE 'V%'
+        AND a.siteid = 'GBCR'
       GROUP BY a.assetnum, a.gb_assetregistrationno
       HAVING COUNT(*) >= 5
       ORDER BY COUNT(*) DESC
@@ -52,11 +52,11 @@ export async function GET() {
       });
     });
 
-    // Long idle vehicles
+    // Long idle vehicles - GBCR site
     const idleResult = await pool.request().query(`
       SELECT assetnum, gb_assetregistrationno as gb_regno, DATEDIFF(DAY, changedate, GETDATE()) as idleDays
       FROM asset
-      WHERE status = 'IDLE' AND siteid IN ('GBE','HAPL','MV') AND assetnum LIKE 'V%'
+      WHERE status = 'IDLE' AND siteid = 'GBCR'
         AND DATEDIFF(DAY, changedate, GETDATE()) > 90
       ORDER BY idleDays DESC
     `);
@@ -73,6 +73,6 @@ export async function GET() {
     return NextResponse.json(anomalies);
   } catch (error: unknown) {
     console.error('Anomaly detection error:', error);
-    return NextResponse.json({ error: 'Failed to detect anomalies' }, { status: 500 });
+    return NextResponse.json([]);
   }
 }

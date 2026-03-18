@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMaxPool } from '@/lib/maxdb';
+import sql from 'mssql';
 
 export async function GET(req: NextRequest) {
   try {
@@ -11,16 +12,34 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get('status') || '';
     const worktype = searchParams.get('worktype') || '';
 
-    let where = "w.siteid IN ('GBE','HAPL','MV') AND w.reportdate >= '2024-01-01'";
-    if (search) where += ` AND (w.wonum LIKE '%${search.replace(/'/g,"''")}%' OR w.description LIKE '%${search.replace(/'/g,"''")}%' OR w.assetnum LIKE '%${search.replace(/'/g,"''")}%')`;
-    if (status) where += ` AND w.status = '${status.replace(/'/g,"''")}'`;
-    if (worktype) where += ` AND w.worktype = '${worktype.replace(/'/g,"''")}'`;
+    const conditions: string[] = ["w.siteid = 'GBCR'", "w.reportdate >= '2024-01-01'"];
+    const countRequest = pool.request();
+    const dataRequest = pool.request();
 
-    const countResult = await pool.request().query(`SELECT COUNT(*) as total FROM workorder w WHERE ${where}`);
-    const total = countResult.recordset[0].total;
+    if (search) {
+      conditions.push(`(w.wonum LIKE @search OR w.description LIKE @search OR w.assetnum LIKE @search)`);
+      const searchVal = `%${search}%`;
+      countRequest.input('search', sql.VarChar, searchVal);
+      dataRequest.input('search', sql.VarChar, searchVal);
+    }
+    if (status) {
+      conditions.push(`w.status = @status`);
+      countRequest.input('status', sql.VarChar, status);
+      dataRequest.input('status', sql.VarChar, status);
+    }
+    if (worktype) {
+      conditions.push(`w.worktype = @worktype`);
+      countRequest.input('worktype', sql.VarChar, worktype);
+      dataRequest.input('worktype', sql.VarChar, worktype);
+    }
+
+    const where = conditions.join(' AND ');
     const offset = (page - 1) * limit;
 
-    const result = await pool.request().query(`
+    const countResult = await countRequest.query(`SELECT COUNT(*) as total FROM workorder w WHERE ${where}`);
+    const total = countResult.recordset[0].total;
+
+    const result = await dataRequest.query(`
       SELECT w.wonum, w.description, w.status, w.worktype, w.assetnum,
         w.reportdate, w.actfinish, w.pluspcustomer, w.siteid, w.estdur,
         w.actlabcost, w.actmatcost, w.actservcost
@@ -36,6 +55,9 @@ export async function GET(req: NextRequest) {
     });
   } catch (error: unknown) {
     console.error('Services API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch work orders' }, { status: 500 });
+    return NextResponse.json({
+      workOrders: [],
+      pagination: { page: 1, limit: 50, total: 0, pages: 0 },
+    });
   }
 }

@@ -33,23 +33,23 @@ export async function GET() {
   try {
     const pool = await getMaxPool();
 
-    // Monthly WO counts (proxy for demand)
+    // Monthly WO counts (proxy for demand) - GBCR site
     const woResult = await pool.request().query(`
       SELECT FORMAT(reportdate, 'yyyy-MM') as month, COUNT(*) as count
       FROM workorder
       WHERE reportdate >= DATEADD(MONTH, -24, GETDATE())
-        AND siteid IN ('GBE','HAPL','MV')
+        AND siteid = 'GBCR'
       GROUP BY FORMAT(reportdate, 'yyyy-MM')
       ORDER BY month
     `);
 
-    // Monthly hired out counts (demand indicator)
+    // Monthly status change counts for HIRED OUT (demand indicator) - GBCR site
     const hireResult = await pool.request().query(`
       SELECT FORMAT(changedate, 'yyyy-MM') as month,
         SUM(CASE WHEN status = 'HIRED OUT' THEN 1 ELSE 0 END) as hiredCount
       FROM asset
       WHERE changedate >= DATEADD(MONTH, -24, GETDATE())
-        AND siteid IN ('GBE','HAPL','MV') AND assetnum LIKE 'V%'
+        AND siteid = 'GBCR'
       GROUP BY FORMAT(changedate, 'yyyy-MM')
       ORDER BY month
     `);
@@ -88,6 +88,9 @@ export async function GET() {
     });
   } catch (error: unknown) {
     console.error('Forecast API error:', error);
-    return NextResponse.json({ error: 'Failed to generate forecast' }, { status: 500 });
+    return NextResponse.json({
+      historical: { woMonths: [], woCounts: [], hireMonths: [], hireCounts: [] },
+      forecast: { months: [], workOrders: { forecast: [], lower: [], upper: [] }, hires: { forecast: [], lower: [], upper: [] } },
+    });
   }
 }

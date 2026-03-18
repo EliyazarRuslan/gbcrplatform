@@ -1,28 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMaxPool } from '@/lib/maxdb';
+import sql from 'mssql';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ wonum: string }> }) {
   try {
     const { wonum } = await params;
     const pool = await getMaxPool();
 
-    const woResult = await pool.request().query(`
-      SELECT w.* FROM workorder w WHERE w.wonum = '${wonum.replace(/'/g,"''")}'
-    `);
+    const woResult = await pool.request()
+      .input('wonum', sql.VarChar, wonum)
+      .query(`SELECT w.* FROM workorder w WHERE w.wonum = @wonum AND w.siteid = 'GBCR'`);
+
     if (woResult.recordset.length === 0) {
       return NextResponse.json({ error: 'Work order not found' }, { status: 404 });
     }
 
-    const laborResult = await pool.request().query(`
-      SELECT laborcode, craft, startdate, finishdate, regularhrs, linecost, gb_chargeable
-      FROM labtrans WHERE refwo = '${wonum.replace(/'/g,"''")}' ORDER BY startdate DESC
-    `);
+    const laborResult = await pool.request()
+      .input('wonum', sql.VarChar, wonum)
+      .query(`
+        SELECT laborcode, craft, startdate, finishdate, regularhrs, linecost, gb_chargeable
+        FROM labtrans WHERE refwo = @wonum ORDER BY startdate DESC
+      `);
 
-    const matResult = await pool.request().query(`
-      SELECT itemnum, description, ABS(quantity) as quantity, linecost, storeloc, actualdate
-      FROM matusetrans WHERE wonum = '${wonum.replace(/'/g,"''")}' AND issuetype = 'ISSUE'
-      ORDER BY actualdate DESC
-    `);
+    const matResult = await pool.request()
+      .input('wonum', sql.VarChar, wonum)
+      .query(`
+        SELECT itemnum, description, ABS(quantity) as quantity, linecost, storeloc, actualdate
+        FROM matusetrans WHERE wonum = @wonum AND issuetype = 'ISSUE'
+        ORDER BY actualdate DESC
+      `);
 
     return NextResponse.json({
       ...woResult.recordset[0],

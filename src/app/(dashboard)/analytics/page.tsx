@@ -21,7 +21,24 @@ export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/analytics').then(r => r.json()).then(d => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+    fetch('/api/analytics')
+      .then(r => r.json())
+      .then(d => {
+        // Ensure all expected arrays are present even if API returns partial/error data
+        setData({
+          revenue: Array.isArray(d.revenue) ? d.revenue : [],
+          laborCost: Array.isArray(d.laborCost) ? d.laborCost : [],
+          materialCost: Array.isArray(d.materialCost) ? d.materialCost : [],
+          woByType: Array.isArray(d.woByType) ? d.woByType : [],
+          topCostlyVehicles: Array.isArray(d.topCostlyVehicles) ? d.topCostlyVehicles : [],
+          statusDistribution: Array.isArray(d.statusDistribution) ? d.statusDistribution : [],
+        });
+        setLoading(false);
+      })
+      .catch(() => {
+        setData({ revenue: [], laborCost: [], materialCost: [], woByType: [], topCostlyVehicles: [], statusDistribution: [] });
+        setLoading(false);
+      });
   }, []);
 
   if (loading) return (
