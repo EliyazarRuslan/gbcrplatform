@@ -13,6 +13,7 @@ import Spinner from '@/components/ui/spinner';
 import PhotoCapture from '@/components/inspection/PhotoCapture';
 import SignatureCanvas from '@/components/inspection/SignatureCanvas';
 import StarRating from '@/components/inspection/StarRating';
+import VehicleDiagram from '@/components/inspection/VehicleDiagram';
 import { formatDate } from '@/lib/utils';
 
 // --- Types ---
@@ -534,18 +535,25 @@ function DamagesSection({
   inspectionId: number;
   onRefresh: () => void;
 }) {
+  const [activeView, setActiveView] = useState<'top' | 'front' | 'rear' | 'left' | 'right'>('top');
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<number | null>(null);
   const [form, setForm] = useState({
-    view: 'top',
-    position_x: 0.5,
-    position_y: 0.5,
+    diagram_view: 'top' as string,
+    diagram_x: 0.5,
+    diagram_y: 0.5,
     damage_type: 'scratch',
     severity: 'minor',
     description: '',
-    pre_existing: false,
+    is_pre_existing: false,
   });
+
+  const handleDiagramTap = (view: string, x: number, y: number) => {
+    if (!isEditable) return;
+    setForm({ ...form, diagram_view: view, diagram_x: x, diagram_y: y });
+    setShowForm(true);
+  };
 
   const handleSaveDamage = async () => {
     setSaving(true);
@@ -557,7 +565,7 @@ function DamagesSection({
       });
       if (res.ok) {
         setShowForm(false);
-        setForm({ view: 'top', position_x: 0.5, position_y: 0.5, damage_type: 'scratch', severity: 'minor', description: '', pre_existing: false });
+        setForm({ diagram_view: activeView, diagram_x: 0.5, diagram_y: 0.5, damage_type: 'scratch', severity: 'minor', description: '', is_pre_existing: false });
         onRefresh();
       }
     } catch {
@@ -571,15 +579,10 @@ function DamagesSection({
     if (!window.confirm('Delete this damage record?')) return;
     setDeleting(damageId);
     try {
-      const res = await fetch(`/api/inspections/${inspectionId}/damages/${damageId}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`/api/inspections/${inspectionId}/damages/${damageId}`, { method: 'DELETE' });
       if (res.ok) onRefresh();
-    } catch {
-      // silently fail
-    } finally {
-      setDeleting(null);
-    }
+    } catch { /* silently fail */ }
+    finally { setDeleting(null); }
   };
 
   const severityColor: Record<string, string> = {
@@ -588,31 +591,42 @@ function DamagesSection({
     severe: 'bg-red-100 text-red-800',
   };
 
+  // Map damages to VehicleDiagram format
+  const diagramDamages = data.damages.map(d => ({
+    id: d.id,
+    diagram_view: (d.view || 'top') as 'top' | 'front' | 'rear' | 'left' | 'right',
+    diagram_x: d.position_x,
+    diagram_y: d.position_y,
+    damage_type: d.damage_type,
+    severity: d.severity,
+    description: d.description,
+    is_pre_existing: !!d.pre_existing,
+  }));
+
   return (
     <Card
       title="Vehicle Damage"
       description={`${data.damages.length} damage${data.damages.length !== 1 ? 's' : ''} recorded`}
-      actions={
-        isEditable && (
-          <Button size="sm" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cancel' : 'Add Damage'}
-          </Button>
-        )
-      }
     >
       <div className="space-y-4">
-        {/* Add Damage Form */}
-        {showForm && (
-          <div className="p-4 bg-neutral-50 rounded-lg border border-neutral-200 space-y-4">
+        {/* Interactive Vehicle Diagram */}
+        <VehicleDiagram
+          damages={diagramDamages}
+          onAddDamage={handleDiagramTap}
+          onSelectDamage={(d) => { if (d.id) { /* scroll to damage in list */ } }}
+          activeView={activeView}
+          onViewChange={setActiveView}
+        />
+
+        {/* Damage Form (shown after tapping on diagram) */}
+        {showForm && isEditable && (
+          <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-4 animate-fade-in">
+            <p className="text-sm font-medium text-amber-800">
+              Mark damage at position ({form.diagram_x.toFixed(2)}, {form.diagram_y.toFixed(2)}) on {form.diagram_view} view
+            </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
-                label="View"
-                value={form.view}
-                onChange={(e) => setForm({ ...form, view: e.target.value })}
-                options={viewOptions}
-              />
-              <Select
-                label="Type"
+                label="Damage Type"
                 value={form.damage_type}
                 onChange={(e) => setForm({ ...form, damage_type: e.target.value })}
                 options={damageTypeOptions}
@@ -623,26 +637,6 @@ function DamagesSection({
                 onChange={(e) => setForm({ ...form, severity: e.target.value })}
                 options={severityOptions}
               />
-              <div className="space-y-3">
-                <Input
-                  label="Position X"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={form.position_x}
-                  onChange={(e) => setForm({ ...form, position_x: parseFloat(e.target.value) })}
-                />
-                <Input
-                  label="Position Y"
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.01"
-                  value={form.position_y}
-                  onChange={(e) => setForm({ ...form, position_y: parseFloat(e.target.value) })}
-                />
-              </div>
             </div>
             <Textarea
               label="Description"
@@ -654,65 +648,39 @@ function DamagesSection({
             <label className="flex items-center gap-2 cursor-pointer touch-manipulation">
               <input
                 type="checkbox"
-                checked={form.pre_existing}
-                onChange={(e) => setForm({ ...form, pre_existing: e.target.checked })}
+                checked={form.is_pre_existing}
+                onChange={(e) => setForm({ ...form, is_pre_existing: e.target.checked })}
                 className="w-5 h-5 rounded border-neutral-300 text-primary focus:ring-primary"
               />
               <span className="text-sm text-neutral-700">Pre-existing damage</span>
             </label>
-            <div className="flex justify-end">
-              <Button onClick={handleSaveDamage} loading={saving} size="sm">
-                Save Damage
-              </Button>
+            <div className="flex gap-2 justify-end">
+              <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
+              <Button onClick={handleSaveDamage} loading={saving} size="sm">Save Damage</Button>
             </div>
           </div>
         )}
 
         {/* Damage List */}
-        {data.damages.length === 0 ? (
-          <p className="text-sm text-neutral-400 text-center py-8">
-            No damages recorded. {isEditable ? 'Tap "Add Damage" to record damage.' : ''}
-          </p>
-        ) : (
+        {data.damages.length > 0 && (
           <div className="space-y-3">
-            {data.damages.map((d) => (
-              <div
-                key={d.id}
-                className="flex items-start justify-between p-4 bg-white border border-neutral-200 rounded-lg"
-              >
+            <h4 className="text-sm font-medium text-neutral-700">Recorded Damages</h4>
+            {data.damages.map((d, i) => (
+              <div key={d.id} className="flex items-start justify-between p-3 bg-white border border-neutral-200 rounded-lg">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-neutral-900 capitalize">
-                      {d.damage_type.replace('_', ' ')}
-                    </span>
-                    <span
-                      className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
-                        severityColor[d.severity] || 'bg-neutral-100 text-neutral-700'
-                      }`}
-                    >
-                      {d.severity}
-                    </span>
+                    <span className="w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shrink-0">{i + 1}</span>
+                    <span className="text-sm font-medium text-neutral-900 capitalize">{d.damage_type.replace('_', ' ')}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${severityColor[d.severity] || 'bg-neutral-100 text-neutral-700'}`}>{d.severity}</span>
                     <span className="text-xs text-neutral-400 capitalize">{d.view} view</span>
-                    {d.pre_existing && (
-                      <Badge variant="warning" size="sm">
-                        Pre-existing
-                      </Badge>
-                    )}
+                    {d.pre_existing && <Badge variant="warning" size="sm">Pre-existing</Badge>}
                   </div>
-                  {d.description && (
-                    <p className="text-sm text-neutral-600">{d.description}</p>
-                  )}
+                  {d.description && <p className="text-sm text-neutral-600 ml-8">{d.description}</p>}
                 </div>
                 {isEditable && (
-                  <button
-                    onClick={() => handleDelete(d.id)}
-                    disabled={deleting === d.id}
-                    className="ml-3 p-2 text-neutral-400 hover:text-red-600 transition-colors touch-manipulation shrink-0"
-                    aria-label="Delete damage"
-                  >
-                    {deleting === d.id ? (
-                      <Spinner size="sm" />
-                    ) : (
+                  <button onClick={() => handleDelete(d.id)} disabled={deleting === d.id}
+                    className="ml-3 p-2 text-neutral-400 hover:text-red-600 transition-colors touch-manipulation shrink-0">
+                    {deleting === d.id ? <Spinner size="sm" /> : (
                       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
