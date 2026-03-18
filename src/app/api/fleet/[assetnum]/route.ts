@@ -43,7 +43,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
         FROM asset a
         LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON vo.assetnum COLLATE DATABASE_DEFAULT = a.assetnum COLLATE DATABASE_DEFAULT
         LEFT JOIN GBCR_Platform.dbo.vehicle_categories vc ON vc.id = vo.category_id
-        WHERE a.assetnum = @assetnum
+        WHERE (a.assetnum = @assetnum OR a.gb_assetregistrationno = @assetnum)
           AND a.siteid = @siteid
       `);
 
