@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const countResult = await countReq.query(`
       SELECT COUNT(*) as total
       FROM ASSET a
-      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM = vo.assetnum
+      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM COLLATE DATABASE_DEFAULT = vo.assetnum COLLATE DATABASE_DEFAULT
       WHERE ${whereClause}
     `);
     const total = countResult.recordset[0].total;
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
         vo.override_reason,
         vo.notes
       FROM ASSET a
-      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM = vo.assetnum
+      LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON a.ASSETNUM COLLATE DATABASE_DEFAULT = vo.assetnum COLLATE DATABASE_DEFAULT
       LEFT JOIN GBCR_Platform.dbo.vehicle_categories vc ON vo.category_id = vc.id
       WHERE ${whereClause}
       ORDER BY a.CHANGEDATE DESC

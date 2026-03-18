@@ -17,20 +17,20 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
           a.status,
           a.siteid,
           a.pluspcustomer        AS customer_code,
-          a.gb_assetregistrationno AS registration_no,
-          a.gb_franchisecode     AS model,
-          a.gb_vehiclemodel      AS colour,
-          a.gb_product           AS fuel_type,
-          a.gb_transmission      AS transmission,
-          a.gb_enginecapacity    AS engine_capacity,
-          a.gb_yearmfg           AS year_mfg,
-          a.serialnum            AS chassis_no,
-          a.gb_insurer           AS insurer,
-          a.gb_policyno          AS policy_no,
-          a.gb_policyexpiry      AS policy_expiry,
-          a.gb_coeexpiry         AS coe_expiry,
-          a.gb_seating           AS seating,
-          a.gb_tonnage           AS tonnage,
+          a.gb_registrationno   AS registration_no,
+          a.gb_vehiclemodel     AS model,
+          a.gb_bodycolor        AS colour,
+          a.gb_fueltype         AS fuel_type,
+          a.gb_transmission     AS transmission,
+          a.gb_enginecap        AS engine_capacity,
+          a.gb_yearmfg          AS year_mfg,
+          a.gb_vehiclechassisno AS chassis_no,
+          a.gb_insurername      AS insurer,
+          a.gb_insurepolicyno   AS policy_no,
+          a.gb_policyexpirydate AS policy_expiry,
+          a.gb_coeexpirydate    AS coe_expiry,
+          a.gb_vehseating       AS seating,
+          a.gb_tonnage          AS tonnage,
           a.installdate          AS install_date,
           a.purchaseprice        AS purchase_price,
           a.changedate           AS change_date,
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ asse
           vo.override_reason,
           vo.notes
         FROM asset a
-        LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON vo.assetnum = a.assetnum
+        LEFT JOIN GBCR_Platform.dbo.vehicle_overrides vo ON vo.assetnum COLLATE DATABASE_DEFAULT = a.assetnum COLLATE DATABASE_DEFAULT
         LEFT JOIN GBCR_Platform.dbo.vehicle_categories vc ON vc.id = vo.category_id
         WHERE a.assetnum = @assetnum
           AND a.siteid = @siteid
