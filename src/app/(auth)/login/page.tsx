@@ -47,12 +47,11 @@ function LoginForm() {
     <div className="bg-white rounded-2xl shadow-lg px-8 py-10">
       {/* Logo */}
       <div className="flex flex-col items-center mb-8">
-        <div
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-4"
-          style={{ backgroundColor: 'var(--color-primary)' }}
-        >
-          <span className="text-white text-2xl font-bold tracking-tight">GB</span>
-        </div>
+        <img
+          src="/goldbell-logo.svg"
+          alt="Goldbell"
+          className="w-24 h-auto mb-4"
+        />
         <h1 className="text-2xl font-bold text-neutral-900">GBCR Platform</h1>
         <p className="text-sm text-neutral-500 mt-1">Vehicle Booking &amp; Inspection</p>
       </div>

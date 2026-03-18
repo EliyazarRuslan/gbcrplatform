@@ -79,11 +79,13 @@ export default function Sidebar({ userRole }: SidebarProps) {
     <aside className={`bg-sidebar text-white flex flex-col transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-white/10">
-        {!collapsed && (
+        {!collapsed ? (
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary-light rounded-lg flex items-center justify-center font-bold text-sm">GB</div>
-            <span className="font-semibold text-sm">GBCR Platform</span>
+            <img src="/goldbell-logo.svg" alt="Goldbell" className="w-8 h-8" />
+            <span className="font-semibold text-sm text-primary-light">GBCR Platform</span>
           </div>
+        ) : (
+          <img src="/goldbell-logo.svg" alt="Goldbell" className="w-8 h-8 mx-auto" />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
