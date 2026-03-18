@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useRef, useEffect } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import type { Role } from '@/types/auth';
 
 const breadcrumbMap: Record<string, string> = {
   '/': 'Dashboard',
@@ -11,11 +13,33 @@ const breadcrumbMap: Record<string, string> = {
   '/customers': 'Customers',
   '/analytics': 'Analytics',
   '/ai': 'AI Insights',
+  '/settings': 'Settings',
+  '/settings/users': 'User Management',
 };
 
-export default function Header() {
-  const [search, setSearch] = useState('');
+const roleLabels: Record<Role, string> = {
+  super_admin: 'Super Admin',
+  branch_manager: 'Branch Manager',
+  customer_service: 'Customer Service',
+  rental_officer: 'Rental Officer',
+  inspector: 'Inspector',
+  driver: 'Driver',
+  finance: 'Finance',
+};
+
+interface HeaderProps {
+  user: {
+    full_name: string;
+    role: string;
+    email: string;
+  };
+}
+
+export default function Header({ user }: HeaderProps) {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const segments = pathname.split('/').filter(Boolean);
   const breadcrumbs = [
@@ -25,6 +49,28 @@ export default function Header() {
       href: '/' + segments.slice(0, i + 1).join('/'),
     })),
   ];
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  async function handleSignOut() {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch {
+      // ignore errors, redirect regardless
+    }
+    router.push('/login');
+  }
+
+  const roleLabel = roleLabels[user.role as Role] ?? user.role;
+  const avatarLetter = user.full_name.charAt(0).toUpperCase();
 
   return (
     <header className="h-16 bg-white border-b border-neutral-200 flex items-center justify-between px-6 shrink-0">
@@ -40,29 +86,67 @@ export default function Header() {
         ))}
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-4">
-        {/* Search */}
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-          </svg>
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search vehicles, bookings..."
-            className="pl-10 pr-4 py-2 w-64 text-sm bg-neutral-100 border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-transparent"
-          />
-        </div>
+      {/* Right side — user dropdown */}
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setDropdownOpen(!dropdownOpen)}
+          className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-neutral-100 transition-colors"
+        >
+          {/* Avatar */}
+          <div className="w-8 h-8 bg-primary-light rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0">
+            {avatarLetter}
+          </div>
 
-        {/* Notifications */}
-        <button className="relative p-2 text-neutral-500 hover:text-neutral-700 hover:bg-neutral-100 rounded-lg transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          {/* Name + role */}
+          <div className="text-left hidden sm:block">
+            <p className="text-sm font-medium text-neutral-900 leading-tight">{user.full_name}</p>
+            <p className="text-xs text-neutral-500 leading-tight">{roleLabel}</p>
+          </div>
+
+          {/* Chevron */}
+          <svg
+            className={`w-4 h-4 text-neutral-400 transition-transform ${dropdownOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-danger rounded-full pulse-dot"></span>
         </button>
+
+        {/* Dropdown menu */}
+        {dropdownOpen && (
+          <div className="absolute right-0 mt-1 w-56 bg-white border border-neutral-200 rounded-lg shadow-lg z-50 overflow-hidden">
+            {/* Email */}
+            <div className="px-4 py-3 border-b border-neutral-100">
+              <p className="text-xs text-neutral-500 truncate">{user.email}</p>
+            </div>
+
+            {/* Actions */}
+            <div className="py-1">
+              <Link
+                href="/change-password"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center gap-2 px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-50 transition-colors"
+              >
+                <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                </svg>
+                Change Password
+              </Link>
+
+              <button
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-danger hover:bg-neutral-50 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
