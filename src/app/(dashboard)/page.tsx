@@ -59,7 +59,7 @@ export default function DashboardPage() {
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-neutral-900">Dashboard</h1>
-        <p className="text-sm text-neutral-500">Last updated: {new Date().toLocaleTimeString()}</p>
+        <p className="text-sm text-neutral-500 hidden sm:block" suppressHydrationWarning>Last updated: {new Date().toLocaleTimeString()}</p>
       </div>
 
       {/* KPI Cards */}
