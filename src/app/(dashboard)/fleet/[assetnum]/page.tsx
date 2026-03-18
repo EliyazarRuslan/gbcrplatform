@@ -3,159 +3,300 @@
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { SkeletonCard, SkeletonTable } from '@/components/ui/Skeleton';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import Badge from '@/components/ui/badge';
+import Card from '@/components/ui/card';
+import Button from '@/components/ui/button';
+import Input from '@/components/ui/input';
+import Select from '@/components/ui/select';
+import Textarea from '@/components/ui/textarea';
+import { formatDate } from '@/lib/utils';
 
 interface VehicleDetail {
-  assetnum: string; description: string; status: string; siteid: string;
-  pluspcustomer: string | null; serialnum: string | null;
-  gb_regno: string | null; gb_make: string | null; gb_model: string | null;
-  gb_vehicletype: string | null; changedate: string | null; installdate: string | null;
-  purchaseprice: number | null; totalcost: number | null;
-  laborCost: number; materialCost: number; totalRevenue: number;
-  workOrderCount: number; lastServiceDate: string | null;
-  workOrders: { wonum: string; description: string; status: string; worktype: string; reportdate: string | null; actfinish: string | null; pluspcustomer: string | null; }[];
+  assetnum: string;
+  description: string;
+  status: string;
+  serial_no: string | null;
+  registration_no: string | null;
+  model: string | null;
+  colour: string | null;
+  fuel_type: string | null;
+  transmission: string | null;
+  engine_capacity: string | null;
+  year_mfg: number | null;
+  chassis_no: string | null;
+  insurer: string | null;
+  policy_no: string | null;
+  policy_expiry: string | null;
+  coe_expiry: string | null;
+  seating: number | null;
+  tonnage: number | null;
+  customer_code: string | null;
+  install_date: string | null;
+  purchase_price: number | null;
+  change_date: string | null;
+  override_id: number | null;
+  category_id: number | null;
+  category_name: string | null;
+  availability_override: string | null;
+  override_reason: string | null;
+  notes: string | null;
 }
 
-const tabs = ['Overview', 'Financial', 'Service History', 'AI Insights'];
+interface FormState {
+  category_id: string;
+  availability_override: string;
+  override_reason: string;
+  notes: string;
+}
+
+const categoryOptions = [
+  { label: 'No category', value: '' },
+  { label: 'Economy Sedan', value: '1' },
+  { label: 'Standard Sedan', value: '2' },
+  { label: 'Premium Sedan', value: '3' },
+  { label: 'SUV', value: '4' },
+  { label: 'Van', value: '5' },
+  { label: 'Truck (Light)', value: '6' },
+  { label: 'Truck (Heavy)', value: '7' },
+];
+
+const availabilityOptions = [
+  { label: 'Available (follow Maximo)', value: '' },
+  { label: 'Blocked', value: 'blocked' },
+  { label: 'Reserved VIP', value: 'reserved_vip' },
+];
+
+function vehicleToForm(v: VehicleDetail): FormState {
+  return {
+    category_id: v.category_id != null ? String(v.category_id) : '',
+    availability_override: v.availability_override ?? '',
+    override_reason: v.override_reason ?? '',
+    notes: v.notes ?? '',
+  };
+}
+
+function formsDiffer(a: FormState, b: FormState): boolean {
+  return (
+    a.category_id !== b.category_id ||
+    a.availability_override !== b.availability_override ||
+    a.override_reason !== b.override_reason ||
+    a.notes !== b.notes
+  );
+}
+
+function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+  return (
+    <div>
+      <p className="text-sm text-neutral-500">{label}</p>
+      <p className="text-sm font-medium text-neutral-900">{value || '-'}</p>
+    </div>
+  );
+}
 
 export default function VehicleDetailPage({ params }: { params: Promise<{ assetnum: string }> }) {
   const { assetnum } = use(params);
+
   const [vehicle, setVehicle] = useState<VehicleDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const [form, setForm] = useState<FormState>({ category_id: '', availability_override: '', override_reason: '', notes: '' });
+  const [originalForm, setOriginalForm] = useState<FormState>({ category_id: '', availability_override: '', override_reason: '', notes: '' });
+
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  const loadVehicle = () => {
+    setLoading(true);
+    setFetchError(null);
     fetch(`/api/fleet/${assetnum}`)
       .then((r) => r.json())
-      .then((data) => { setVehicle(data); setLoading(false); })
-      .catch(() => setLoading(false));
+      .then((res) => {
+        if (!res.success) throw new Error(res.error || 'Failed to load vehicle');
+        const v: VehicleDetail = res.data;
+        setVehicle(v);
+        const f = vehicleToForm(v);
+        setForm(f);
+        setOriginalForm(f);
+        setLoading(false);
+      })
+      .catch((err) => {
+        setFetchError(err.message);
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    loadVehicle();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [assetnum]);
 
-  if (loading) return <div className="space-y-4"><SkeletonCard /><SkeletonTable /></div>;
-  if (!vehicle) return <div className="text-center py-12 text-neutral-500">Vehicle not found</div>;
+  const isDirty = formsDiffer(form, originalForm);
 
-  const profitability = vehicle.totalRevenue - vehicle.laborCost - vehicle.materialCost;
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+    try {
+      const body: Record<string, string | number | null> = {
+        category_id: form.category_id !== '' ? Number(form.category_id) : null,
+        availability_override: form.availability_override !== '' ? form.availability_override : null,
+        override_reason: form.override_reason !== '' ? form.override_reason : null,
+        notes: form.notes !== '' ? form.notes : null,
+      };
+      const res = await fetch(`/api/fleet/${assetnum}/overrides`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Save failed');
+      setSaveSuccess(true);
+      loadVehicle();
+      setTimeout(() => setSaveSuccess(false), 4000);
+    } catch (err: unknown) {
+      setSaveError(err instanceof Error ? err.message : 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-4 animate-pulse">
+        <div className="h-8 bg-neutral-200 rounded w-48" />
+        <div className="h-6 bg-neutral-200 rounded w-72" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-neutral-200 rounded-xl" />
+          <div className="h-64 bg-neutral-200 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (fetchError || !vehicle) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-neutral-500">{fetchError || 'Vehicle not found'}</p>
+        <Link href="/fleet" className="mt-4 inline-block text-sm text-primary hover:underline">← Back to Fleet</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Back + Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/fleet" className="p-2 hover:bg-neutral-200 rounded-lg transition-colors">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+      {/* Header */}
+      <div>
+        <Link href="/fleet" className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-800 transition-colors mb-3">
+          ← Back to Fleet
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold">{vehicle.gb_regno || vehicle.assetnum}</h1>
-          <p className="text-sm text-neutral-500">{vehicle.description}</p>
-        </div>
-        <StatusBadge status={vehicle.status} />
-      </div>
-
-      {/* Tabs */}
-      <div className="flex gap-1 border-b border-neutral-200">
-        {tabs.map((tab) => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'Overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-xl border border-neutral-200 p-5 space-y-4">
-            <h3 className="font-semibold text-neutral-700">Vehicle Information</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              {[
-                ['Asset Number', vehicle.assetnum],
-                ['Reg Number', vehicle.gb_regno],
-                ['Serial Number', vehicle.serialnum],
-                ['Make', vehicle.gb_make],
-                ['Model', vehicle.gb_model],
-                ['Type', vehicle.gb_vehicletype],
-                ['Site', vehicle.siteid],
-                ['Customer', vehicle.pluspcustomer],
-                ['Install Date', formatDate(vehicle.installdate)],
-                ['Last Updated', formatDate(vehicle.changedate)],
-              ].map(([label, val]) => (
-                <div key={label as string}><p className="text-neutral-400">{label}</p><p className="font-medium">{val || '-'}</p></div>
-              ))}
-            </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-bold text-neutral-900">
+            {vehicle.registration_no || vehicle.assetnum} — {vehicle.description}
+          </h1>
+          <div className="flex items-center gap-2">
+            <StatusBadge status={vehicle.status} />
+            {vehicle.category_name && (
+              <Badge variant="info">{vehicle.category_name}</Badge>
+            )}
           </div>
-          <div className="bg-white rounded-xl border border-neutral-200 p-5 space-y-4">
-            <h3 className="font-semibold text-neutral-700">Quick Stats</h3>
+        </div>
+      </div>
+
+      {/* Two-column layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Left Column — read-only details */}
+        <div className="space-y-6">
+          <Card title="Vehicle Information" padding="md">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-3 bg-blue-50 rounded-lg"><p className="text-xs text-blue-600">Work Orders</p><p className="text-xl font-bold text-blue-900">{vehicle.workOrderCount}</p></div>
-              <div className="p-3 bg-green-50 rounded-lg"><p className="text-xs text-green-600">Revenue</p><p className="text-xl font-bold text-green-900">{formatCurrency(vehicle.totalRevenue)}</p></div>
-              <div className="p-3 bg-red-50 rounded-lg"><p className="text-xs text-red-600">Total Cost</p><p className="text-xl font-bold text-red-900">{formatCurrency(vehicle.laborCost + vehicle.materialCost)}</p></div>
-              <div className={`p-3 rounded-lg ${profitability >= 0 ? 'bg-green-50' : 'bg-red-50'}`}><p className={`text-xs ${profitability >= 0 ? 'text-green-600' : 'text-red-600'}`}>Profitability</p><p className={`text-xl font-bold ${profitability >= 0 ? 'text-green-900' : 'text-red-900'}`}>{formatCurrency(profitability)}</p></div>
+              <DetailRow label="Registration" value={vehicle.registration_no} />
+              <DetailRow label="Model" value={vehicle.model} />
+              <DetailRow label="Chassis No" value={vehicle.chassis_no} />
+              <DetailRow label="Colour" value={vehicle.colour} />
+              <DetailRow label="Fuel Type" value={vehicle.fuel_type} />
+              <DetailRow label="Transmission" value={vehicle.transmission} />
+              <DetailRow label="Year" value={vehicle.year_mfg} />
+              <DetailRow label="Engine" value={vehicle.engine_capacity} />
+              <DetailRow label="Seating" value={vehicle.seating} />
+              <DetailRow label="Tonnage" value={vehicle.tonnage} />
             </div>
-            <div className="pt-2">
-              <p className="text-xs text-neutral-400">Last Service</p>
-              <p className="text-sm font-medium">{formatDate(vehicle.lastServiceDate)}</p>
+          </Card>
+
+          <Card title="Insurance & Compliance" padding="md">
+            <div className="grid grid-cols-2 gap-4">
+              <DetailRow label="Insurer" value={vehicle.insurer} />
+              <DetailRow label="Policy No" value={vehicle.policy_no} />
+              <DetailRow label="Policy Expiry" value={formatDate(vehicle.policy_expiry)} />
+              <DetailRow label="COE Expiry" value={formatDate(vehicle.coe_expiry)} />
             </div>
-          </div>
-        </div>
-      )}
+          </Card>
 
-      {activeTab === 'Financial' && (
-        <div className="bg-white rounded-xl border border-neutral-200 p-5 space-y-4">
-          <h3 className="font-semibold text-neutral-700">Financial Summary</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div><p className="text-sm text-neutral-400">Purchase Price</p><p className="text-lg font-bold">{formatCurrency(vehicle.purchaseprice)}</p></div>
-            <div><p className="text-sm text-neutral-400">Labor Cost</p><p className="text-lg font-bold text-red-600">{formatCurrency(vehicle.laborCost)}</p></div>
-            <div><p className="text-sm text-neutral-400">Material Cost</p><p className="text-lg font-bold text-red-600">{formatCurrency(vehicle.materialCost)}</p></div>
-            <div><p className="text-sm text-neutral-400">Total Revenue</p><p className="text-lg font-bold text-green-600">{formatCurrency(vehicle.totalRevenue)}</p></div>
-          </div>
-          <div className="border-t border-neutral-200 pt-4 flex justify-between">
-            <span className="font-medium">Net Profitability</span>
-            <span className={`text-lg font-bold ${profitability >= 0 ? 'text-green-600' : 'text-red-600'}`}>{formatCurrency(profitability)}</span>
-          </div>
+          <Card title="Assignment" padding="md">
+            <div className="grid grid-cols-2 gap-4">
+              <DetailRow label="Customer" value={vehicle.customer_code} />
+              <DetailRow label="Install Date" value={formatDate(vehicle.install_date)} />
+              <DetailRow label="Last Updated" value={formatDate(vehicle.change_date)} />
+            </div>
+          </Card>
         </div>
-      )}
 
-      {activeTab === 'Service History' && (
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-200 bg-neutral-50">
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">WO Number</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Description</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Reported</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Completed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(vehicle.workOrders || []).map((wo) => (
-                <tr key={wo.wonum} className="border-b border-neutral-100 hover:bg-neutral-50">
-                  <td className="px-4 py-3"><Link href={`/services/${wo.wonum}`} className="text-blue-600 hover:underline">{wo.wonum}</Link></td>
-                  <td className="px-4 py-3 truncate max-w-[300px]">{wo.description}</td>
-                  <td className="px-4 py-3">{wo.worktype}</td>
-                  <td className="px-4 py-3"><StatusBadge status={wo.status} /></td>
-                  <td className="px-4 py-3">{formatDate(wo.reportdate)}</td>
-                  <td className="px-4 py-3">{formatDate(wo.actfinish)}</td>
-                </tr>
-              ))}
-              {(!vehicle.workOrders || vehicle.workOrders.length === 0) && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-neutral-400">No work orders found</td></tr>
+        {/* Right Column — editable rental settings */}
+        <div>
+          <Card title="Rental Settings" padding="md">
+            <div className="space-y-4">
+              <Select
+                label="Category"
+                options={categoryOptions}
+                value={form.category_id}
+                onChange={(e) => setForm((f) => ({ ...f, category_id: e.target.value }))}
+              />
+
+              <Select
+                label="Availability"
+                options={availabilityOptions}
+                value={form.availability_override}
+                onChange={(e) => setForm((f) => ({ ...f, availability_override: e.target.value }))}
+              />
+
+              {form.availability_override !== '' && (
+                <Input
+                  label="Override Reason"
+                  value={form.override_reason}
+                  onChange={(e) => setForm((f) => ({ ...f, override_reason: e.target.value }))}
+                  placeholder="Reason for availability override"
+                />
               )}
-            </tbody>
-          </table>
-        </div>
-      )}
 
-      {activeTab === 'AI Insights' && (
-        <div className="bg-white rounded-xl border border-neutral-200 p-8 text-center">
-          <svg className="w-12 h-12 mx-auto text-neutral-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-          <h3 className="font-semibold text-neutral-700 mb-1">AI Insights Coming Soon</h3>
-          <p className="text-sm text-neutral-400">Maintenance predictions and optimization recommendations for this vehicle.</p>
+              <Textarea
+                label="Notes"
+                rows={4}
+                value={form.notes}
+                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                placeholder="Internal notes about this vehicle"
+              />
+
+              <div className="pt-2 flex flex-col gap-2">
+                <Button
+                  variant="primary"
+                  loading={saving}
+                  disabled={!isDirty}
+                  onClick={handleSave}
+                >
+                  Save Changes
+                </Button>
+
+                {saveSuccess && (
+                  <p className="text-sm text-green-600">Changes saved successfully.</p>
+                )}
+                {saveError && (
+                  <p className="text-sm text-red-600">{saveError}</p>
+                )}
+              </div>
+            </div>
+          </Card>
         </div>
-      )}
+      </div>
     </div>
   );
 }
