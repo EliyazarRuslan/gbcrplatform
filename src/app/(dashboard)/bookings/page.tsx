@@ -102,7 +102,7 @@ export default function BookingsPage() {
             <tbody>
               {bookings.map(b => (
                 <tr key={b.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                  <td className="px-4 py-3"><Link href={`/fleet/${b.assetnum}`} className="text-primary hover:underline font-medium">{b.assetnum}</Link></td>
+                  <td className="px-4 py-3 font-medium">{b.assetnum}</td>
                   <td className="px-4 py-3">{b.customer_name}</td>
                   <td className="px-4 py-3">{formatDate(b.start_date)}</td>
                   <td className="px-4 py-3">{formatDate(b.end_date)}</td>
