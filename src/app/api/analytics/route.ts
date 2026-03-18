@@ -38,6 +38,40 @@ export async function GET() {
       WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR' AND status = 'ACTIVE'
     `);
 
+    // PV vs CV breakdown
+    const productBreakdownResult = await pool.request().query(`
+      SELECT
+        CASE
+          WHEN gb_product = 'PV' THEN 'Passenger Vehicle (PV)'
+          WHEN gb_product = 'CV' THEN 'Commercial Vehicle (CV)'
+          WHEN gb_product = 'BV' THEN 'Bus/Van (BV)'
+          ELSE 'Unclassified'
+        END as product,
+        gb_product as product_code,
+        COUNT(*) as count,
+        SUM(gb_rentalamount) as total_rental
+      FROM pluspagreement
+      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR' AND status = 'ACTIVE'
+      GROUP BY gb_product
+      ORDER BY COUNT(*) DESC
+    `);
+
+    // Monthly revenue split by PV/CV
+    const revenueBySplitResult = await pool.request().query(`
+      SELECT
+        FORMAT(startdate, 'yyyy-MM') as month,
+        ISNULL(gb_product, 'Other') as product,
+        COUNT(*) as agreements,
+        SUM(gb_rentalamount) as revenue
+      FROM pluspagreement
+      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
+        AND status IN ('ACTIVE', 'COMPLETE')
+        AND startdate >= DATEADD(MONTH, -12, GETDATE())
+        AND gb_product IN ('PV', 'CV')
+      GROUP BY FORMAT(startdate, 'yyyy-MM'), gb_product
+      ORDER BY month, product
+    `);
+
     // WO counts by type - GBCR site
     const woTypeResult = await pool.request().query(`
       SELECT worktype, COUNT(*) as count
@@ -72,6 +106,8 @@ export async function GET() {
       revenue: revenueResult.recordset,
       agreementStatus: agreementStatusResult.recordset,
       activeValue: activeValueResult.recordset[0],
+      productBreakdown: productBreakdownResult.recordset,
+      revenueBySplit: revenueBySplitResult.recordset,
       woByType: woTypeResult.recordset,
       topVehicles: topVehiclesResult.recordset,
       statusDistribution: statusDist.recordset,
@@ -82,6 +118,8 @@ export async function GET() {
       revenue: [],
       agreementStatus: [],
       activeValue: { active_count: 0, active_rental: 0, active_deposits: 0 },
+      productBreakdown: [],
+      revenueBySplit: [],
       woByType: [],
       topVehicles: [],
       statusDistribution: [],

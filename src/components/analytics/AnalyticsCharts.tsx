@@ -10,6 +10,7 @@ const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 interface Props {
   data: {
     revenue: { month: string; agreements: number; revenue: number }[];
+    revenueBySplit: { month: string; product: string; agreements: number; revenue: number }[];
     woByType: { worktype: string; count: number }[];
     statusDistribution: { status: string; count: number }[];
     agreementStatus: { status: string; count: number; total_rental: number }[];
@@ -40,16 +41,26 @@ export default function AnalyticsCharts({ data }: Props) {
         </ResponsiveContainer>
       </div>
 
-      {/* Monthly New Agreements */}
+      {/* PV vs CV Monthly Revenue */}
       <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-4">New Agreements by Month</h3>
+        <h3 className="text-sm font-semibold text-neutral-700 mb-4">PV vs CV Monthly Revenue</h3>
         <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={data.revenue}>
+          <BarChart data={(() => {
+            const months = new Set<string>();
+            data.revenueBySplit.forEach(r => months.add(r.month));
+            return Array.from(months).sort().map(m => {
+              const pv = data.revenueBySplit.find(r => r.month === m && r.product === 'PV');
+              const cv = data.revenueBySplit.find(r => r.month === m && r.product === 'CV');
+              return { month: m, PV: pv?.revenue || 0, CV: cv?.revenue || 0 };
+            });
+          })()}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
             <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
-            <Bar dataKey="agreements" fill="#d4941c" name="Agreements" radius={[4, 4, 0, 0]} />
+            <YAxis tickFormatter={formatK} tick={{ fontSize: 11 }} />
+            <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
+            <Legend />
+            <Bar dataKey="PV" stackId="rev" fill="#3b82f6" name="PV (Passenger)" />
+            <Bar dataKey="CV" stackId="rev" fill="#10b981" name="CV (Commercial)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
