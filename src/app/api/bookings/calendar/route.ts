@@ -8,9 +8,13 @@ export async function GET(req: NextRequest) {
     const year = parseInt(searchParams.get('year') || String(new Date().getFullYear()));
     const month = parseInt(searchParams.get('month') || String(new Date().getMonth() + 1));
 
+    // Compute next month/year correctly to handle December → January rollover
+    const nextMonth = month === 12 ? 1 : month + 1;
+    const nextYear = month === 12 ? year + 1 : year;
+
     const result = await pool.request()
       .input('startDate', sql.Date, `${year}-${String(month).padStart(2, '0')}-01`)
-      .input('endDate', sql.Date, `${year}-${String(month + 1 > 12 ? 1 : month + 1).padStart(2, '0')}-01`)
+      .input('endDate', sql.Date, `${nextYear}-${String(nextMonth).padStart(2, '0')}-01`)
       .query(`
         SELECT id, assetnum, customer_name, start_date, end_date, status
         FROM bookings

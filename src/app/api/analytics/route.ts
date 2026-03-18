@@ -6,14 +6,15 @@ export async function GET() {
     const pool = await getMaxPool();
 
     // Monthly revenue - GBCR site
+    // pluspbillline has no linecost or invoicedate; use billedprice and scheduledate
     const revenueResult = await pool.request().query(`
-      SELECT FORMAT(bb.invoicedate, 'yyyy-MM') as month,
-        SUM(bl.linecost) as revenue
+      SELECT FORMAT(bb.scheduledate, 'yyyy-MM') as month,
+        SUM(bl.billedprice) as revenue
       FROM pluspbillline bl
       INNER JOIN pluspbillbatch bb ON bl.billbatchnum = bb.billbatchnum
-      WHERE bb.invoicedate >= DATEADD(MONTH, -12, GETDATE())
-        AND bb.siteid = 'GBCR'
-      GROUP BY FORMAT(bb.invoicedate, 'yyyy-MM')
+      WHERE bb.scheduledate >= DATEADD(MONTH, -12, GETDATE())
+        AND bl.siteid = 'GBCR'
+      GROUP BY FORMAT(bb.scheduledate, 'yyyy-MM')
       ORDER BY month
     `);
 

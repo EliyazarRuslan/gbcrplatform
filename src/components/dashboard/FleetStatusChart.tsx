@@ -33,7 +33,7 @@ export default function FleetStatusChart({ stats }: { stats: FleetStats }) {
             outerRadius={100}
             paddingAngle={3}
             dataKey="value"
-            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+            label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
             labelLine={false}
           >
             {data.map((entry, i) => (
@@ -41,7 +41,7 @@ export default function FleetStatusChart({ stats }: { stats: FleetStats }) {
             ))}
           </Pie>
           <Tooltip
-            formatter={(value: number) => [value.toLocaleString(), 'Vehicles']}
+            formatter={(value) => [Number(value).toLocaleString(), 'Vehicles']}
           />
           <Legend />
         </PieChart>

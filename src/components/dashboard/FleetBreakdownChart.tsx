@@ -30,7 +30,7 @@ export default function FleetBreakdownChart({ stats }: { stats: FleetStats }) {
           <XAxis type="number" tick={{ fontSize: 12 }} />
           <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
           <Tooltip
-            formatter={(value: number) => [value.toLocaleString(), 'Vehicles']}
+            formatter={(value) => [Number(value).toLocaleString(), 'Vehicles']}
             contentStyle={{ borderRadius: '8px', border: '1px solid #e2e8f0' }}
           />
           <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={28}>
