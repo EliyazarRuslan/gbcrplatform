@@ -24,9 +24,9 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/fleet?statsOnly=true')
+    fetch('/api/fleet/stats')
       .then((res) => res.json())
-      .then((data) => { setStats(data.stats); setLoading(false); })
+      .then((data) => { setStats(data.data); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
