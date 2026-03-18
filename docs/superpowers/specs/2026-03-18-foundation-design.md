@@ -37,8 +37,10 @@ An existing prototype (`gbcr-inspection-web`) exists as a Vite + React frontend 
 │   │   ├── layout.tsx                  # Root layout (html, body, providers)
 │   │   ├── (auth)/
 │   │   │   ├── layout.tsx              # Centered card layout (no sidebar)
-│   │   │   └── login/
-│   │   │       └── page.tsx            # Login page
+│   │   │   ├── login/
+│   │   │   │   └── page.tsx            # Login page
+│   │   │   └── change-password/
+│   │   │       └── page.tsx            # Change password (first login + voluntary)
 │   │   ├── (dashboard)/
 │   │   │   ├── layout.tsx              # App shell (sidebar + header)
 │   │   │   ├── page.tsx                # Dashboard home
@@ -56,11 +58,15 @@ An existing prototype (`gbcr-inspection-web`) exists as a Vite + React frontend 
 │   │       ├── auth/
 │   │       │   ├── login/route.ts      # POST — authenticate
 │   │       │   ├── logout/route.ts     # POST — clear cookie
-│   │       │   └── me/route.ts         # GET — current user
-│   │       └── users/
-│   │           ├── route.ts            # GET (list), POST (create)
-│   │           └── [id]/
-│   │               └── route.ts        # GET, PUT, DELETE
+│   │       │   ├── me/route.ts         # GET — current user
+│   │       │   └── change-password/route.ts  # PUT — change own password
+│   │       ├── users/
+│   │       │   ├── route.ts            # GET (list), POST (create)
+│   │       │   └── [id]/
+│   │       │       ├── route.ts        # GET, PUT (update)
+│   │       │       └── deactivate/route.ts  # PUT (deactivate)
+│   │       └── files/
+│   │           └── [...path]/route.ts  # GET — authenticated file serving
 │   ├── components/
 │   │   ├── ui/
 │   │   │   ├── button.tsx
@@ -91,14 +97,14 @@ An existing prototype (`gbcr-inspection-web`) exists as a Vite + React frontend 
 │   ├── logo.svg                        # GBCR logo
 │   └── manifest.json                   # PWA manifest
 ├── scripts/
-│   ├── seed.sql                        # Seed data (admin user, branch, categories)
+│   ├── seed.ts                         # Node.js seed script (bcrypt hash + SQL inserts)
 │   └── schema.sql                      # Foundation table DDL
 ├── docs/
 │   └── superpowers/specs/              # Design specs
 ├── .env.local                          # Environment variables
 ├── .gitignore
 ├── next.config.ts
-├── tailwind.config.ts
+├── tailwind.config.ts              # Tailwind v4 (CSS-based config also supported)
 ├── postcss.config.mjs
 ├── tsconfig.json
 └── package.json
@@ -109,6 +115,10 @@ An existing prototype (`gbcr-inspection-web`) exists as a Vite + React frontend 
 ## 3. Database Schema
 
 All tables created in existing `GBCR_Platform` database on `GBITR01V.goldbell.com.sg`.
+
+**Note:** `vehicle_categories` is intentionally included in Foundation as system reference/configuration data. It contains pricing defaults that the Super Admin configures during initial setup, before any vehicles or bookings exist. The Vehicle Management sub-project (Sub-Project 2) will reference this table but not create it.
+
+**`updated_at` convention:** All tables with `updated_at` will use application-level updates — every UPDATE query must explicitly set `updated_at = GETDATE()`. No database triggers.
 
 ### 3.1 users
 
@@ -186,7 +196,7 @@ All tables created in existing `GBCR_Platform` database on `GBITR01V.goldbell.co
 3. Server compares password with `password_hash` using bcrypt
 4. If valid and user status is `active`:
    - Generate JWT with payload: `{ userId, email, role, branchId }`
-   - Set JWT as `httpOnly`, `secure`, `sameSite: strict` cookie named `gbcr_token`
+   - Set JWT as `httpOnly`, `sameSite: strict` cookie named `gbcr_token` (`secure` flag only when served over HTTPS — intranet may use HTTP)
    - Expiry: 24 hours
    - Update `last_login_at` on user record
    - Log to `audit_logs` (action: 'login')
@@ -225,6 +235,7 @@ If role doesn't match, returns 403 Forbidden.
 | `/api/auth/me` | all authenticated |
 | `/api/auth/logout` | all authenticated |
 | `/(dashboard)/*` | all authenticated |
+| `/api/files/*` | all authenticated |
 
 Subsequent sub-projects will add their own role restrictions.
 
@@ -276,6 +287,8 @@ Subsequent sub-projects will add their own role restrictions.
 | Finance | DollarSign | `/finance` | super_admin, branch_manager, finance |
 | Reports | BarChart3 | `/reports` | super_admin, branch_manager, finance |
 | Settings | Settings | `/settings` | super_admin |
+
+**Note:** The `driver` role intentionally has no sidebar menu items beyond Dashboard. Drivers will primarily use the mobile PWA for assigned tasks (delivery/collection), which will be built in Sub-Project 5 (Inspections). In Foundation, a driver who logs in sees only the Dashboard.
 
 ### 5.3 Responsive Behavior
 
@@ -367,7 +380,7 @@ All built with Tailwind CSS v4. No external component library.
 | POST | /api/users | super_admin | Create user |
 | GET | /api/users/[id] | super_admin | Get user detail |
 | PUT | /api/users/[id] | super_admin | Update user |
-| DELETE | /api/users/[id] | super_admin | Deactivate user (soft delete via status) |
+| PUT | /api/users/[id]/deactivate | super_admin | Deactivate user (sets status to 'inactive') |
 
 ### 7.3 Database Helper
 
@@ -390,8 +403,9 @@ const config: sql.config = {
 let pool: sql.ConnectionPool | null = null
 
 export async function getPool(): Promise<sql.ConnectionPool> {
-  if (!pool) {
+  if (!pool || !pool.connected) {
     pool = await sql.connect(config)
+    pool.on('error', () => { pool = null })  // Reset on connection loss
   }
   return pool
 }
