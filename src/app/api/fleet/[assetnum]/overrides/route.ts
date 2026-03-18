@@ -102,7 +102,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ asse
 
     // Audit log
     await logAudit({
-      userId: user.id,
+      userId: user.userId,
       action: existingResult.recordset.length > 0 ? 'UPDATE' : 'INSERT',
       entityType: 'vehicle_override',
       entityId: overrideId,

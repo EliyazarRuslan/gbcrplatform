@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
             <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500">Work Orders</th>
           </tr></thead>
           <tbody>
-            {data?.topCostlyVehicles.map((v, i) => (
+            {(data?.topCostlyVehicles || []).map((v, i) => (
               <tr key={v.assetnum} className="border-b border-neutral-100 hover:bg-neutral-50">
                 <td className="px-4 py-2 text-neutral-400">{i + 1}</td>
                 <td className="px-4 py-2 font-medium">{v.assetnum}</td>
