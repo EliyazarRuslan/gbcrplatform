@@ -55,13 +55,22 @@ The GBCR Platform already has a fleet page and API routes that query Maximo (MAX
 | id | INT IDENTITY(1,1) | PRIMARY KEY |
 | assetnum | VARCHAR(30) | NOT NULL, UNIQUE |
 | category_id | INT | NULL, FK → vehicle_categories(id) |
-| availability_override | VARCHAR(30) | NULL, CHECK IN ('blocked', 'reserved_vip', NULL) |
+| availability_override | VARCHAR(30) | NULL, CHECK (availability_override IN ('blocked', 'reserved_vip')) |
 | override_reason | NVARCHAR(200) | NULL |
 | notes | NVARCHAR(MAX) | NULL |
 | created_at | DATETIME2 | NOT NULL, DEFAULT GETDATE() |
 | updated_at | DATETIME2 | NOT NULL, DEFAULT GETDATE() |
 
 When `availability_override` is set, the vehicle is treated as unavailable for booking regardless of Maximo status.
+
+**Audit logging:** Override changes log to `audit_logs` with `entity_type = 'vehicle_override'`. Since `entity_id` is INT and assetnums are VARCHAR, store the `vehicle_overrides.id` as `entity_id` (after upsert) and include `assetnum` in the `new_values` JSON payload.
+
+**Connection pools:**
+- **Read queries** (GET /api/fleet, GET /api/fleet/[assetnum]): Use `maxdb.ts` pool (MAXDB76, ReadUser) with cross-database references to GBCR_Platform.
+- **Write queries** (PUT /api/fleet/[assetnum]/overrides): Use `db.ts` pool (GBCR_Platform, ReadUser with dbo access) for upserts.
+- The PUT endpoint should first verify the assetnum exists in Maximo via the maxdb pool before writing to GBCR_Platform. Return 404 if asset not found.
+
+**maxdb.ts reconnection:** Add the same error recovery pattern as `db.ts` — check `!pool.connected` and set `pool.on('error', () => { pool = null })`.
 
 ---
 
@@ -71,9 +80,9 @@ When `availability_override` is set, the vehicle is treated as unavailable for b
 
 Rewrite existing endpoint. Queries MAXDB76 for GBCR vehicles, cross-database joins with GBCR_Platform for overrides.
 
-**Query params:** page, pageSize (default 50), search, status, category, statsOnly
+**Query params:** page, pageSize (default 50), search, status, category
 
-**Stats query:** Count by status for KPI cards (HIRED OUT, NOT READY, IDLE, BOOKED).
+**Stats included:** Response always includes status counts for KPI cards (HIRED OUT, NOT READY, IDLE, BOOKED). Use `GET /api/fleet/stats` for stats-only requests (e.g., dashboard).
 
 **List query:**
 - Source: MAXDB76.dbo.ASSET WHERE SITEID='GBCR' AND STATUS NOT IN ('SOLD','DECOMMISSIONED','LAID UP')
