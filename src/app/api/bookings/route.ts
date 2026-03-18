@@ -27,11 +27,13 @@ export async function GET(req: NextRequest) {
     if (status) request2.input('status', sql.VarChar, status);
     if (month) request2.input('month', sql.VarChar, month);
 
+    request2.input('offset', sql.Int, offset);
+    request2.input('limit', sql.Int, limit);
     const result = await request2.query(`
       SELECT b.* FROM bookings b
       WHERE ${where}
       ORDER BY b.start_date DESC
-      OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
     `);
 
     return NextResponse.json({

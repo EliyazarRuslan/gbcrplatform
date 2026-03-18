@@ -18,7 +18,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ wonu
     const laborResult = await pool.request()
       .input('wonum', sql.VarChar, wonum)
       .query(`
-        SELECT laborcode, craft, startdate, finishdate, regularhrs, linecost, gb_chargeable
+        SELECT laborcode, craft, startdate, finishdate, regularhrs, linecost, gb_ischargeable as gb_chargeable
         FROM labtrans WHERE refwo = @wonum ORDER BY startdate DESC
       `);
 

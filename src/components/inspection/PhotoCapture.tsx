@@ -37,7 +37,7 @@ export default function PhotoCapture({
 
     try {
       const formData = new FormData();
-      formData.append('photo', file);
+      formData.append('file', file);
       formData.append('photo_type', photoType);
 
       const res = await fetch(`/api/inspections/${inspectionId}/photos`, {

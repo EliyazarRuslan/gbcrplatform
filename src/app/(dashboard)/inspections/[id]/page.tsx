@@ -21,18 +21,18 @@ import { formatDate } from '@/lib/utils';
 interface InspectionPhoto {
   id: number;
   photo_type: string;
-  photo_url: string;
+  file_path: string;
 }
 
 interface InspectionDamage {
   id: number;
-  view: string;
-  position_x: number;
-  position_y: number;
+  diagram_view: string;
+  diagram_x: number;
+  diagram_y: number;
   damage_type: string;
   severity: string;
   description: string;
-  pre_existing: boolean;
+  is_pre_existing: boolean;
 }
 
 interface InspectionData {
@@ -52,7 +52,7 @@ interface InspectionData {
   safety_equipment: string | null;
   cleanliness_interior: number | null;
   cleanliness_exterior: number | null;
-  smell: string | null;
+  smell_condition: string | null;
   fuel_level: string | null;
   mileage_reading: number | null;
   overall_notes: string | null;
@@ -367,7 +367,7 @@ function PhotosSection({
   isEditable: boolean;
   onRefresh: () => void;
 }) {
-  const photoMap = new Map(data.photos.map((p) => [p.photo_type, p.photo_url]));
+  const photoMap = new Map(data.photos.map((p) => [p.photo_type, `/api/files/${p.file_path}`]));
 
   return (
     <Card title="Vehicle Photos" description={`${data.photos.length} of ${PHOTO_SLOTS.length} photos captured`}>
@@ -493,8 +493,8 @@ function ChecklistSection({
           />
           <Select
             label="Smell"
-            value={data.smell || 'none'}
-            onChange={(e) => updateField('smell', e.target.value)}
+            value={data.smell_condition || 'none'}
+            onChange={(e) => updateField('smell_condition', e.target.value)}
             options={smellOptions}
             disabled={!isEditable}
           />
@@ -594,13 +594,13 @@ function DamagesSection({
   // Map damages to VehicleDiagram format
   const diagramDamages = data.damages.map(d => ({
     id: d.id,
-    diagram_view: (d.view || 'top') as 'top' | 'front' | 'rear' | 'left' | 'right',
-    diagram_x: d.position_x,
-    diagram_y: d.position_y,
+    diagram_view: (d.diagram_view || 'top') as 'top' | 'front' | 'rear' | 'left' | 'right',
+    diagram_x: d.diagram_x,
+    diagram_y: d.diagram_y,
     damage_type: d.damage_type,
     severity: d.severity,
     description: d.description,
-    is_pre_existing: !!d.pre_existing,
+    is_pre_existing: !!d.is_pre_existing,
   }));
 
   return (
@@ -672,8 +672,8 @@ function DamagesSection({
                     <span className="w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shrink-0">{i + 1}</span>
                     <span className="text-sm font-medium text-neutral-900 capitalize">{d.damage_type.replace('_', ' ')}</span>
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${severityColor[d.severity] || 'bg-neutral-100 text-neutral-700'}`}>{d.severity}</span>
-                    <span className="text-xs text-neutral-400 capitalize">{d.view} view</span>
-                    {d.pre_existing && <Badge variant="warning" size="sm">Pre-existing</Badge>}
+                    <span className="text-xs text-neutral-400 capitalize">{d.diagram_view} view</span>
+                    {d.is_pre_existing && <Badge variant="warning" size="sm">Pre-existing</Badge>}
                   </div>
                   {d.description && <p className="text-sm text-neutral-600 ml-8">{d.description}</p>}
                 </div>
@@ -713,14 +713,11 @@ function SignaturesSection({
 }) {
   const saveSignature = async (field: 'inspector_signature' | 'customer_signature', dataUrl: string) => {
     try {
-      const body: Record<string, string | boolean> = { [field]: dataUrl };
-      if (field === 'customer_signature') {
-        body.customer_acknowledged = true;
-      }
-      await fetch(`/api/inspections/${inspectionId}`, {
-        method: 'PUT',
+      const type = field === 'inspector_signature' ? 'inspector' : 'customer';
+      await fetch(`/api/inspections/${inspectionId}/signature`, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ type, signature: dataUrl }),
       });
       onRefresh();
     } catch {
@@ -743,7 +740,7 @@ function SignaturesSection({
       <Card title="Inspector Signature">
         <SignatureCanvas
           onSave={(url) => saveSignature('inspector_signature', url)}
-          existingSignature={data.inspector_signature || undefined}
+          existingSignature={data.inspector_signature ? `/api/files/${data.inspector_signature}` : undefined}
         />
       </Card>
 
@@ -751,14 +748,14 @@ function SignaturesSection({
         {data.customer_acknowledged && data.customer_signature ? (
           <div className="space-y-2">
             <div className="border border-neutral-200 rounded-lg p-4 bg-neutral-50">
-              <img src={data.customer_signature} alt="Customer signature" className="max-h-32 mx-auto" />
+              <img src={`/api/files/${data.customer_signature}`} alt="Customer signature" className="max-h-32 mx-auto" />
             </div>
             <Badge variant="success">Customer Acknowledged</Badge>
           </div>
         ) : (
           <SignatureCanvas
             onSave={(url) => saveSignature('customer_signature', url)}
-            existingSignature={data.customer_signature || undefined}
+            existingSignature={data.customer_signature ? `/api/files/${data.customer_signature}` : undefined}
           />
         )}
       </Card>

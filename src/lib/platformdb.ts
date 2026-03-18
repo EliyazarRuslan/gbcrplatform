@@ -13,8 +13,10 @@ const config: sql.config = {
 let pool: sql.ConnectionPool | null = null;
 
 export async function getPlatformPool(): Promise<sql.ConnectionPool> {
-  if (!pool) {
-    pool = await sql.connect(config);
+  if (!pool || !pool.connected) {
+    pool = new sql.ConnectionPool(config);
+    pool.on('error', () => { pool = null; });
+    await pool.connect();
   }
   return pool;
 }

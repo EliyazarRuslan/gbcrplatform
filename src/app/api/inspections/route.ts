@@ -114,12 +114,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate booking_id is a valid UUID if provided
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const parsedBookingId = booking_id && typeof booking_id === 'string' && uuidRegex.test(booking_id.trim())
+      ? booking_id.trim()
+      : null;
+
     const pool = await getPool();
     const insertResult = await pool.request()
       .input('vehicle_assetnum', sql.NVarChar(50), vehicle_assetnum)
       .input('vehicle_regno', sql.NVarChar(50), vehicle_regno)
       .input('inspection_type', sql.NVarChar(20), inspection_type)
-      .input('booking_id', sql.UniqueIdentifier, booking_id || null)
+      .input('booking_id', sql.UniqueIdentifier, parsedBookingId)
       .input('inspector_id', sql.Int, currentUser.userId)
       .query(`
         INSERT INTO inspections (

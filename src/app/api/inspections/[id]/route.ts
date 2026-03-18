@@ -115,8 +115,8 @@ export async function PUT(
     if (body.functionality_check !== undefined) { fields.push('functionality_check = @functionality_check'); req.input('functionality_check', sql.NVarChar(sql.MAX), body.functionality_check); }
     if (body.tire_condition !== undefined) { fields.push('tire_condition = @tire_condition'); req.input('tire_condition', sql.NVarChar(sql.MAX), body.tire_condition); }
     if (body.safety_equipment !== undefined) { fields.push('safety_equipment = @safety_equipment'); req.input('safety_equipment', sql.NVarChar(sql.MAX), body.safety_equipment); }
-    if (body.cleanliness_interior !== undefined) { fields.push('cleanliness_interior = @cleanliness_interior'); req.input('cleanliness_interior', sql.TinyInt, body.cleanliness_interior); }
-    if (body.cleanliness_exterior !== undefined) { fields.push('cleanliness_exterior = @cleanliness_exterior'); req.input('cleanliness_exterior', sql.TinyInt, body.cleanliness_exterior); }
+    if (body.cleanliness_interior !== undefined) { fields.push('cleanliness_interior = @cleanliness_interior'); req.input('cleanliness_interior', sql.Int, body.cleanliness_interior); }
+    if (body.cleanliness_exterior !== undefined) { fields.push('cleanliness_exterior = @cleanliness_exterior'); req.input('cleanliness_exterior', sql.Int, body.cleanliness_exterior); }
     if (body.smell_condition !== undefined) { fields.push('smell_condition = @smell_condition'); req.input('smell_condition', sql.NVarChar(sql.MAX), body.smell_condition); }
     if (body.overall_notes !== undefined) { fields.push('overall_notes = @overall_notes'); req.input('overall_notes', sql.NVarChar(sql.MAX), body.overall_notes); }
     if (body.checklist_data !== undefined) { fields.push('checklist_data = @checklist_data'); req.input('checklist_data', sql.NVarChar(sql.MAX), JSON.stringify(body.checklist_data)); }

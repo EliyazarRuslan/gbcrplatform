@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
     const countResult = await countRequest.query(`SELECT COUNT(*) as total FROM workorder w WHERE ${where}`);
     const total = countResult.recordset[0].total;
 
+    dataRequest.input('offset', sql.Int, offset);
+    dataRequest.input('limit', sql.Int, limit);
     const result = await dataRequest.query(`
       SELECT w.wonum, w.description, w.status, w.worktype, w.assetnum,
         w.reportdate, w.actfinish, w.pluspcustomer, w.siteid, w.estdur,
@@ -46,7 +48,7 @@ export async function GET(req: NextRequest) {
       FROM workorder w
       WHERE ${where}
       ORDER BY w.reportdate DESC
-      OFFSET ${offset} ROWS FETCH NEXT ${limit} ROWS ONLY
+      OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
     `);
 
     return NextResponse.json({

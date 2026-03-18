@@ -9,6 +9,7 @@ const breadcrumbMap: Record<string, string> = {
   '/': 'Dashboard',
   '/fleet': 'Fleet Management',
   '/bookings': 'Bookings',
+  '/inspections': 'Inspections',
   '/services': 'Service & Maintenance',
   '/customers': 'Customers',
   '/analytics': 'Analytics',
