@@ -5,33 +5,37 @@ export async function GET() {
   try {
     const pool = await getMaxPool();
 
-    // Monthly revenue - GBCR site
-    // pluspbillline has no linecost or invoicedate; use billedprice and scheduledate
+    // Monthly rental revenue from active agreements (pluspagreement)
     const revenueResult = await pool.request().query(`
-      SELECT FORMAT(bb.scheduledate, 'yyyy-MM') as month,
-        SUM(bl.billedprice) as revenue
-      FROM pluspbillline bl
-      INNER JOIN pluspbillbatch bb ON bl.billbatchnum = bb.billbatchnum
-      WHERE bb.scheduledate >= DATEADD(MONTH, -12, GETDATE())
-        AND bl.siteid = 'GBCR'
-      GROUP BY FORMAT(bb.scheduledate, 'yyyy-MM')
+      SELECT FORMAT(startdate, 'yyyy-MM') as month,
+        COUNT(*) as agreements,
+        SUM(gb_rentalamount) as revenue
+      FROM pluspagreement
+      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
+        AND status IN ('ACTIVE', 'COMPLETE')
+        AND startdate >= DATEADD(MONTH, -12, GETDATE())
+      GROUP BY FORMAT(startdate, 'yyyy-MM')
       ORDER BY month
     `);
 
-    // Labor cost breakdown - GBCR site
-    const laborCostResult = await pool.request().query(`
-      SELECT FORMAT(transdate, 'yyyy-MM') as month, SUM(linecost) as cost
-      FROM labtrans WHERE transdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
-      GROUP BY FORMAT(transdate, 'yyyy-MM')
-      ORDER BY month
+    // Agreement status summary
+    const agreementStatusResult = await pool.request().query(`
+      SELECT status, COUNT(*) as count,
+        SUM(gb_rentalamount) as total_rental
+      FROM pluspagreement
+      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
+      GROUP BY status
+      ORDER BY count DESC
     `);
 
-    // Material cost breakdown - GBCR site
-    const matCostResult = await pool.request().query(`
-      SELECT FORMAT(actualdate, 'yyyy-MM') as month, SUM(ABS(linecost)) as cost
-      FROM matusetrans WHERE actualdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR' AND issuetype = 'ISSUE'
-      GROUP BY FORMAT(actualdate, 'yyyy-MM')
-      ORDER BY month
+    // Active agreements total value
+    const activeValueResult = await pool.request().query(`
+      SELECT
+        COUNT(*) as active_count,
+        SUM(gb_rentalamount) as active_rental,
+        SUM(gb_depositamount) as active_deposits
+      FROM pluspagreement
+      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR' AND status = 'ACTIVE'
     `);
 
     // WO counts by type - GBCR site
@@ -41,40 +45,45 @@ export async function GET() {
       GROUP BY worktype ORDER BY count DESC
     `);
 
-    // Top 10 costly vehicles - GBCR site
-    const topCostResult = await pool.request().query(`
-      SELECT TOP 10 a.assetnum, a.gb_assetregistrationno as gb_regno, a.description,
-        ISNULL(a.totalcost, 0) as totalCost,
-        (SELECT COUNT(*) FROM workorder wo WHERE wo.assetnum = a.assetnum AND wo.siteid = 'GBCR') as woCount
-      FROM asset a
-      WHERE a.siteid = 'GBCR'
-      ORDER BY a.totalcost DESC
+    // Top vehicles by rental amount (active agreements)
+    const topVehiclesResult = await pool.request().query(`
+      SELECT TOP 10
+        a.assetnum,
+        a.gb_assetregistrationno as gb_regno,
+        a.description,
+        COUNT(ag.agreement) as agreement_count,
+        SUM(ag.gb_rentalamount) as total_rental
+      FROM pluspagreement ag
+      INNER JOIN asset a ON ag.assetnum COLLATE DATABASE_DEFAULT = a.assetnum COLLATE DATABASE_DEFAULT AND a.siteid = 'GBCR'
+      WHERE ag.orgid = 'GOLDBELL' AND ag.gb_entity = 'GBCR' AND ag.status = 'ACTIVE'
+      GROUP BY a.assetnum, a.gb_assetregistrationno, a.description
+      ORDER BY total_rental DESC
     `);
 
-    // Fleet status distribution - GBCR site
+    // Fleet status distribution - GBCR site (active fleet only)
     const statusDist = await pool.request().query(`
       SELECT status, COUNT(*) as count
       FROM asset WHERE siteid = 'GBCR'
+        AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
       GROUP BY status ORDER BY count DESC
     `);
 
     return NextResponse.json({
       revenue: revenueResult.recordset,
-      laborCost: laborCostResult.recordset,
-      materialCost: matCostResult.recordset,
+      agreementStatus: agreementStatusResult.recordset,
+      activeValue: activeValueResult.recordset[0],
       woByType: woTypeResult.recordset,
-      topCostlyVehicles: topCostResult.recordset,
+      topVehicles: topVehiclesResult.recordset,
       statusDistribution: statusDist.recordset,
     });
   } catch (error: unknown) {
     console.error('Analytics API error:', error);
-    // Return empty data gracefully so the page doesn't crash
     return NextResponse.json({
       revenue: [],
-      laborCost: [],
-      materialCost: [],
+      agreementStatus: [],
+      activeValue: { active_count: 0, active_rental: 0, active_deposits: 0 },
       woByType: [],
-      topCostlyVehicles: [],
+      topVehicles: [],
       statusDistribution: [],
     });
   }
