@@ -154,7 +154,7 @@ function ActionsDropdown({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const status = booking.status;
+  const status = (booking.status || '').toUpperCase();
 
   // Determine available actions based on current status
   const statusTransitions: { label: string; value: string; className: string }[] = [];
@@ -168,8 +168,8 @@ function ActionsDropdown({
     statusTransitions.push({ label: 'Complete', value: 'COMPLETED', className: 'text-green-700 hover:bg-green-50' });
   }
 
-  const canCancel = ['PENDING', 'CONFIRMED'].includes(status);
-  const canDelete = ['CANCELLED', 'COMPLETED'].includes(status);
+  const canCancel = ['PENDING', 'CONFIRMED', 'ACTIVE'].includes(status);
+  const canDelete = true; // Always allow delete
 
   return (
     <div className="relative" ref={ref}>
@@ -203,22 +203,16 @@ function ActionsDropdown({
             </button>
           )}
 
-          {(statusTransitions.length > 0 || canCancel) && canDelete && (
+          {(statusTransitions.length > 0 || canCancel) && (
             <div className="border-t border-neutral-100 my-1" />
           )}
 
-          {canDelete && (
-            <button
-              onClick={() => { setOpen(false); onDelete(); }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              Delete Booking
-            </button>
-          )}
-
-          {statusTransitions.length === 0 && !canCancel && !canDelete && (
-            <p className="px-4 py-2 text-sm text-neutral-400">No actions available</p>
-          )}
+          <button
+            onClick={() => { setOpen(false); onDelete(); }}
+            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+          >
+            Delete Booking
+          </button>
         </div>
       )}
     </div>
