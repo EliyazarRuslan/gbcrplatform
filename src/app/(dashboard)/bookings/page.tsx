@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { SkeletonTable } from '@/components/ui/Skeleton';
@@ -13,14 +13,52 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
-  useEffect(() => {
+  const fetchBookings = () => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     fetch(`/api/bookings?${params}`)
       .then(r => r.json())
       .then(data => { setBookings(data.bookings || []); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [statusFilter]);
+  };
+
+  useEffect(() => { fetchBookings(); }, [statusFilter]);
+
+  const handleCancel = async (id: string) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    try {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'CANCELLED' }),
+      });
+      if (res.ok) fetchBookings();
+      else alert('Failed to cancel booking');
+    } catch { alert('Error cancelling booking'); }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this booking? This action cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/bookings/${id}`, { method: 'DELETE' });
+      if (res.ok) fetchBookings();
+      else alert('Failed to delete booking');
+    } catch { alert('Error deleting booking'); }
+  };
+
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    if (!window.confirm(`Change booking status to ${newStatus}?`)) return;
+    try {
+      const res = await fetch(`/api/bookings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      });
+      if (res.ok) fetchBookings();
+      else alert('Failed to update booking');
+    } catch { alert('Error updating booking'); }
+  };
 
   const statuses = ['PENDING', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'CANCELLED'];
 
@@ -46,7 +84,7 @@ export default function BookingsPage() {
         </select>
       </div>
 
-      {loading ? <SkeletonTable rows={8} cols={7} /> : (
+      {loading ? <SkeletonTable rows={8} cols={8} /> : (
         <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
           <table className="w-full text-sm">
             <thead>
@@ -58,30 +96,131 @@ export default function BookingsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Daily Rate</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Actions</th>
               </tr>
             </thead>
             <tbody>
               {bookings.map(b => (
                 <tr key={b.id} className="border-b border-neutral-100 hover:bg-neutral-50">
-                  <td className="px-4 py-3"><Link href={`/fleet/${b.assetnum}`} className="text-blue-600 hover:underline">{b.assetnum}</Link></td>
+                  <td className="px-4 py-3"><Link href={`/fleet/${b.assetnum}`} className="text-primary hover:underline font-medium">{b.assetnum}</Link></td>
                   <td className="px-4 py-3">{b.customer_name}</td>
                   <td className="px-4 py-3">{formatDate(b.start_date)}</td>
                   <td className="px-4 py-3">{formatDate(b.end_date)}</td>
                   <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
                   <td className="px-4 py-3">{formatCurrency(b.daily_rate)}</td>
                   <td className="px-4 py-3">{formatCurrency(b.total_amount)}</td>
+                  <td className="px-4 py-3">
+                    <ActionsDropdown
+                      booking={b}
+                      onCancel={() => handleCancel(b.id)}
+                      onDelete={() => handleDelete(b.id)}
+                      onStatusChange={(status) => handleStatusChange(b.id, status)}
+                    />
+                  </td>
                 </tr>
               ))}
               {bookings.length === 0 && (
-                <tr><td colSpan={7} className="px-4 py-8 text-center text-neutral-400">No bookings found. Create your first booking to get started.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-8 text-center text-neutral-400">No bookings found. Create your first booking to get started.</td></tr>
               )}
             </tbody>
           </table>
         </div>
       )}
 
-      {/* Create Booking Modal */}
-      {showCreate && <CreateBookingModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); window.location.reload(); }} />}
+      {showCreate && <CreateBookingModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); fetchBookings(); }} />}
+    </div>
+  );
+}
+
+function ActionsDropdown({
+  booking,
+  onCancel,
+  onDelete,
+  onStatusChange,
+}: {
+  booking: Booking;
+  onCancel: () => void;
+  onDelete: () => void;
+  onStatusChange: (status: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const status = booking.status;
+
+  // Determine available actions based on current status
+  const statusTransitions: { label: string; value: string; className: string }[] = [];
+  if (status === 'PENDING') {
+    statusTransitions.push({ label: 'Confirm', value: 'CONFIRMED', className: 'text-blue-700 hover:bg-blue-50' });
+  }
+  if (status === 'CONFIRMED') {
+    statusTransitions.push({ label: 'Set Active', value: 'ACTIVE', className: 'text-green-700 hover:bg-green-50' });
+  }
+  if (status === 'ACTIVE') {
+    statusTransitions.push({ label: 'Complete', value: 'COMPLETED', className: 'text-green-700 hover:bg-green-50' });
+  }
+
+  const canCancel = ['PENDING', 'CONFIRMED'].includes(status);
+  const canDelete = ['CANCELLED', 'COMPLETED'].includes(status);
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-1.5 rounded-lg hover:bg-neutral-100 transition-colors"
+      >
+        <svg className="w-5 h-5 text-neutral-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50 animate-fade-in">
+          {statusTransitions.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => { setOpen(false); onStatusChange(t.value); }}
+              className={`w-full text-left px-4 py-2 text-sm ${t.className} transition-colors`}
+            >
+              {t.label}
+            </button>
+          ))}
+
+          {canCancel && (
+            <button
+              onClick={() => { setOpen(false); onCancel(); }}
+              className="w-full text-left px-4 py-2 text-sm text-amber-700 hover:bg-amber-50 transition-colors"
+            >
+              Cancel Booking
+            </button>
+          )}
+
+          {(statusTransitions.length > 0 || canCancel) && canDelete && (
+            <div className="border-t border-neutral-100 my-1" />
+          )}
+
+          {canDelete && (
+            <button
+              onClick={() => { setOpen(false); onDelete(); }}
+              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Delete Booking
+            </button>
+          )}
+
+          {statusTransitions.length === 0 && !canCancel && !canDelete && (
+            <p className="px-4 py-2 text-sm text-neutral-400">No actions available</p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
