@@ -14,8 +14,9 @@ let pool: sql.ConnectionPool | null = null;
 
 export async function getMaxPool(): Promise<sql.ConnectionPool> {
   if (!pool || !pool.connected) {
-    pool = await sql.connect(config);
+    pool = new sql.ConnectionPool(config);
     pool.on('error', () => { pool = null; });
+    await pool.connect();
   }
   return pool;
 }
