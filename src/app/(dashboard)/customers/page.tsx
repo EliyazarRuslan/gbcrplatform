@@ -26,11 +26,13 @@ export default function CustomersPage() {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, pageSize: 50 });
+  const [activeOnly, setActiveOnly] = useState(false);
 
-  const fetchData = (p: number = 1, searchTerm: string = '') => {
+  const fetchData = (p: number = 1, searchTerm: string = '', activeRentals: boolean = activeOnly) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(p), pageSize: '50' });
     if (searchTerm) params.set('search', searchTerm);
+    if (activeRentals) params.set('activeRentals', 'true');
     fetch(`/api/customers?${params}`)
       .then((r) => r.json())
       .then((data) => {
@@ -43,7 +45,7 @@ export default function CustomersPage() {
       .catch(() => setLoading(false));
   };
 
-  useEffect(() => { fetchData(page); }, [page]);
+  useEffect(() => { fetchData(page, search, activeOnly); }, [page, activeOnly]);
 
   const columns = useMemo<ColumnDef<Customer>[]>(() => [
     {
@@ -105,9 +107,15 @@ export default function CustomersPage() {
         >
           Search
         </button>
+        <button
+          onClick={() => { setActiveOnly(!activeOnly); setPage(1); }}
+          className={`px-4 py-2 text-sm rounded-lg transition-colors ${activeOnly ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
+        >
+          {activeOnly ? 'With Active Rentals' : 'All Customers'}
+        </button>
         {search && (
           <button
-            onClick={() => { setSearch(''); setPage(1); fetchData(1, ''); }}
+            onClick={() => { setSearch(''); setPage(1); fetchData(1, '', activeOnly); }}
             className="px-4 py-2 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors"
           >
             Clear
