@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformPool, sql } from '@/lib/platformdb';
+import { getUserFromRequest } from '@/lib/auth';
 import { v4 as uuidv4 } from 'uuid';
 
 export async function GET(req: NextRequest) {
@@ -22,15 +23,20 @@ export async function GET(req: NextRequest) {
     const countResult = await request.query(`SELECT COUNT(*) as total FROM bookings b WHERE ${where}`);
     const total = countResult.recordset[0].total;
 
-    const offset = (page - 1) * limit;
     const request2 = pool.request();
     if (status) request2.input('status', sql.VarChar, status);
     if (month) request2.input('month', sql.VarChar, month);
 
+    const offset = (page - 1) * limit;
     request2.input('offset', sql.Int, offset);
     request2.input('limit', sql.Int, limit);
     const result = await request2.query(`
-      SELECT b.* FROM bookings b
+      SELECT b.*,
+        cu.full_name as created_by_name,
+        uu.full_name as updated_by_name
+      FROM bookings b
+      LEFT JOIN GBCR_Platform.dbo.users cu ON b.created_by = cu.id
+      LEFT JOIN GBCR_Platform.dbo.users uu ON b.updated_by = uu.id
       WHERE ${where}
       ORDER BY b.start_date DESC
       OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY
@@ -48,6 +54,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const currentUser = await getUserFromRequest(req);
     const pool = await getPlatformPool();
     const body = await req.json();
     const id = uuidv4();
@@ -62,9 +69,10 @@ export async function POST(req: NextRequest) {
       .input('status', sql.VarChar(20), 'PENDING')
       .input('daily_rate', sql.Decimal(18, 2), body.daily_rate || null)
       .input('notes', sql.NVarChar(sql.MAX), body.notes || null)
+      .input('created_by', sql.Int, currentUser?.userId || null)
       .query(`
-        INSERT INTO bookings (id, assetnum, customer_name, customer_code, start_date, end_date, status, daily_rate, notes, created_at, updated_at)
-        VALUES (@id, @assetnum, @customer_name, @customer_code, @start_date, @end_date, @status, @daily_rate, @notes, GETDATE(), GETDATE())
+        INSERT INTO bookings (id, assetnum, customer_name, customer_code, start_date, end_date, status, daily_rate, notes, created_by, created_at, updated_at)
+        VALUES (@id, @assetnum, @customer_name, @customer_code, @start_date, @end_date, @status, @daily_rate, @notes, @created_by, GETDATE(), GETDATE())
       `);
 
     return NextResponse.json({ id, message: 'Booking created' }, { status: 201 });

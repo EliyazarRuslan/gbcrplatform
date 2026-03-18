@@ -92,8 +92,8 @@ export default function InspectionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchInspections = async (p = page) => {
-    setLoading(true);
+  const fetchInspections = async (p = page, showLoading = true) => {
+    if (showLoading) setLoading(true);
     try {
       const params = new URLSearchParams();
       params.set('page', String(p));
@@ -118,6 +118,12 @@ export default function InspectionsPage() {
   useEffect(() => {
     fetchInspections(page);
   }, [page]);
+
+  // Auto-refresh every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => fetchInspections(page, false), 10000);
+    return () => clearInterval(interval);
+  }, [page, typeFilter, statusFilter, search]);
 
   const handleSearch = () => {
     setPage(1);

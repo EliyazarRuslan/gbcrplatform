@@ -13,8 +13,8 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
-  const fetchBookings = () => {
-    setLoading(true);
+  const fetchBookings = (showLoading = true) => {
+    if (showLoading) setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
     fetch(`/api/bookings?${params}`)
@@ -24,6 +24,12 @@ export default function BookingsPage() {
   };
 
   useEffect(() => { fetchBookings(); }, [statusFilter]);
+
+  // Auto-refresh every 10 seconds so all users see updates
+  useEffect(() => {
+    const interval = setInterval(() => fetchBookings(false), 10000);
+    return () => clearInterval(interval);
+  }, [statusFilter]);
 
   const handleCancel = async (id: string) => {
     if (!window.confirm('Are you sure you want to cancel this booking?')) return;
@@ -95,7 +101,7 @@ export default function BookingsPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">End Date</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Daily Rate</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Total</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Created By</th>
                 <th className="px-4 py-3 text-left text-xs font-semibold text-neutral-500">Actions</th>
               </tr>
             </thead>
@@ -108,7 +114,7 @@ export default function BookingsPage() {
                   <td className="px-4 py-3">{formatDate(b.end_date)}</td>
                   <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
                   <td className="px-4 py-3">{formatCurrency(b.daily_rate)}</td>
-                  <td className="px-4 py-3">{formatCurrency(b.total_amount)}</td>
+                  <td className="px-4 py-3 text-xs text-neutral-500">{(b as unknown as Record<string, string>).created_by_name || '-'}</td>
                   <td className="px-4 py-3">
                     <ActionsDropdown
                       booking={b}

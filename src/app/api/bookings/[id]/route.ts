@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPlatformPool, sql } from '@/lib/platformdb';
+import { getUserFromRequest } from '@/lib/auth';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -7,7 +8,15 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const pool = await getPlatformPool();
     const result = await pool.request()
       .input('id', sql.UniqueIdentifier, id)
-      .query('SELECT * FROM bookings WHERE id = @id');
+      .query(`
+        SELECT b.*,
+          cu.full_name as created_by_name,
+          uu.full_name as updated_by_name
+        FROM bookings b
+        LEFT JOIN users cu ON b.created_by = cu.id
+        LEFT JOIN users uu ON b.updated_by = uu.id
+        WHERE b.id = @id
+      `);
 
     if (result.recordset.length === 0) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
@@ -21,6 +30,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
 export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
+    const currentUser = await getUserFromRequest(req);
     const { id } = await params;
     const pool = await getPlatformPool();
     const body = await req.json();
@@ -40,6 +50,11 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     }
 
     fields.push('updated_at = GETDATE()');
+    if (currentUser) {
+      fields.push('updated_by = @updated_by');
+      request.input('updated_by', sql.Int, currentUser.userId);
+    }
+
     await request.query(`UPDATE bookings SET ${fields.join(', ')} WHERE id = @id`);
 
     return NextResponse.json({ message: 'Booking updated' });
