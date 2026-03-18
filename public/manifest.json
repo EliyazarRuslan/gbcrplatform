@@ -1,0 +1,16 @@
+{
+  "name": "GBCR Platform",
+  "short_name": "GBCR",
+  "description": "Goldbell Car Rental - Vehicle Booking & Inspection Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f1f5f9",
+  "theme_color": "#1e40af",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
