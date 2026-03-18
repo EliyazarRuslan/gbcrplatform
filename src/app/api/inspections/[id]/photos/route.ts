@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool, sql } from '@/lib/db';
 import { requireRole, AuthError } from '@/lib/auth';
-import { saveFile } from '@/lib/file-storage';
+import { saveFile, deleteFile } from '@/lib/file-storage';
 import { logAudit } from '@/lib/audit';
 
 export async function GET(
@@ -127,6 +127,65 @@ export async function POST(
       return NextResponse.json({ success: false, error: err.message }, { status: err.status });
     }
     console.error('POST /api/inspections/[id]/photos error:', err);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const currentUser = await requireRole(request, ['super_admin', 'branch_manager', 'rental_officer', 'inspector']);
+
+    const { id } = await params;
+    const inspectionId = parseInt(id, 10);
+    const { searchParams } = new URL(request.url);
+    const photoId = parseInt(searchParams.get('photoId') || '', 10);
+
+    if (isNaN(inspectionId) || isNaN(photoId)) {
+      return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 });
+    }
+
+    const pool = await getPool();
+
+    // Get photo record
+    const photo = await pool.request()
+      .input('id', sql.Int, photoId)
+      .input('inspection_id', sql.Int, inspectionId)
+      .query('SELECT id, file_path FROM inspection_photos WHERE id = @id AND inspection_id = @inspection_id');
+
+    if (photo.recordset.length === 0) {
+      return NextResponse.json({ success: false, error: 'Photo not found' }, { status: 404 });
+    }
+
+    const filePath = photo.recordset[0].file_path;
+
+    // Delete from DB
+    await pool.request()
+      .input('id', sql.Int, photoId)
+      .query('DELETE FROM inspection_photos WHERE id = @id');
+
+    // Delete file from storage
+    if (filePath) {
+      await deleteFile(filePath);
+    }
+
+    await logAudit({
+      userId: currentUser.userId,
+      action: 'INSPECTION_PHOTO_DELETED',
+      entityType: 'inspection_photo',
+      entityId: photoId,
+      newValues: { inspection_id: inspectionId, file_path: filePath },
+      ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || undefined,
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (err) {
+    if (err instanceof AuthError) {
+      return NextResponse.json({ success: false, error: err.message }, { status: err.status });
+    }
+    console.error('DELETE /api/inspections/[id]/photos error:', err);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

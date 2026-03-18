@@ -367,21 +367,26 @@ function PhotosSection({
   isEditable: boolean;
   onRefresh: () => void;
 }) {
-  const photoMap = new Map(data.photos.map((p) => [p.photo_type, `/api/files/${p.file_path}`]));
+  const photoMap = new Map(data.photos.map((p) => [p.photo_type, { url: `/api/files/${p.file_path}`, id: p.id }]));
 
   return (
     <Card title="Vehicle Photos" description={`${data.photos.length} of ${PHOTO_SLOTS.length} photos captured`}>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-        {PHOTO_SLOTS.map((slot) => (
-          <PhotoCapture
-            key={slot.type}
-            photoType={slot.type}
-            label={slot.label}
-            existingUrl={photoMap.get(slot.type)}
-            inspectionId={data.id}
-            onUploaded={onRefresh}
-          />
-        ))}
+        {PHOTO_SLOTS.map((slot) => {
+          const photo = photoMap.get(slot.type);
+          return (
+            <PhotoCapture
+              key={slot.type}
+              photoType={slot.type}
+              label={slot.label}
+              existingUrl={photo?.url}
+              existingPhotoId={photo?.id}
+              inspectionId={data.id}
+              onUploaded={onRefresh}
+              editable={isEditable}
+            />
+          );
+        })}
       </div>
     </Card>
   );

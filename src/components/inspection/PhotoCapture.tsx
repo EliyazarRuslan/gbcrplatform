@@ -7,19 +7,24 @@ interface PhotoCaptureProps {
   photoType: string;
   label: string;
   existingUrl?: string;
+  existingPhotoId?: number;
   inspectionId: number;
   onUploaded: () => void;
+  editable?: boolean;
 }
 
 export default function PhotoCapture({
   photoType,
   label,
   existingUrl,
+  existingPhotoId,
   inspectionId,
   onUploaded,
+  editable = true,
 }: PhotoCaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [preview, setPreview] = useState<string | null>(existingUrl || null);
   const [error, setError] = useState('');
 
@@ -27,7 +32,6 @@ export default function PhotoCapture({
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Show preview immediately
     const reader = new FileReader();
     reader.onload = () => setPreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -51,8 +55,28 @@ export default function PhotoCapture({
       setError('Upload failed. Tap to retry.');
     } finally {
       setUploading(false);
-      // Reset input so same file can be re-selected
       if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!existingPhotoId) return;
+    if (!window.confirm('Delete this photo?')) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/inspections/${inspectionId}/photos?photoId=${existingPhotoId}`, {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        setPreview(null);
+        onUploaded();
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -61,21 +85,30 @@ export default function PhotoCapture({
       <span className="text-xs font-medium text-neutral-600 truncate">{label}</span>
       <div
         className="relative aspect-[4/3] rounded-lg border-2 border-dashed border-neutral-300 bg-neutral-50 overflow-hidden cursor-pointer hover:border-primary transition-colors touch-manipulation"
-        onClick={() => !uploading && inputRef.current?.click()}
+        onClick={() => !uploading && !deleting && editable && inputRef.current?.click()}
       >
         {preview ? (
           <>
-            <img
-              src={preview}
-              alt={label}
-              className="w-full h-full object-cover"
-            />
-            {!uploading && (
-              <div className="absolute inset-0 bg-black/0 hover:bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-all">
-                <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
-                  Replace
-                </span>
-              </div>
+            <img src={preview} alt={label} className="w-full h-full object-cover" />
+            {editable && !uploading && !deleting && (
+              <>
+                {/* Replace overlay */}
+                <div className="absolute inset-0 bg-black/0 hover:bg-black/30 flex items-center justify-center opacity-0 hover:opacity-100 transition-all">
+                  <span className="text-white text-xs font-medium bg-black/50 px-2 py-1 rounded">
+                    Replace
+                  </span>
+                </div>
+                {/* Delete button */}
+                <button
+                  onClick={handleDelete}
+                  className="absolute top-1 right-1 w-7 h-7 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md transition-colors z-10"
+                  title="Delete photo"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </>
             )}
           </>
         ) : (
@@ -87,7 +120,7 @@ export default function PhotoCapture({
             <span className="text-xs">Tap to capture</span>
           </div>
         )}
-        {uploading && (
+        {(uploading || deleting) && (
           <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
             <Spinner size="md" />
           </div>
