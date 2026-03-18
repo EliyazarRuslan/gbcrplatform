@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
       .input('vehicle_assetnum', sql.NVarChar(50), vehicle_assetnum)
       .input('vehicle_regno', sql.NVarChar(50), vehicle_regno)
       .input('inspection_type', sql.NVarChar(20), inspection_type)
-      .input('booking_id', sql.Int, booking_id || null)
+      .input('booking_id', sql.UniqueIdentifier, booking_id || null)
       .input('inspector_id', sql.Int, currentUser.userId)
       .query(`
         INSERT INTO inspections (
