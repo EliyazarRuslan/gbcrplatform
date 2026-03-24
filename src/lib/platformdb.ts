@@ -8,17 +8,37 @@ const config: sql.config = {
   port: parseInt(process.env.PLATFORM_PORT || '1433'),
   options: { encrypt: false, trustServerCertificate: true },
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
+  requestTimeout: 30000,
+  connectionTimeout: 15000,
 };
 
-let pool: sql.ConnectionPool | null = null;
+const globalForDb = globalThis as unknown as { platformPool: sql.ConnectionPool | undefined; platformPoolPromise: Promise<sql.ConnectionPool> | undefined };
 
 export async function getPlatformPool(): Promise<sql.ConnectionPool> {
-  if (!pool || !pool.connected) {
-    pool = new sql.ConnectionPool(config);
-    pool.on('error', () => { pool = null; });
-    await pool.connect();
+  if (globalForDb.platformPool?.connected) {
+    return globalForDb.platformPool;
   }
-  return pool;
+
+  if (globalForDb.platformPoolPromise) {
+    return globalForDb.platformPoolPromise;
+  }
+
+  globalForDb.platformPoolPromise = new sql.ConnectionPool(config)
+    .connect()
+    .then((pool) => {
+      globalForDb.platformPool = pool;
+      pool.on('error', () => {
+        globalForDb.platformPool = undefined;
+        globalForDb.platformPoolPromise = undefined;
+      });
+      return pool;
+    })
+    .catch((err) => {
+      globalForDb.platformPoolPromise = undefined;
+      throw err;
+    });
+
+  return globalForDb.platformPoolPromise;
 }
 
 export { sql };

@@ -6,22 +6,39 @@ const config: sql.config = {
   user: process.env.DB_USER || 'ReadUser',
   password: process.env.DB_PASSWORD || 'G0ldBell123',
   port: parseInt(process.env.DB_PORT || '1433'),
-  options: {
-    encrypt: false,
-    trustServerCertificate: true,
-  },
+  options: { encrypt: false, trustServerCertificate: true },
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
+  requestTimeout: 30000,
+  connectionTimeout: 15000,
 };
 
-let pool: sql.ConnectionPool | null = null;
+const globalForDb = globalThis as unknown as { dbPool: sql.ConnectionPool | undefined; dbPoolPromise: Promise<sql.ConnectionPool> | undefined };
 
 export async function getPool(): Promise<sql.ConnectionPool> {
-  if (!pool || !pool.connected) {
-    pool = new sql.ConnectionPool(config);
-    pool.on('error', () => { pool = null; });
-    await pool.connect();
+  if (globalForDb.dbPool?.connected) {
+    return globalForDb.dbPool;
   }
-  return pool;
+
+  if (globalForDb.dbPoolPromise) {
+    return globalForDb.dbPoolPromise;
+  }
+
+  globalForDb.dbPoolPromise = new sql.ConnectionPool(config)
+    .connect()
+    .then((pool) => {
+      globalForDb.dbPool = pool;
+      pool.on('error', () => {
+        globalForDb.dbPool = undefined;
+        globalForDb.dbPoolPromise = undefined;
+      });
+      return pool;
+    })
+    .catch((err) => {
+      globalForDb.dbPoolPromise = undefined;
+      throw err;
+    });
+
+  return globalForDb.dbPoolPromise;
 }
 
 export { sql };

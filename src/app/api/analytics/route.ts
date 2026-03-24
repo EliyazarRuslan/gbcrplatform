@@ -113,7 +113,8 @@ export async function GET() {
       statusDistribution: statusDist.recordset,
     });
   } catch (error: unknown) {
-    console.error('Analytics API error:', error);
+    console.error('Analytics API error:', error instanceof Error ? error.message : error);
+    console.error('Analytics API stack:', error instanceof Error ? error.stack : '');
     return NextResponse.json({
       revenue: [],
       agreementStatus: [],

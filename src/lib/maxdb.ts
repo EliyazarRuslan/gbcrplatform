@@ -8,17 +8,38 @@ const config: sql.config = {
   port: parseInt(process.env.MAXDB_PORT || '1433'),
   options: { encrypt: false, trustServerCertificate: true },
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
+  requestTimeout: 30000,
+  connectionTimeout: 15000,
 };
 
-let pool: sql.ConnectionPool | null = null;
+// Use globalThis to persist across Turbopack HMR
+const globalForDb = globalThis as unknown as { maxPool: sql.ConnectionPool | undefined; maxPoolPromise: Promise<sql.ConnectionPool> | undefined };
 
 export async function getMaxPool(): Promise<sql.ConnectionPool> {
-  if (!pool || !pool.connected) {
-    pool = new sql.ConnectionPool(config);
-    pool.on('error', () => { pool = null; });
-    await pool.connect();
+  if (globalForDb.maxPool?.connected) {
+    return globalForDb.maxPool;
   }
-  return pool;
+
+  if (globalForDb.maxPoolPromise) {
+    return globalForDb.maxPoolPromise;
+  }
+
+  globalForDb.maxPoolPromise = new sql.ConnectionPool(config)
+    .connect()
+    .then((pool) => {
+      globalForDb.maxPool = pool;
+      pool.on('error', () => {
+        globalForDb.maxPool = undefined;
+        globalForDb.maxPoolPromise = undefined;
+      });
+      return pool;
+    })
+    .catch((err) => {
+      globalForDb.maxPoolPromise = undefined;
+      throw err;
+    });
+
+  return globalForDb.maxPoolPromise;
 }
 
 export { sql };
