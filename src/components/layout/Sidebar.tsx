@@ -29,7 +29,6 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
-  // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [pathname]);
@@ -41,29 +40,33 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center h-16 px-4 border-b border-white/10">
+      <div className="flex items-center h-16 px-4 border-b border-white/[0.06]">
         {!collapsed ? (
-          <div className="flex items-center gap-2">
-            <img src="/goldbell-logo.svg" alt="Goldbell" className="w-8 h-8" />
-            <span className="font-semibold text-sm text-primary-light">GBCR Platform</span>
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-md shadow-primary/20">
+              <img src="/goldbell-logo.svg" alt="Goldbell" className="w-5 h-5 brightness-0 invert" />
+            </div>
+            <div>
+              <span className="font-semibold text-sm text-white tracking-tight">GBCR</span>
+              <span className="text-xs text-neutral-500 block leading-none">Platform</span>
+            </div>
           </div>
         ) : (
-          <img src="/goldbell-logo.svg" alt="Goldbell" className="w-8 h-8 mx-auto" />
+          <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center mx-auto shadow-md shadow-primary/20">
+            <img src="/goldbell-logo.svg" alt="Goldbell" className="w-5 h-5 brightness-0 invert" />
+          </div>
         )}
-        {/* Close button on mobile, collapse toggle on desktop */}
-        {/* Close on mobile */}
         <button
           onClick={() => setMobileOpen(false)}
-          className="md:hidden p-1.5 rounded-lg hover:bg-sidebar-hover transition-colors ml-auto"
+          className="md:hidden p-1.5 rounded-lg hover:bg-white/5 transition-colors ml-auto text-neutral-400 hover:text-white"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
-        {/* Collapse toggle on desktop */}
         <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`hidden md:block p-1.5 rounded-lg hover:bg-sidebar-hover transition-colors ${collapsed ? 'mx-auto' : 'ml-auto'}`}
+          className={`hidden md:flex p-1.5 rounded-lg hover:bg-white/5 transition-colors text-neutral-500 hover:text-neutral-300 ${collapsed ? 'mx-auto' : 'ml-auto'}`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsed ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7m8 14l-7-7 7-7'} />
@@ -72,30 +75,38 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
+      <nav className="flex-1 py-3 space-y-0.5 px-2.5 overflow-y-auto">
         {visibleItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-sm ${
-                isActive ? 'bg-sidebar-active text-white' : 'text-neutral-400 hover:bg-sidebar-hover hover:text-white'
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm group relative ${
+                isActive
+                  ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-white shadow-sm'
+                  : 'text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200'
               }`}
               title={collapsed ? item.label : undefined}
             >
-              <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              {isActive && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
+              )}
+              <svg className={`w-[18px] h-[18px] shrink-0 transition-colors ${isActive ? 'text-primary-light' : 'text-neutral-500 group-hover:text-neutral-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
               </svg>
-              {!collapsed && <span>{item.label}</span>}
+              {!collapsed && <span className={`${isActive ? 'font-medium' : 'font-normal'}`}>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {!collapsed && (
-        <div className="p-4 border-t border-white/10 text-xs text-neutral-500">
-          Goldbell Car Rental v1.0
+        <div className="p-4 border-t border-white/[0.06]">
+          <div className="flex items-center gap-2 text-[11px] text-neutral-600">
+            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot" />
+            <span>System Online</span>
+          </div>
         </div>
       )}
     </>
@@ -103,36 +114,32 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
 
   return (
     <>
-      {/* Mobile hamburger button — rendered in the header area via portal-like fixed positioning */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-sidebar text-white rounded-lg shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-sidebar text-white rounded-xl shadow-lg shadow-black/20"
         aria-label="Open menu"
       >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
 
-      {/* Mobile overlay */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
-      {/* Mobile sidebar */}
       <aside
-        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-sidebar text-white flex flex-col transform transition-transform duration-300 ${
+        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient text-white flex flex-col transform transition-transform duration-300 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {sidebarContent}
       </aside>
 
-      {/* Desktop sidebar */}
-      <aside className={`hidden md:flex bg-sidebar text-white flex-col transition-all duration-300 ${collapsed ? 'w-16' : 'w-60'}`}>
+      <aside className={`hidden md:flex sidebar-gradient text-white flex-col transition-all duration-300 ${collapsed ? 'w-[60px]' : 'w-[230px]'}`}>
         {sidebarContent}
       </aside>
     </>

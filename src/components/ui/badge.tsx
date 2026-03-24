@@ -8,16 +8,16 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: 'bg-neutral-100 text-neutral-700',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-yellow-100 text-yellow-800',
-  destructive: 'bg-red-100 text-red-800',
-  info: 'bg-blue-100 text-blue-800',
+  default: 'bg-neutral-100 text-neutral-600 border-neutral-200/60',
+  success: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  warning: 'bg-amber-50 text-amber-700 border-amber-100',
+  destructive: 'bg-red-50 text-red-700 border-red-100',
+  info: 'bg-blue-50 text-blue-700 border-blue-100',
 };
 
 const sizeClasses: Record<NonNullable<BadgeProps['size']>, string> = {
-  sm: 'px-2 py-0.5 text-xs',
-  md: 'px-3 py-1 text-sm',
+  sm: 'px-2 py-0.5 text-[11px]',
+  md: 'px-2.5 py-1 text-xs',
 };
 
 export default function Badge({
@@ -28,7 +28,7 @@ export default function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full font-medium',
+        'inline-flex items-center rounded-lg font-medium border',
         variantClasses[variant],
         sizeClasses[size],
       )}

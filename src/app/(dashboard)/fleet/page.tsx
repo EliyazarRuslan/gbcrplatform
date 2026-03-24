@@ -57,13 +57,13 @@ const CATEGORY_OPTIONS = [
 ];
 
 const CATEGORY_COLORS: Record<number, string> = {
-  1: 'bg-sky-100 text-sky-700',
-  2: 'bg-blue-100 text-blue-700',
-  3: 'bg-indigo-100 text-indigo-700',
-  4: 'bg-emerald-100 text-emerald-700',
-  5: 'bg-violet-100 text-violet-700',
-  6: 'bg-orange-100 text-orange-700',
-  7: 'bg-red-100 text-red-700',
+  1: 'bg-sky-50 text-sky-700 border-sky-100',
+  2: 'bg-blue-50 text-blue-700 border-blue-100',
+  3: 'bg-indigo-50 text-indigo-700 border-indigo-100',
+  4: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  5: 'bg-violet-50 text-violet-700 border-violet-100',
+  6: 'bg-orange-50 text-orange-700 border-orange-100',
+  7: 'bg-red-50 text-red-700 border-red-100',
 };
 
 export default function FleetPage() {
@@ -126,7 +126,7 @@ export default function FleetPage() {
       accessorKey: 'registration_no',
       header: 'Reg No',
       cell: ({ row }) => (
-        <Link href={`/fleet/${row.original.assetnum}`} className="text-blue-600 hover:underline font-medium">
+        <Link href={`/fleet/${row.original.assetnum}`} className="text-primary hover:text-primary-dark font-semibold transition-colors">
           {row.original.registration_no || row.original.assetnum}
         </Link>
       ),
@@ -136,7 +136,7 @@ export default function FleetPage() {
       accessorKey: 'description',
       header: 'Description',
       cell: ({ getValue }) => (
-        <span className="truncate max-w-[200px] block" title={getValue() as string}>
+        <span className="truncate max-w-[200px] block text-neutral-600" title={getValue() as string}>
           {getValue() as string}
         </span>
       ),
@@ -167,16 +167,16 @@ export default function FleetPage() {
       cell: ({ row }) => {
         const { category_id, category_name } = row.original;
         if (!category_id || !category_name) return <span className="text-neutral-300">-</span>;
-        const color = CATEGORY_COLORS[category_id] || 'bg-gray-100 text-gray-700';
+        const color = CATEGORY_COLORS[category_id] || 'bg-neutral-50 text-neutral-600 border-neutral-200';
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${color}`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium border ${color}`}>
             {category_name}
           </span>
         );
       },
     },
     { accessorKey: 'fuel_type', header: 'Fuel', cell: ({ getValue }) => getValue() || <span className="text-neutral-300">-</span> },
-    { accessorKey: 'transmission', header: 'Transmission', cell: ({ getValue }) => getValue() || <span className="text-neutral-300">-</span> },
+    { accessorKey: 'transmission', header: 'Trans', cell: ({ getValue }) => getValue() || <span className="text-neutral-300">-</span> },
     {
       accessorKey: 'customer_code',
       header: 'Customer',
@@ -195,67 +195,54 @@ export default function FleetPage() {
   });
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Fleet Management</h1>
-        <span className="text-sm text-neutral-500">{stats.total.toLocaleString()} vehicles</span>
+        <div>
+          <h1 className="text-xl font-bold text-neutral-900 tracking-tight">Fleet Management</h1>
+          <p className="text-sm text-neutral-400 mt-0.5">{stats.total.toLocaleString()} vehicles in fleet</p>
+        </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-        <StatCard
-          title="Total Fleet"
-          value={stats.total.toLocaleString()}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <StatCard title="Total Fleet" value={stats.total.toLocaleString()}
           icon="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10M3 16h10M13 16h2m0 0h2a2 2 0 000-4h-2m0 4V8m0 0h2a2 2 0 010 4h-2"
-          color="blue"
-        />
-        <StatCard
-          title="Hired Out"
-          value={stats.hiredOut.toLocaleString()}
-          icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-          color="green"
-        />
-        <StatCard
-          title="Not Ready"
-          value={stats.notReady.toLocaleString()}
+          color="blue" />
+        <StatCard title="Hired Out" value={stats.hiredOut.toLocaleString()}
+          icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" color="green" />
+        <StatCard title="Not Ready" value={stats.notReady.toLocaleString()}
           icon="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          color="red"
-        />
-        <StatCard
-          title="Idle"
-          value={stats.idle.toLocaleString()}
-          icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-          color="yellow"
-        />
-        <StatCard
-          title="Booked"
-          value={stats.booked.toLocaleString()}
+          color="red" />
+        <StatCard title="Idle" value={stats.idle.toLocaleString()}
+          icon="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" color="yellow" />
+        <StatCard title="Booked" value={stats.booked.toLocaleString()}
           icon="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          color="indigo"
-        />
-        <StatCard
-          title="Utilization"
-          value={`${stats.utilizationRate.toFixed(1)}%`}
+          color="indigo" />
+        <StatCard title="Utilization" value={`${stats.utilizationRate.toFixed(1)}%`}
           icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-          color="purple"
-        />
+          color="purple" />
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3">
-        <input
-          type="text"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-          placeholder="Search by asset, reg no, description..."
-          className="px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light w-80"
-        />
+      <div className="flex flex-wrap gap-3 items-center">
+        <div className="relative flex-1 max-w-sm">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+            placeholder="Search by asset, reg no, description..."
+            className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+          />
+        </div>
         <select
           value={statusFilter}
           onChange={(e) => handleStatusChange(e.target.value)}
-          className="px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
         >
           <option value="">All Statuses</option>
           <option value="HIRED OUT">HIRED OUT</option>
@@ -266,7 +253,7 @@ export default function FleetPage() {
         <select
           value={categoryFilter}
           onChange={(e) => handleCategoryChange(e.target.value)}
-          className="px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
         >
           {CATEGORY_OPTIONS.map((opt) => (
             <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -274,7 +261,7 @@ export default function FleetPage() {
         </select>
         <button
           onClick={handleSearch}
-          className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
+          className="px-5 py-2 text-sm bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-md hover:shadow-primary/20 transition-all font-medium"
         >
           Search
         </button>
@@ -282,21 +269,21 @@ export default function FleetPage() {
 
       {/* Table */}
       {loading ? <SkeletonTable rows={10} cols={9} /> : (
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-neutral-200/80 overflow-hidden shadow-sm shadow-neutral-900/[0.03]">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id} className="border-b border-neutral-200 bg-neutral-50">
+                  <tr key={hg.id} className="border-b border-neutral-100 bg-neutral-50/80">
                     {hg.headers.map((header) => (
                       <th
                         key={header.id}
                         onClick={header.column.getToggleSortingHandler()}
-                        className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider cursor-pointer hover:text-neutral-700 select-none"
+                        className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider cursor-pointer hover:text-neutral-600 select-none transition-colors"
                       >
                         <div className="flex items-center gap-1">
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? ''}
+                          {{ asc: ' \u2191', desc: ' \u2193' }[header.column.getIsSorted() as string] ?? ''}
                         </div>
                       </th>
                     ))}
@@ -306,13 +293,18 @@ export default function FleetPage() {
               <tbody>
                 {table.getRowModel().rows.length === 0 ? (
                   <tr>
-                    <td colSpan={columns.length} className="px-4 py-10 text-center text-neutral-400 text-sm">
-                      No vehicles found.
+                    <td colSpan={columns.length} className="px-4 py-12 text-center text-neutral-400 text-sm">
+                      <div className="flex flex-col items-center gap-2">
+                        <svg className="w-8 h-8 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        No vehicles found
+                      </div>
                     </td>
                   </tr>
                 ) : (
                   table.getRowModel().rows.map((row) => (
-                    <tr key={row.id} className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors">
+                    <tr key={row.id} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-3 text-neutral-700">
                           {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -326,22 +318,22 @@ export default function FleetPage() {
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 bg-neutral-50">
-            <span className="text-sm text-neutral-500">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
+            <span className="text-xs text-neutral-400 font-medium">
               Page {page} of {totalPages} ({pagination.total.toLocaleString()} total)
             </span>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
-                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
               >
                 Previous
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
-                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white transition-colors"
+                className="px-3.5 py-1.5 text-xs font-medium border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
               >
                 Next
               </button>

@@ -17,17 +17,17 @@ interface ButtonProps {
 }
 
 const variantClasses: Record<NonNullable<ButtonProps['variant']>, string> = {
-  primary: 'bg-primary text-white hover:bg-primary-dark',
-  secondary: 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200',
-  destructive: 'bg-red-600 text-white hover:bg-red-700',
+  primary: 'bg-gradient-to-r from-primary to-primary-dark text-white hover:shadow-md hover:shadow-primary/20 active:shadow-sm',
+  secondary: 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200/80',
+  destructive: 'bg-red-600 text-white hover:bg-red-700 hover:shadow-md hover:shadow-red-500/20',
   ghost: 'bg-transparent text-neutral-700 hover:bg-neutral-100',
-  outline: 'border border-neutral-300 bg-transparent text-neutral-700 hover:bg-neutral-50',
+  outline: 'border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300',
 };
 
 const sizeClasses: Record<NonNullable<ButtonProps['size']>, string> = {
   sm: 'px-3 py-1.5 text-xs',
   md: 'px-4 py-2 text-sm',
-  lg: 'px-6 py-2.5 text-base',
+  lg: 'px-6 py-2.5 text-sm',
 };
 
 export default function Button({
@@ -49,7 +49,7 @@ export default function Button({
       onClick={onClick}
       disabled={isDisabled}
       className={cn(
-        'inline-flex items-center gap-2 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-light',
+        'inline-flex items-center gap-2 rounded-xl font-medium transition-all duration-200',
         variantClasses[variant],
         sizeClasses[size],
         isDisabled && 'opacity-50 cursor-not-allowed pointer-events-none',

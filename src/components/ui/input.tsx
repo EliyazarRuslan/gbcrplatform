@@ -21,11 +21,11 @@ export default function Input({
   const inputId = id ?? (label ? label.toLowerCase().replace(/\s+/g, '-') : undefined);
 
   return (
-    <div className={cn('flex flex-col gap-1', className)}>
+    <div className={cn('flex flex-col gap-1.5', className)}>
       {label && (
         <label
           htmlFor={inputId}
-          className="text-sm font-medium text-neutral-700"
+          className="text-xs font-medium text-neutral-500 uppercase tracking-wider"
         >
           {label}
           {required && <span className="ml-1 text-red-500">*</span>}
@@ -35,16 +35,16 @@ export default function Input({
         id={inputId}
         required={required}
         className={cn(
-          'w-full rounded-lg border px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 transition-colors',
-          'focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-primary',
+          'w-full rounded-xl border px-4 py-2.5 text-sm text-neutral-900 placeholder:text-neutral-400 transition-all duration-200 bg-neutral-50/50',
+          'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-white',
           error
-            ? 'border-red-500 focus:border-red-500 focus:ring-red-200'
-            : 'border-neutral-300',
+            ? 'border-red-400 focus:border-red-400 focus:ring-red-100'
+            : 'border-neutral-200/80',
         )}
         {...rest}
       />
       {error && <p className="text-xs text-red-600">{error}</p>}
-      {hint && !error && <p className="text-xs text-neutral-500">{hint}</p>}
+      {hint && !error && <p className="text-xs text-neutral-400">{hint}</p>}
     </div>
   );
 }

@@ -44,8 +44,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-neutral-100">
-        <div className="animate-spin w-8 h-8 border-4 border-primary-light border-t-transparent rounded-full" />
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center animate-glow">
+            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+          </div>
+          <p className="text-sm text-neutral-400 font-medium">Loading platform...</p>
+        </div>
       </div>
     );
   }
