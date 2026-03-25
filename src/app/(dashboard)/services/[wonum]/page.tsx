@@ -41,7 +41,7 @@ export default function WODetailPage({ params }: { params: Promise<{ wonum: stri
         <StatusBadge status={wo.status} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-xl border border-neutral-200 p-5 space-y-3">
           <h3 className="font-semibold text-neutral-700">Details</h3>
           <div className="space-y-2 text-sm">
@@ -64,6 +64,7 @@ export default function WODetailPage({ params }: { params: Promise<{ wonum: stri
       {/* Labor table */}
       <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-neutral-200"><h3 className="font-semibold text-neutral-700">Labor ({wo.labor.length})</h3></div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-neutral-200 bg-neutral-50">
             <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500">Code</th>
@@ -80,11 +81,13 @@ export default function WODetailPage({ params }: { params: Promise<{ wonum: stri
             {wo.labor.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-neutral-400">No labor records</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Materials table */}
       <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-neutral-200"><h3 className="font-semibold text-neutral-700">Materials ({wo.materials.length})</h3></div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-neutral-200 bg-neutral-50">
             <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500">Item</th>
@@ -101,6 +104,7 @@ export default function WODetailPage({ params }: { params: Promise<{ wonum: stri
             {wo.materials.length === 0 && <tr><td colSpan={6} className="px-4 py-6 text-center text-neutral-400">No material records</td></tr>}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

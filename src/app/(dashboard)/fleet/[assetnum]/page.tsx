@@ -209,7 +209,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
         {/* Left Column — read-only details */}
         <div className="space-y-6">
           <Card title="Vehicle Information" padding="md">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DetailRow label="Registration" value={vehicle.registration_no} />
               <DetailRow label="Model" value={vehicle.model} />
               <DetailRow label="Chassis No" value={vehicle.chassis_no} />
@@ -224,7 +224,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
           </Card>
 
           <Card title="Insurance & Compliance" padding="md">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DetailRow label="Insurer" value={vehicle.insurer} />
               <DetailRow label="Policy No" value={vehicle.policy_no} />
               <DetailRow label="Policy Expiry" value={formatDate(vehicle.policy_expiry)} />
@@ -233,7 +233,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
           </Card>
 
           <Card title="Assignment" padding="md">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <DetailRow label="Customer" value={vehicle.customer_code} />
               <DetailRow label="Install Date" value={formatDate(vehicle.install_date)} />
               <DetailRow label="Last Updated" value={formatDate(vehicle.change_date)} />
