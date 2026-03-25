@@ -111,6 +111,7 @@ export default function AnalyticsPage() {
       {/* Top vehicles by rental */}
       <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-neutral-200"><h3 className="font-semibold text-neutral-700">Top 10 Vehicles by Active Rental Value</h3></div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-neutral-200 bg-neutral-50">
             <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500">#</th>
@@ -136,11 +137,13 @@ export default function AnalyticsPage() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Agreement Status Breakdown */}
       <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
         <div className="px-5 py-3 border-b border-neutral-200"><h3 className="font-semibold text-neutral-700">Agreement Status Breakdown</h3></div>
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead><tr className="border-b border-neutral-200 bg-neutral-50">
             <th className="px-4 py-2 text-left text-xs font-semibold text-neutral-500">Status</th>
@@ -157,6 +160,7 @@ export default function AnalyticsPage() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
