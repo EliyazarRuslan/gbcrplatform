@@ -1,0 +1,136 @@
+<h2>Mobile App Screens & Navigation</h2>
+<p class="subtitle">Three core modules with tab-based navigation</p>
+
+<div class="mockup">
+  <div class="mockup-header">App Navigation</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <!-- Phone mockup -->
+    <div style="max-width: 360px; margin: 0 auto; background: #1a1a2e; border-radius: 40px; padding: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="background: #0f0f1a; border-radius: 30px; overflow: hidden; min-height: 600px; display: flex; flex-direction: column;">
+        <!-- Status bar -->
+        <div style="padding: 12px 24px 8px; display: flex; justify-content: space-between; color: #fff; font-size: 12px;">
+          <span>9:41</span>
+          <span>LTE |||</span>
+        </div>
+
+        <!-- Header -->
+        <div style="padding: 16px 20px; background: linear-gradient(135deg, #6366f1, #8b5cf6);">
+          <div style="color: rgba(255,255,255,0.7); font-size: 13px;">Good morning, Inspector</div>
+          <div style="color: #fff; font-size: 22px; font-weight: 700; margin-top: 4px;">GBCR Mobile</div>
+        </div>
+
+        <!-- Content area -->
+        <div style="flex: 1; padding: 16px; background: #f8f9fc;">
+          <!-- Quick stats -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+            <div style="background: white; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <div style="font-size: 11px; color: #888; text-transform: uppercase;">Pending</div>
+              <div style="font-size: 28px; font-weight: 700; color: #f59e0b;">3</div>
+              <div style="font-size: 12px; color: #666;">Inspections</div>
+            </div>
+            <div style="background: white; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+              <div style="font-size: 11px; color: #888; text-transform: uppercase;">Today</div>
+              <div style="font-size: 28px; font-weight: 700; color: #10b981;">5</div>
+              <div style="font-size: 12px; color: #666;">Completed</div>
+            </div>
+          </div>
+
+          <!-- Recent items -->
+          <div style="background: white; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
+            <div style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px;">Recent Inspections</div>
+            <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+              <div style="width: 36px; height: 36px; background: #dbeafe; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="margin-left: 10px; flex: 1;">
+                <div style="font-size: 13px; font-weight: 600; color: #333;">SLK 1234 A</div>
+                <div style="font-size: 11px; color: #888;">Pre-Rental · Toyota Corolla</div>
+              </div>
+              <div style="font-size: 11px; color: #10b981; font-weight: 600;">Done</div>
+            </div>
+            <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
+              <div style="width: 36px; height: 36px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="margin-left: 10px; flex: 1;">
+                <div style="font-size: 13px; font-weight: 600; color: #333;">SBA 5678 B</div>
+                <div style="font-size: 11px; color: #888;">Post-Return · Honda Civic</div>
+              </div>
+              <div style="font-size: 11px; color: #f59e0b; font-weight: 600;">Draft</div>
+            </div>
+            <div style="display: flex; align-items: center; padding: 10px 0;">
+              <div style="width: 36px; height: 36px; background: #fce4ec; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="margin-left: 10px; flex: 1;">
+                <div style="font-size: 13px; font-weight: 600; color: #333;">SGP 9012 C</div>
+                <div style="font-size: 11px; color: #888;">Ad-Hoc · Hyundai Avante</div>
+              </div>
+              <div style="font-size: 11px; color: #6366f1; font-weight: 600;">Review</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab bar -->
+        <div style="display: flex; justify-content: space-around; padding: 10px 0 24px; background: white; border-top: 1px solid #eee;">
+          <div style="text-align: center;">
+            <div style="font-size: 20px;">📋</div>
+            <div style="font-size: 10px; color: #6366f1; font-weight: 600; margin-top: 2px;">Inspections</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 20px;">💬</div>
+            <div style="font-size: 10px; color: #888; margin-top: 2px;">AI Chat</div>
+          </div>
+          <div style="text-align: center; position: relative;">
+            <div style="font-size: 20px;">🔔</div>
+            <div style="position: absolute; top: -2px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center;">2</div>
+            <div style="font-size: 10px; color: #888; margin-top: 2px;">Alerts</div>
+          </div>
+          <div style="text-align: center;">
+            <div style="font-size: 20px;">👤</div>
+            <div style="font-size: 10px; color: #888; margin-top: 2px;">Profile</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Screen Map</div>
+  <div class="mockup-body" style="padding: 1.5rem; font-size: 14px; line-height: 2;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+      <div>
+        <div style="font-weight: 700; color: #6366f1; margin-bottom: 8px;">📋 Inspections Tab</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="padding: 4px 0;">• Inspection List (filter by status)</li>
+          <li style="padding: 4px 0;">• New Inspection Form</li>
+          <li style="padding: 4px 0; padding-left: 1rem; color: #666;">↳ Vehicle Selection</li>
+          <li style="padding: 4px 0; padding-left: 1rem; color: #666;">↳ Condition Checklist</li>
+          <li style="padding: 4px 0; padding-left: 1rem; color: #666;">↳ Damage Marking (touch diagram)</li>
+          <li style="padding: 4px 0; padding-left: 1rem; color: #666;">↳ Photo Capture (camera + GPS)</li>
+          <li style="padding: 4px 0; padding-left: 1rem; color: #666;">↳ Signature Capture</li>
+          <li style="padding: 4px 0;">• Inspection Detail / Review</li>
+          <li style="padding: 4px 0;">• Offline Queue Status</li>
+        </ul>
+      </div>
+      <div>
+        <div style="font-weight: 700; color: #3b82f6; margin-bottom: 8px;">💬 AI Chat Tab</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="padding: 4px 0;">• Chat Interface</li>
+          <li style="padding: 4px 0;">• Conversation History</li>
+          <li style="padding: 4px 0;">• Quick Prompts (fleet queries)</li>
+        </ul>
+
+        <div style="font-weight: 700; color: #ef4444; margin-bottom: 8px; margin-top: 16px;">🔔 Alerts Tab</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="padding: 4px 0;">• Notification Center</li>
+          <li style="padding: 4px 0;">• Push notification settings</li>
+        </ul>
+
+        <div style="font-weight: 700; color: #888; margin-bottom: 8px; margin-top: 16px;">👤 Profile Tab</div>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="padding: 4px 0;">• User info & role</li>
+          <li style="padding: 4px 0;">• Logout</li>
+          <li style="padding: 4px 0;">• App version / sync status</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

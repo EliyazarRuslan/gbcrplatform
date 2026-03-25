@@ -1,0 +1,167 @@
+<h2>Technical Design Details</h2>
+<p class="subtitle">Offline sync, push notifications, and key libraries</p>
+
+<div class="mockup">
+  <div class="mockup-header">Offline Inspection Sync Flow</div>
+  <div class="mockup-body" style="padding: 2rem;">
+    <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
+      <!-- Step 1 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #6366f1; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+        <div style="flex: 1; background: #f0f0ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Inspector fills out form</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Photos, damage marks, signatures, readings — all captured natively</div>
+        </div>
+      </div>
+      <!-- Step 2 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+        <div style="flex: 1; background: #fffbeb; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Saved to local SQLite</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Inspection data + photos stored locally with status: <code>pending_sync</code></div>
+        </div>
+      </div>
+      <!-- Step 3 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+        <div style="flex: 1; background: #ecfdf5; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Network available?</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">NetInfo API detects connectivity. If online → sync immediately. If offline → queue for later.</div>
+        </div>
+      </div>
+      <!-- Step 4 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">4</div>
+        <div style="flex: 1; background: #eff6ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Background sync</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">expo-task-manager runs sync when connectivity returns. Uploads inspection data, then photos. Retries on failure.</div>
+        </div>
+      </div>
+      <!-- Step 5 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #8b5cf6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">5</div>
+        <div style="flex: 1; background: #f5f3ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Status updated</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Local record marked <code>synced</code>. Inspector sees green checkmark in the offline queue screen.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Push Notification Architecture</div>
+  <div class="mockup-body" style="padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
+      <div style="background: #6366f1; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Next.js API</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Event trigger</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #ef4444; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Expo Push</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Server SDK</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #f59e0b; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">APNs / FCM</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Apple / Google</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #3b82f6; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Device</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">iOS / Android</div>
+      </div>
+    </div>
+    <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fc; border-radius: 8px; font-size: 13px; line-height: 1.8;">
+      <strong>Notification triggers:</strong>
+      <ul style="margin: 4px 0 0 0; padding-left: 1.2rem;">
+        <li>Inspection approved/rejected by reviewer</li>
+        <li>New inspection assigned to user</li>
+        <li>Offline sync completed/failed</li>
+        <li>System alerts from admin</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Key Libraries & APIs</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="text-align: left; border-bottom: 2px solid #e5e7eb;">
+          <th style="padding: 8px 12px; color: #666;">Purpose</th>
+          <th style="padding: 8px 12px; color: #666;">Library</th>
+          <th style="padding: 8px 12px; color: #666;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Navigation</td>
+          <td style="padding: 10px 12px;"><code>expo-router</code></td>
+          <td style="padding: 10px 12px; color: #666;">File-based routing (like Next.js)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Camera</td>
+          <td style="padding: 10px 12px;"><code>expo-camera</code></td>
+          <td style="padding: 10px 12px; color: #666;">Photo capture for inspections</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Location</td>
+          <td style="padding: 10px 12px;"><code>expo-location</code></td>
+          <td style="padding: 10px 12px; color: #666;">GPS coordinates for photos</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Offline DB</td>
+          <td style="padding: 10px 12px;"><code>expo-sqlite</code></td>
+          <td style="padding: 10px 12px; color: #666;">Local inspection storage</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Push</td>
+          <td style="padding: 10px 12px;"><code>expo-notifications</code></td>
+          <td style="padding: 10px 12px; color: #666;">Cross-platform push via EAS</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Background Sync</td>
+          <td style="padding: 10px 12px;"><code>expo-task-manager</code></td>
+          <td style="padding: 10px 12px; color: #666;">Sync inspections when online</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Network</td>
+          <td style="padding: 10px 12px;"><code>@react-native-community/netinfo</code></td>
+          <td style="padding: 10px 12px; color: #666;">Detect connectivity changes</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Signatures</td>
+          <td style="padding: 10px 12px;"><code>react-native-signature-canvas</code></td>
+          <td style="padding: 10px 12px; color: #666;">Touch-based signature capture</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Damage Diagram</td>
+          <td style="padding: 10px 12px;"><code>react-native-svg</code></td>
+          <td style="padding: 10px 12px; color: #666;">Interactive vehicle damage marking</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; font-weight: 600;">Real-time</td>
+          <td style="padding: 10px 12px;"><code>socket.io-client</code></td>
+          <td style="padding: 10px 12px; color: #666;">Same as web app</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.05); border-radius: 12px;">
+  <h3 style="margin-top: 0;">New API Endpoints Needed</h3>
+  <ul style="line-height: 2; font-size: 14px;">
+    <li><code>POST /api/push/register</code> — Register device push token</li>
+    <li><code>DELETE /api/push/unregister</code> — Remove push token on logout</li>
+    <li><code>POST /api/inspections/sync</code> — Batch upload offline inspections</li>
+    <li><code>POST /api/inspections/photos/upload</code> — Multipart photo upload (mobile-optimized)</li>
+  </ul>
+</div>

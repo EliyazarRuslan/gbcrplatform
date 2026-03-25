@@ -1,0 +1,87 @@
+<h2>Architecture Overview</h2>
+<p class="subtitle">GBCR Mobile — Monorepo with Expo + Shared Packages</p>
+
+<div class="mockup">
+  <div class="mockup-header">Monorepo Structure</div>
+  <div class="mockup-body" style="font-family: monospace; font-size: 14px; line-height: 1.8; padding: 1.5rem;">
+    <div style="color: #6366f1; font-weight: bold;">gbcr-platform/</div>
+    <div style="padding-left: 1.5rem;">
+      <div style="color: #888;">├── <span style="color: #f59e0b;">apps/</span></div>
+      <div style="padding-left: 2.5rem;">
+        <div>├── <span style="color: #10b981; font-weight: bold;">web/</span> <span style="color: #888;">← existing Next.js app (moved from root)</span></div>
+        <div>└── <span style="color: #3b82f6; font-weight: bold;">mobile/</span> <span style="color: #888;">← new Expo app</span></div>
+      </div>
+      <div style="color: #888;">├── <span style="color: #f59e0b;">packages/</span></div>
+      <div style="padding-left: 2.5rem;">
+        <div>├── <span style="color: #ec4899; font-weight: bold;">shared/</span> <span style="color: #888;">← TypeScript types, API client, utils</span></div>
+        <div>└── <span style="color: #ec4899; font-weight: bold;">api-client/</span> <span style="color: #888;">← typed HTTP client for all endpoints</span></div>
+      </div>
+      <div style="color: #888;">├── turbo.json <span style="color: #888;">← Turborepo config</span></div>
+      <div style="color: #888;">└── package.json <span style="color: #888;">← workspace root</span></div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Data Flow</div>
+  <div class="mockup-body" style="padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+      <div style="background: #3b82f6; color: white; padding: 1rem 1.5rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold; font-size: 1.1rem;">Mobile App</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">Expo (React Native)</div>
+      </div>
+      <div style="font-size: 2rem; color: #888;">→</div>
+      <div style="background: #6366f1; color: white; padding: 1rem 1.5rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold; font-size: 1.1rem;">Next.js API</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">Existing routes</div>
+      </div>
+      <div style="font-size: 2rem; color: #888;">→</div>
+      <div style="background: #10b981; color: white; padding: 1rem 1.5rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold; font-size: 1.1rem;">MSSQL</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">MAXDB76 + Platform</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; margin-top: 1.5rem; flex-wrap: wrap;">
+      <div style="background: #3b82f6; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold;">Offline Queue</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">SQLite / AsyncStorage</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">⇄</div>
+      <div style="background: #f59e0b; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold;">Sync Engine</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">Background sync</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #6366f1; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; text-align: center; min-width: 140px;">
+        <div style="font-weight: bold;">API</div>
+        <div style="font-size: 0.8rem; opacity: 0.8;">When online</div>
+      </div>
+    </div>
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; flex-wrap: wrap;">
+        <div style="background: #ef4444; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; text-align: center; min-width: 140px;">
+          <div style="font-weight: bold;">Socket.io</div>
+          <div style="font-size: 0.8rem; opacity: 0.8;">Real-time events</div>
+        </div>
+        <div style="font-size: 1.5rem; color: #888;">→</div>
+        <div style="background: #8b5cf6; color: white; padding: 0.8rem 1.2rem; border-radius: 12px; text-align: center; min-width: 140px;">
+          <div style="font-weight: bold;">Expo Notifications</div>
+          <div style="font-size: 0.8rem; opacity: 0.8;">Push via EAS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.05); border-radius: 12px;">
+  <h3 style="margin-top: 0;">Key Decisions</h3>
+  <ul style="line-height: 2;">
+    <li><strong>Mobile consumes existing API</strong> — no new backend needed, just some new endpoints for push token registration and offline sync</li>
+    <li><strong>Shared package</strong> for TypeScript types extracted from current <code>src/lib/types.ts</code> and <code>src/types/</code></li>
+    <li><strong>SQLite (expo-sqlite)</strong> for offline inspection storage</li>
+    <li><strong>Expo Push Notifications</strong> via EAS for cross-platform push</li>
+    <li><strong>Socket.io client</strong> reused from web app for real-time updates</li>
+  </ul>
+</div>
