@@ -74,6 +74,9 @@ export default function ResponsiveTable<T extends Record<string, unknown>>({
               <div
                 key={idx}
                 onClick={() => onRowClick?.(row)}
+                role={onRowClick ? "button" : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={onRowClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onRowClick(row); } } : undefined}
                 className={`bg-white rounded-xl border border-neutral-200 p-4 ${
                   onRowClick ? 'cursor-pointer active:bg-neutral-50' : ''
                 }`}

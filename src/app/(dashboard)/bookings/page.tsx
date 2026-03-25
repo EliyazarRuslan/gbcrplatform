@@ -78,10 +78,10 @@ export default function BookingsPage() {
           <p className="text-sm text-neutral-400 mt-0.5">{bookings.length} booking{bookings.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex gap-2.5">
-          <Link href="/bookings/calendar" className="px-4 py-2 text-sm border border-neutral-200/80 rounded-xl hover:bg-white hover:border-neutral-300 transition-all font-medium text-neutral-600">
+          <Link href="/bookings/calendar" className="hidden md:inline-flex px-4 py-2 text-sm border border-neutral-200/80 rounded-xl hover:bg-white hover:border-neutral-300 transition-all font-medium text-neutral-600">
             Calendar View
           </Link>
-          <button onClick={() => setShowCreate(true)} className="px-5 py-2 text-sm bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-md hover:shadow-primary/20 transition-all font-medium">
+          <button onClick={() => setShowCreate(true)} className="hidden md:inline-flex px-5 py-2 text-sm bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-md hover:shadow-primary/20 transition-all font-medium">
             New Booking
           </button>
         </div>
@@ -298,7 +298,7 @@ function CreateBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
 
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl shadow-black/10 animate-scale-in">
+      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl shadow-black/10 animate-scale-in overflow-y-auto max-h-[85vh]">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-bold text-neutral-900">New Booking</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors">
@@ -308,7 +308,7 @@ function CreateBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
           </button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Vehicle Asset No</label>
               <input required value={form.assetnum} onChange={e => setForm({...form, assetnum: e.target.value})}
@@ -325,7 +325,7 @@ function CreateBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
             <input required value={form.customer_name} onChange={e => setForm({...form, customer_name: e.target.value})}
               className="w-full mt-1.5 px-3.5 py-2.5 text-sm border border-neutral-200/80 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none transition-all bg-neutral-50/50 focus:bg-white" />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="text-xs font-medium text-neutral-500 uppercase tracking-wider">Start Date</label>
               <input type="date" required value={form.start_date} onChange={e => setForm({...form, start_date: e.target.value})}

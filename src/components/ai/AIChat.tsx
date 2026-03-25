@@ -83,7 +83,7 @@ export default function AIChat() {
         )}
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}>
+            <div className={`max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}>
               <div className="whitespace-pre-wrap">{msg.content}</div>
             </div>
           </div>
