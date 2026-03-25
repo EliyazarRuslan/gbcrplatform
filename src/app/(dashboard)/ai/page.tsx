@@ -17,10 +17,10 @@ export default function AIPage() {
     <div className="space-y-6 animate-fade-in">
       <h1 className="text-2xl font-bold">AI Insights</h1>
 
-      <div className="flex gap-1 border-b border-neutral-200">
+      <div className="flex gap-1 border-b border-neutral-200 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
+            className={`flex-shrink-0 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-neutral-500 hover:text-neutral-700'}`}>
             {tab}
           </button>
         ))}

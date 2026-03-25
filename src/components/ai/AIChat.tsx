@@ -63,7 +63,7 @@ export default function AIChat() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-280px)]">
+    <div className="flex flex-col h-[calc(100vh-220px)] md:h-[calc(100vh-280px)]">
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
@@ -72,9 +72,9 @@ export default function AIChat() {
             </svg>
             <h3 className="font-semibold text-neutral-700 mb-2">AI Fleet Assistant</h3>
             <p className="text-sm text-neutral-400 mb-6">Ask me anything about your fleet, bookings, costs, or optimization.</p>
-            <div className="flex flex-wrap gap-2 justify-center max-w-xl mx-auto">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:justify-center md:max-w-xl md:mx-auto scrollbar-none">
               {suggestions.map(s => (
-                <button key={s} onClick={() => { setInput(s); }} className="px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-full hover:bg-neutral-200 transition-colors">
+                <button key={s} onClick={() => { setInput(s); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-full hover:bg-neutral-200 transition-colors whitespace-nowrap">
                   {s}
                 </button>
               ))}
