@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   useReactTable, getCoreRowModel, getSortedRowModel,
   flexRender, ColumnDef, SortingState,
@@ -20,6 +21,7 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -92,99 +94,152 @@ export default function CustomersPage() {
       </div>
 
       {/* Search */}
-      <div className="flex gap-3">
+      <div className="space-y-2">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { setPage(1); fetchData(1, search); } }}
           placeholder="Search by code, name, email, phone..."
-          className="px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg w-96 focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="w-full px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
         />
-        <button
-          onClick={() => { setPage(1); fetchData(1, search); }}
-          className="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
-        >
-          Search
-        </button>
-        <button
-          onClick={() => { setActiveOnly(!activeOnly); setPage(1); }}
-          className={`px-4 py-2 text-sm rounded-lg transition-colors ${activeOnly ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
-        >
-          {activeOnly ? 'With Active Rentals' : 'All Customers'}
-        </button>
-        {search && (
+        <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
           <button
-            onClick={() => { setSearch(''); setPage(1); fetchData(1, '', activeOnly); }}
-            className="px-4 py-2 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors"
+            onClick={() => { setPage(1); fetchData(1, search); }}
+            className="shrink-0 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors"
           >
-            Clear
+            Search
           </button>
-        )}
+          <button
+            onClick={() => { setActiveOnly(!activeOnly); setPage(1); }}
+            className={`shrink-0 px-4 py-2 text-sm rounded-lg transition-colors ${activeOnly ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'}`}
+          >
+            {activeOnly ? 'With Active Rentals' : 'All Customers'}
+          </button>
+          {search && (
+            <button
+              onClick={() => { setSearch(''); setPage(1); fetchData(1, '', activeOnly); }}
+              className="shrink-0 px-4 py-2 text-sm bg-neutral-100 text-neutral-700 rounded-lg hover:bg-neutral-200 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? <SkeletonTable rows={10} cols={7} /> : (
-        <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                {table.getHeaderGroups().map((hg) => (
-                  <tr key={hg.id} className="border-b border-neutral-200 bg-neutral-50">
-                    {hg.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        onClick={header.column.getToggleSortingHandler()}
-                        className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider cursor-pointer hover:text-neutral-700"
-                      >
-                        <div className="flex items-center gap-1">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? ''}
-                        </div>
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3 text-neutral-700">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                {customers.length === 0 && (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-neutral-400">No customers found</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-xl border border-neutral-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  {table.getHeaderGroups().map((hg) => (
+                    <tr key={hg.id} className="border-b border-neutral-200 bg-neutral-50">
+                      {hg.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          onClick={header.column.getToggleSortingHandler()}
+                          className="px-4 py-3 text-left text-xs font-semibold text-neutral-500 uppercase tracking-wider cursor-pointer hover:text-neutral-700"
+                        >
+                          <div className="flex items-center gap-1">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {{ asc: ' ↑', desc: ' ↓' }[header.column.getIsSorted() as string] ?? ''}
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      onClick={() => router.push(`/customers/${row.original.customer_code}`)}
+                      className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer"
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3 text-neutral-700">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                  {customers.length === 0 && (
+                    <tr><td colSpan={7} className="px-4 py-8 text-center text-neutral-400">No customers found</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 bg-neutral-50">
-            <span className="text-sm text-neutral-500">
-              Page {page} of {totalPages} ({pagination.total.toLocaleString()} total)
-            </span>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white"
-              >
-                Next
-              </button>
+            {/* Pagination */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-200 bg-neutral-50">
+              <span className="text-sm text-neutral-500">
+                Page {page} of {totalPages} ({pagination.total.toLocaleString()} total)
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="px-3 py-1.5 text-sm border border-neutral-200 rounded-lg disabled:opacity-50 hover:bg-white"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-3">
+            {customers.length === 0 ? (
+              <div className="bg-white rounded-xl border border-neutral-200 px-4 py-12 text-center text-sm text-neutral-400">
+                No customers found
+              </div>
+            ) : (
+              customers.map((c) => (
+                <div
+                  key={c.customer_code}
+                  onClick={() => router.push(`/customers/${c.customer_code}`)}
+                  className="bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-primary text-sm">{c.customer_code}</p>
+                      <p className="text-sm text-neutral-700 mt-0.5">{c.name}</p>
+                    </div>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${c.active_rentals > 0 ? 'bg-green-100 text-green-800' : 'bg-neutral-100 text-neutral-600'}`}>
+                      {c.active_rentals} rental{c.active_rentals !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                    {c.email && <span>{c.email}</span>}
+                    {c.phone && <span>{c.phone}</span>}
+                    {c.pay_term && <span>Pay: {c.pay_term}</span>}
+                  </div>
+                </div>
+              ))
+            )}
+            {/* Mobile pagination */}
+            {pagination.total > 0 && (
+              <div className="flex items-center justify-between mt-3 px-1">
+                <p className="text-xs text-neutral-500">Page {page} of {totalPages}</p>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed">Prev</button>
+                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed">Next</button>
+                </div>
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
