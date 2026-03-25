@@ -2,12 +2,15 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/ui/StatusBadge';
+import FAB from '@/components/ui/fab';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import type { Booking } from '@/lib/types';
 
 export default function BookingsPage() {
+  const router = useRouter();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState('');
@@ -84,63 +87,105 @@ export default function BookingsPage() {
         </div>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
         <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-          className="px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer">
+          className="shrink-0 px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer">
           <option value="">All Statuses</option>
           {statuses.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
       </div>
 
       {loading ? <SkeletonTable rows={8} cols={8} /> : (
-        <div className="bg-white rounded-xl border border-neutral-200/80 overflow-visible shadow-sm shadow-neutral-900/[0.03]">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-100 bg-neutral-50/80">
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Vehicle</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Customer</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Start Date</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">End Date</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Daily Rate</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Created By</th>
-                <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {bookings.map(b => (
-                <tr key={b.id} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
-                  <td className="px-4 py-3"><a href={`/fleet/${b.assetnum}`} className="text-primary hover:text-primary-dark font-semibold transition-colors">{b.assetnum}</a></td>
-                  <td className="px-4 py-3 text-neutral-700">{b.customer_name}</td>
-                  <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{formatDate(b.start_date)}</td>
-                  <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{formatDate(b.end_date)}</td>
-                  <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
-                  <td className="px-4 py-3 text-neutral-700 font-medium">{formatCurrency(b.daily_rate)}</td>
-                  <td className="px-4 py-3 text-xs text-neutral-400">{(b as unknown as Record<string, string>).created_by_name || '-'}</td>
-                  <td className="px-4 py-3">
-                    <ActionsDropdown
-                      booking={b}
-                      onCancel={() => handleCancel(b.id)}
-                      onDelete={() => handleDelete(b.id)}
-                      onStatusChange={(status) => handleStatusChange(b.id, status)}
-                    />
-                  </td>
+        <>
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-xl border border-neutral-200/80 overflow-visible shadow-sm shadow-neutral-900/[0.03]">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-100 bg-neutral-50/80">
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Vehicle</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Customer</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Start Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">End Date</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Status</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Daily Rate</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Created By</th>
+                  <th className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">Actions</th>
                 </tr>
-              ))}
-              {bookings.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-neutral-400 text-sm">
-                  <div className="flex flex-col items-center gap-2">
-                    <svg className="w-8 h-8 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    No bookings found. Create your first booking to get started.
+              </thead>
+              <tbody>
+                {bookings.map(b => (
+                  <tr key={b.id} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
+                    <td className="px-4 py-3"><a href={`/fleet/${b.assetnum}`} className="text-primary hover:text-primary-dark font-semibold transition-colors">{b.assetnum}</a></td>
+                    <td className="px-4 py-3 text-neutral-700">{b.customer_name}</td>
+                    <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{formatDate(b.start_date)}</td>
+                    <td className="px-4 py-3 text-neutral-600 font-mono text-xs">{formatDate(b.end_date)}</td>
+                    <td className="px-4 py-3"><StatusBadge status={b.status} /></td>
+                    <td className="px-4 py-3 text-neutral-700 font-medium">{formatCurrency(b.daily_rate)}</td>
+                    <td className="px-4 py-3 text-xs text-neutral-400">{(b as unknown as Record<string, string>).created_by_name || '-'}</td>
+                    <td className="px-4 py-3">
+                      <ActionsDropdown
+                        booking={b}
+                        onCancel={() => handleCancel(b.id)}
+                        onDelete={() => handleDelete(b.id)}
+                        onStatusChange={(status) => handleStatusChange(b.id, status)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+                {bookings.length === 0 && (
+                  <tr><td colSpan={8} className="px-4 py-12 text-center text-neutral-400 text-sm">
+                    <div className="flex flex-col items-center gap-2">
+                      <svg className="w-8 h-8 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      No bookings found. Create your first booking to get started.
+                    </div>
+                  </td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card list */}
+          <div className="md:hidden space-y-3">
+            {bookings.length === 0 ? (
+              <div className="bg-white rounded-xl border border-neutral-200 px-4 py-12 text-center text-sm text-neutral-400">
+                No bookings found. Create your first booking to get started.
+              </div>
+            ) : (
+              bookings.map((b) => (
+                <div
+                  key={b.id}
+                  onClick={() => router.push(`/fleet/${b.assetnum}`)}
+                  className="bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-primary text-sm">{b.assetnum}</p>
+                      <p className="text-xs text-neutral-600 mt-0.5">{b.customer_name}</p>
+                    </div>
+                    <StatusBadge status={b.status} />
                   </div>
-                </td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  <div className="mt-2 flex items-center gap-3 text-xs text-neutral-500">
+                    <span>{formatDate(b.start_date)}</span>
+                    <span className="text-neutral-300">→</span>
+                    <span>{formatDate(b.end_date)}</span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between">
+                    <span className="text-xs font-medium text-neutral-700">{formatCurrency(b.daily_rate)}/day</span>
+                    {(b as unknown as Record<string, string>).created_by_name && (
+                      <span className="text-xs text-neutral-400">{(b as unknown as Record<string, string>).created_by_name}</span>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </>
       )}
+
+      {/* FAB for mobile */}
+      <FAB label="New Booking" onClick={() => setShowCreate(true)} />
 
       {showCreate && <CreateBookingModal onClose={() => setShowCreate(false)} onCreated={() => { setShowCreate(false); fetchBookings(); }} />}
     </div>
