@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DataTable, { Column } from '@/components/ui/data-table';
+import { Column } from '@/components/ui/data-table';
+import ResponsiveTable from '@/components/ui/responsive-table';
+import FAB from '@/components/ui/fab';
 import Badge from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
@@ -211,59 +213,71 @@ export default function InspectionsPage() {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="space-y-2">
         <Input
           placeholder="Search vehicle assetnum or reg no..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-64"
         />
-        <Select
-          options={typeOptions}
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-44"
-        />
-        <Select
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-44"
-        />
-        <Button variant="secondary" onClick={handleSearch}>
-          Search
-        </Button>
+        <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
+          <Select
+            options={typeOptions}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="shrink-0 w-44"
+          />
+          <Select
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="shrink-0 w-44"
+          />
+          <Button variant="secondary" onClick={handleSearch} className="shrink-0">
+            Search
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
-      <div
-        className="cursor-pointer"
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          const row = target.closest('tr');
-          if (!row) return;
-          const tbody = row.closest('tbody');
-          if (!tbody) return;
-          const idx = Array.from(tbody.children).indexOf(row);
-          if (idx >= 0 && idx < inspections.length) {
-            router.push(`/inspections/${inspections[idx].id}`);
-          }
+      <ResponsiveTable<Inspection>
+        columns={columns}
+        data={inspections}
+        loading={loading}
+        emptyMessage="No inspections found. Create your first inspection to get started."
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (p) => setPage(p),
         }}
-      >
-        <DataTable<Inspection>
-          columns={columns}
-          data={inspections}
-          loading={loading}
-          emptyMessage="No inspections found. Create your first inspection to get started."
-          pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            onPageChange: (p) => setPage(p),
-          }}
-        />
-      </div>
+        onRowClick={(row) => router.push(`/inspections/${row.id}`)}
+        mobileCard={(row) => (
+          <div>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-semibold text-primary text-sm">#{row.id}</p>
+                <p className="text-xs text-neutral-500 mt-0.5">{row.vehicle_regno || row.vehicle_assetnum}</p>
+              </div>
+              <Badge variant={statusBadgeVariant[row.status] || 'default'}>
+                {statusLabels[row.status] || row.status}
+              </Badge>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge variant={typeBadgeVariant[row.inspection_type] || 'default'}>
+                {typeLabels[row.inspection_type] || row.inspection_type}
+              </Badge>
+              <span className="text-xs text-neutral-500">{formatDate(row.inspection_date)}</span>
+            </div>
+            {row.inspector_name && (
+              <p className="text-xs text-neutral-400 mt-1">Inspector: {row.inspector_name}</p>
+            )}
+          </div>
+        )}
+      />
+
+      {/* FAB for mobile */}
+      <FAB label="New Inspection" onClick={() => setShowCreate(true)} />
 
       {/* Create Modal */}
       {showCreate && (
