@@ -64,24 +64,24 @@ export default function BookingCalendarPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden overflow-x-auto">
         {/* Header */}
-        <div className="grid grid-cols-7 border-b border-neutral-200">
+        <div className="grid grid-cols-7 border-b border-neutral-200 min-w-[560px]">
           {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => (
             <div key={d} className="px-2 py-3 text-center text-xs font-semibold text-neutral-500 bg-neutral-50">{d}</div>
           ))}
         </div>
 
         {/* Days */}
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7 min-w-[560px]">
           {/* Padding */}
           {Array.from({ length: paddingDays }).map((_, i) => (
-            <div key={`pad-${i}`} className="min-h-[100px] p-2 border-b border-r border-neutral-100 bg-neutral-50" />
+            <div key={`pad-${i}`} className="min-h-[70px] md:min-h-[100px] p-1 md:p-2 border-b border-r border-neutral-100 bg-neutral-50" />
           ))}
           {days.map(day => {
             const dayBookings = getBookingsForDay(day);
             return (
-              <div key={day.toISOString()} className={`min-h-[100px] p-2 border-b border-r border-neutral-100 ${!isSameMonth(day, currentDate) ? 'bg-neutral-50' : ''} ${isToday(day) ? 'bg-blue-50' : ''}`}>
+              <div key={day.toISOString()} className={`min-h-[70px] md:min-h-[100px] p-1 md:p-2 border-b border-r border-neutral-100 ${!isSameMonth(day, currentDate) ? 'bg-neutral-50' : ''} ${isToday(day) ? 'bg-blue-50' : ''}`}>
                 <p className={`text-xs font-medium mb-1 ${isToday(day) ? 'text-blue-600' : 'text-neutral-600'}`}>{format(day, 'd')}</p>
                 <div className="space-y-1">
                   {dayBookings.slice(0, 3).map(b => (
