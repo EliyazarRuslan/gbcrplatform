@@ -23,8 +23,8 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose} />
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up">
+      <div className="fixed inset-0 bg-black/40 z-50" onClick={onClose} role="button" tabIndex={-1} aria-label="Close" />
+      <div className="fixed bottom-0 left-0 right-0 z-[51] bg-white rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up">
         <div className="relative flex items-center justify-between px-4 pt-4 pb-2 border-b border-neutral-100">
           <div className="w-10 h-1 bg-neutral-300 rounded-full absolute left-1/2 -translate-x-1/2 top-2" />
           {title && <h3 className="text-base font-semibold text-neutral-800 mt-2">{title}</h3>}

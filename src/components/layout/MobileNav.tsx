@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import type { Role } from '@/types/auth';
 import { getVisibleItems } from '@/lib/nav-items';
@@ -11,6 +11,8 @@ const MAX_PRIMARY_TABS = 4;
 export default function MobileNav({ userRole }: { userRole: Role }) {
   const [moreOpen, setMoreOpen] = useState(false);
   const pathname = usePathname();
+
+  useEffect(() => { setMoreOpen(false); }, [pathname]);
 
   const visibleItems = getVisibleItems(userRole);
 
@@ -28,6 +30,8 @@ export default function MobileNav({ userRole }: { userRole: Role }) {
         <div
           className="md:hidden fixed inset-0 bg-black/40 z-40"
           onClick={() => setMoreOpen(false)}
+          role="button"
+          aria-label="Close menu"
         />
       )}
 
@@ -86,6 +90,8 @@ export default function MobileNav({ userRole }: { userRole: Role }) {
         {moreTabs.length > 0 && (
           <button
             onClick={() => setMoreOpen(!moreOpen)}
+            aria-label="More menu"
+            aria-expanded={moreOpen}
             className={`flex flex-col items-center justify-center flex-1 py-2 text-[10px] transition-colors ${
               isMoreActive || moreOpen ? 'text-primary font-medium' : 'text-neutral-400'
             }`}
