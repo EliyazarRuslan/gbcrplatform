@@ -58,13 +58,13 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sidebar via-[#151d35] to-sidebar p-6 text-white">
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sidebar via-[#151d35] to-sidebar p-5 sm:p-6 text-white">
         <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-primary/5 rounded-full blur-2xl translate-y-1/2" />
         <div className="relative z-10">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
             <div>
-              <h1 className="text-2xl font-bold tracking-tight">Fleet Overview</h1>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Fleet Overview</h1>
               <p className="text-neutral-400 text-sm mt-1">Real-time vehicle status and fleet performance</p>
             </div>
             <p className="text-xs text-neutral-500 hidden sm:block font-mono" suppressHydrationWarning>
@@ -116,13 +116,13 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         {stats && <FleetStatusChart stats={stats} />}
         {stats && <FleetBreakdownChart stats={stats} />}
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <a href="/fleet" className="group bg-white rounded-xl border border-neutral-200/80 p-5 hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-200/60 transition-all duration-300">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
