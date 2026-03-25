@@ -27,6 +27,10 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
 
+:root {
+  --mobile-nav-height: 4rem;
+}
+
 body {
   background: linear-gradient(135deg, #f0f2f5 0%, #e8ecf1 50%, #f0f2f5 100%);
   color: var(--color-neutral-900);
