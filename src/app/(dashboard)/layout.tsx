@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import MobileNav from '@/components/layout/MobileNav';
+import MobileHeader from '@/components/layout/MobileHeader';
 import type { Role } from '@/types/auth';
 
 interface UserData {
@@ -59,11 +61,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen overflow-hidden">
       <Sidebar userRole={user.role} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header user={user} />
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* Desktop header */}
+        <div className="hidden md:block">
+          <Header user={user} />
+        </div>
+        {/* Mobile header */}
+        <MobileHeader user={user} />
+        <main className="flex-1 overflow-y-auto p-3 md:p-6 pb-[calc(var(--mobile-nav-height)+1rem)] md:pb-6">
           {children}
         </main>
       </div>
+      <MobileNav userRole={user.role} />
     </div>
   );
 }
