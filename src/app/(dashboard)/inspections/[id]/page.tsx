@@ -14,6 +14,7 @@ import PhotoCapture from '@/components/inspection/PhotoCapture';
 import SignatureCanvas from '@/components/inspection/SignatureCanvas';
 import StarRating from '@/components/inspection/StarRating';
 import VehicleDiagram from '@/components/inspection/VehicleDiagram';
+import MobileInspectionForm from '@/components/inspection/MobileInspectionForm';
 import { formatDate } from '@/lib/utils';
 
 // --- Types ---
@@ -304,8 +305,8 @@ export default function InspectionDetailPage() {
         )}
       </div>
 
-      {/* Section Tabs */}
-      <div className="flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
+      {/* Desktop: Section Tabs */}
+      <div className="hidden md:flex gap-1 overflow-x-auto pb-1 -mx-1 px-1">
         {sections.map((s) => (
           <button
             key={s.id}
@@ -330,28 +331,47 @@ export default function InspectionDetailPage() {
         ))}
       </div>
 
-      {/* Section Content */}
-      {activeSection === 'photos' && (
-        <PhotosSection data={data} isEditable={isEditable} onRefresh={fetchData} />
-      )}
-      {activeSection === 'checklist' && (
-        <ChecklistSection data={data} isEditable={isEditable} updateField={updateField} />
-      )}
-      {activeSection === 'damages' && (
-        <DamagesSection data={data} isEditable={isEditable} inspectionId={id} onRefresh={fetchData} />
-      )}
-      {activeSection === 'signatures' && (
-        <SignaturesSection data={data} isEditable={isEditable} updateField={updateField} inspectionId={id} onRefresh={fetchData} />
-      )}
-      {activeSection === 'submit' && (
-        <SubmitSection
-          data={data}
-          onSubmit={handleSubmit}
-          submitting={submitting}
-          submitError={submitError}
-          isEditable={isEditable}
-        />
-      )}
+      {/* Desktop: Section Content */}
+      <div className="hidden md:block">
+        {activeSection === 'photos' && (
+          <PhotosSection data={data} isEditable={isEditable} onRefresh={fetchData} />
+        )}
+        {activeSection === 'checklist' && (
+          <ChecklistSection data={data} isEditable={isEditable} updateField={updateField} />
+        )}
+        {activeSection === 'damages' && (
+          <DamagesSection data={data} isEditable={isEditable} inspectionId={id} onRefresh={fetchData} />
+        )}
+        {activeSection === 'signatures' && (
+          <SignaturesSection data={data} isEditable={isEditable} updateField={updateField} inspectionId={id} onRefresh={fetchData} />
+        )}
+        {activeSection === 'submit' && (
+          <SubmitSection
+            data={data}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            submitError={submitError}
+            isEditable={isEditable}
+          />
+        )}
+      </div>
+
+      {/* Mobile: Multi-step wizard */}
+      <div className="md:hidden">
+        <MobileInspectionForm>
+          <PhotosSection data={data} isEditable={isEditable} onRefresh={fetchData} />
+          <ChecklistSection data={data} isEditable={isEditable} updateField={updateField} />
+          <DamagesSection data={data} isEditable={isEditable} inspectionId={id} onRefresh={fetchData} />
+          <SignaturesSection data={data} isEditable={isEditable} updateField={updateField} inspectionId={id} onRefresh={fetchData} />
+          <SubmitSection
+            data={data}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            submitError={submitError}
+            isEditable={isEditable}
+          />
+        </MobileInspectionForm>
+      </div>
     </div>
   );
 }
