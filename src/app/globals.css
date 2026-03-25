@@ -151,6 +151,14 @@ tr.table-row-hover:hover {
   animation: gradient-shift 15s ease infinite;
 }
 
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
 /* Noise texture overlay */
 .noise-overlay::before {
   content: '';
