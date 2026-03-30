@@ -1,32 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthorizationUrl } from '@/lib/msal';
-import crypto from 'crypto';
+
+const TENANT_ID = process.env.AZURE_AD_TENANT_ID!;
+const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID!;
+const REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
 
 export async function GET(request: NextRequest) {
-  // Generate CSRF state token
-  const state = crypto.randomBytes(32).toString('hex');
+  const redirect = request.nextUrl.searchParams.get('redirect') || '/';
 
-  // Validate redirect: must be a relative path starting with '/' and not starting with '//'
-  const rawRedirect = request.nextUrl.searchParams.get('redirect') || '/';
-  const redirect = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : '/';
-
-  const origin = request.headers.get('referer')
-    ? new URL(request.headers.get('referer')!).origin
-    : request.nextUrl.origin;
-
-  // Encode state components as base64 JSON to avoid '|' collision
-  const stateWithRedirect = `${state}|${Buffer.from(JSON.stringify({ redirect, origin })).toString('base64url')}`;
-
-  const authUrl = getAuthorizationUrl(stateWithRedirect);
-
-  const response = NextResponse.redirect(authUrl);
-  response.cookies.set('sso_state', state, {
-    httpOnly: true,
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 600,
-    path: '/',
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: REDIRECT_URI,
+    response_mode: 'query',
+    scope: 'openid profile email User.Read',
+    state: redirect,
+    prompt: 'select_account',
   });
 
-  return response;
+  const authUrl = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize?${params}`;
+
+  return NextResponse.redirect(authUrl);
 }
