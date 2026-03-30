@@ -12,6 +12,7 @@ export const metadata: Metadata = {
     title: 'GBCR',
   },
   icons: {
+    icon: '/favicon.png',
     apple: '/icons/apple-touch-icon.png',
   },
 };

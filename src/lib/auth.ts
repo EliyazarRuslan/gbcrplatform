@@ -34,7 +34,7 @@ export async function verifyToken(token: string): Promise<AuthUser | null> {
 export function setTokenCookie(response: NextResponse, token: string): NextResponse {
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax', // lax required for SSO redirects from Microsoft
     secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true',
     maxAge: COOKIE_MAX_AGE,
     path: '/',

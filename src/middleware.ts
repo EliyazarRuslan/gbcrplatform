@@ -19,12 +19,15 @@ export async function middleware(request: NextRequest) {
   if (
     pathname === '/login' ||
     pathname === '/api/auth/login' ||
+    pathname.startsWith('/api/auth/sso') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
     pathname === '/manifest.json' ||
     pathname.endsWith('.svg') ||
     pathname.endsWith('.png') ||
-    pathname.endsWith('.ico')
+    pathname.endsWith('.ico') ||
+    pathname === '/sw.js' ||
+    pathname === '/offline'
   ) {
     return NextResponse.next();
   }

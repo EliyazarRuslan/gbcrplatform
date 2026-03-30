@@ -46,12 +46,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center animate-glow">
-            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+      <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-5">
+          <img src="/goldbell-logo.svg" alt="Goldbell" className="w-12 h-12 rounded-xl animate-glow" />
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin w-5 h-5 border-2 border-charcoal border-t-transparent rounded-full" />
+            <p className="text-[12px] text-neutral-400 font-medium uppercase tracking-widest">Loading</p>
           </div>
-          <p className="text-sm text-neutral-400 font-medium">Loading platform...</p>
         </div>
       </div>
     );
