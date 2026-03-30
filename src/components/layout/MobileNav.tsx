@@ -30,7 +30,9 @@ export default function MobileNav({ userRole }: { userRole: Role }) {
         <div
           className="md:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40"
           onClick={() => setMoreOpen(false)}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); setMoreOpen(false); } }}
           role="button"
+          tabIndex={0}
           aria-label="Close menu"
         />
       )}

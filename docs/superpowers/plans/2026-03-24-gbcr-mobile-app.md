@@ -260,6 +260,14 @@ Add to root `.gitignore`:
 
 Change `FILE_STORAGE_ROOT=./storage` to an absolute path or `FILE_STORAGE_ROOT=../../storage` so it resolves correctly from `apps/web/`.
 
+> ⚠️ **Migration plan when changing FILE_STORAGE_ROOT:** Before switching, run a migration script (`scripts/migrate-file-paths.ts`) that:
+> 1. Reads every `file_path` in `inspection_photos`.
+> 2. Resolves it against the old root and the new root.
+> 3. Verifies the file exists at the new path (checksum/existence check); aborts with a list of missing files if any are not found.
+> 4. Updates `inspection_photos.file_path` atomically in a single transaction.
+>
+> Add a **backward-compatibility fallback** in the file-serving handler: if the resolved new path does not exist, fall back to the old root. Schedule a maintenance window and document the rollback steps (revert `FILE_STORAGE_ROOT` in `.env` and re-run the migration in reverse) in the deployment runbook before changing this value in production.
+
 - [ ] **Step 9: Install dependencies from root**
 
 ```bash
@@ -469,15 +477,40 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 
 - [ ] **Step 2: Update middleware to support Authorization header**
 
-In `apps/web/src/middleware.ts` (line 32), the token is extracted from `request.cookies.get('gbcr_token')`. Update to also check the Authorization header:
+In `apps/web/src/middleware.ts` (line 32), the token is extracted from `request.cookies.get('gbcr_token')`. Update to also check the Authorization header with robust parsing (case-insensitive, variable whitespace, rejects malformed headers):
 
 ```typescript
 // Replace line 32:
-const token = request.cookies.get('gbcr_token')?.value
-  ?? request.headers.get('authorization')?.replace('Bearer ', '') ?? null;
+const rawAuthHeader = request.headers.get('authorization');
+let bearerToken: string | null = null;
+if (rawAuthHeader) {
+  const match = rawAuthHeader.match(/^[Bb]earer\s+(\S+)$/);
+  bearerToken = match ? match[1].trim() : null;
+}
+const token = bearerToken ?? request.cookies.get('gbcr_token')?.value ?? null;
 ```
 
 Also add `/api/app-config` to the public routes list (line 19-30) since it needs to be accessible without auth for mobile version checking.
+
+- [ ] **Step 2b: Create GET /api/auth/me endpoint**
+
+Create `apps/web/src/app/api/auth/me/route.ts` so the mobile `AuthProvider` can validate a stored token on startup:
+
+```typescript
+// apps/web/src/app/api/auth/me/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { getUserFromRequest } from '@/lib/auth';
+
+export async function GET(request: NextRequest) {
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  }
+  return NextResponse.json({ success: true, data: user });
+}
+```
+
+This route is called by `AuthContext.tsx` when a token is stored but no cached user profile exists (e.g. on first launch after install or cache eviction).
 
 - [ ] **Step 3: Update login route to return token in body**
 
@@ -529,6 +562,10 @@ git commit -m "feat: add Bearer token auth support for mobile clients"
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, signToken, setTokenCookie, getTokenFromRequest } from '@/lib/auth';
 
+// Rate-limit map: userId -> last refresh timestamp (in-memory; use Redis/DB in production)
+const refreshRateLimit = new Map<number, number>();
+const REFRESH_RATE_LIMIT_MS = 60_000; // max 1 refresh per user per minute
+
 export async function POST(request: NextRequest) {
   try {
     const token = getTokenFromRequest(request);
@@ -546,6 +583,27 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+
+    // Check token expiry window — only refresh if within 2 hours of expiry
+    const tokenPayload = user as { exp?: number };
+    const now = Math.floor(Date.now() / 1000);
+    const TWO_HOURS = 2 * 60 * 60;
+    if (tokenPayload.exp && tokenPayload.exp - now > TWO_HOURS) {
+      return NextResponse.json(
+        { success: false, error: 'Token does not need refresh yet' },
+        { status: 400 }
+      );
+    }
+
+    // Rate limiting: max 1 refresh per user per minute
+    const lastRefresh = refreshRateLimit.get(user.userId);
+    if (lastRefresh && Date.now() - lastRefresh < REFRESH_RATE_LIMIT_MS) {
+      return NextResponse.json(
+        { success: false, error: 'Too many refresh requests. Try again in a moment.' },
+        { status: 429 }
+      );
+    }
+    refreshRateLimit.set(user.userId, Date.now());
 
     // Issue a new token
     const newToken = await signToken(user);
@@ -602,7 +660,7 @@ BEGIN
     is_active BIT DEFAULT 1,
     created_at DATETIME DEFAULT GETDATE(),
     updated_at DATETIME DEFAULT GETDATE(),
-    CONSTRAINT UQ_expo_push_token UNIQUE (expo_push_token),
+    CONSTRAINT UQ_user_expo_push_token UNIQUE (user_id, expo_push_token),
     CONSTRAINT FK_push_tokens_users FOREIGN KEY (user_id) REFERENCES users(id)
   );
   CREATE INDEX IX_push_tokens_user_id ON push_tokens(user_id);
@@ -791,6 +849,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Enforce batch size limit to prevent abuse / resource exhaustion
+    const MAX_BATCH_SIZE = 50;
+    if (inspections.length > MAX_BATCH_SIZE) {
+      return NextResponse.json(
+        { success: false, error: `Batch too large: max ${MAX_BATCH_SIZE} inspections per request` },
+        { status: 413 }
+      );
+    }
+
     const pool = await getPool();
     const results: Array<{ local_id: number; server_id: number; status: string }> = [];
 
@@ -798,13 +865,27 @@ export async function POST(request: NextRequest) {
       const transaction = pool.transaction();
       try {
         await transaction.begin();
-        // Insert inspection
+
+        // Idempotency: if a client_uuid is provided and already exists, return the existing server_id
+        if (inspection.client_uuid) {
+          const existing = await transaction.request()
+            .input('client_uuid', inspection.client_uuid)
+            .query('SELECT id FROM inspections WHERE client_uuid = @client_uuid');
+          if (existing.recordset.length > 0) {
+            await transaction.rollback();
+            results.push({ local_id: inspection.local_id, server_id: existing.recordset[0].id, status: 'synced' });
+            continue;
+          }
+        }
+
+        // Insert inspection — always force inspector_id to the authenticated user and status to 'submitted'
         const insertResult = await transaction.request()
           .input('vehicle_assetnum', inspection.vehicle_assetnum)
           .input('vehicle_regno', inspection.vehicle_regno)
           .input('inspection_type', inspection.inspection_type)
-          .input('status', inspection.status || 'submitted')
-          .input('inspector_id', user.userId)
+          .input('status', 'submitted')       // always server-authoritative
+          .input('inspector_id', user.userId) // always set from JWT, never from client payload
+          .input('client_uuid', inspection.client_uuid || null)
           .input('booking_id', inspection.booking_id || null)
           .input('inspection_date', inspection.inspection_date || null)
           .input('mileage_reading', inspection.mileage_reading || null)
@@ -828,7 +909,7 @@ export async function POST(request: NextRequest) {
           .query(`
             INSERT INTO inspections (
               vehicle_assetnum, vehicle_regno, inspection_type, status, inspector_id,
-              booking_id, inspection_date, mileage_reading, fuel_level,
+              client_uuid, booking_id, inspection_date, mileage_reading, fuel_level,
               cleanliness_interior, cleanliness_exterior,
               exterior_condition, interior_condition, functionality_check,
               tire_condition, safety_equipment, smell_condition, overall_notes,
@@ -837,7 +918,7 @@ export async function POST(request: NextRequest) {
               gps_latitude, gps_longitude, created_at, updated_at
             ) VALUES (
               @vehicle_assetnum, @vehicle_regno, @inspection_type, @status, @inspector_id,
-              @booking_id, @inspection_date, @mileage_reading, @fuel_level,
+              @client_uuid, @booking_id, @inspection_date, @mileage_reading, @fuel_level,
               @cleanliness_interior, @cleanliness_exterior,
               @exterior_condition, @interior_condition, @functionality_check,
               @tire_condition, @safety_equipment, @smell_condition, @overall_notes,
@@ -970,6 +1051,12 @@ let graphClient: Client | null = null;
 function getGraphClient(): Client {
   if (graphClient) return graphClient;
 
+  const requiredVars = ['AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'ONEDRIVE_DRIVE_ID'] as const;
+  const missing = requiredVars.filter((v) => !process.env[v]);
+  if (missing.length > 0) {
+    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
   const credential = new ClientSecretCredential(
     process.env.AZURE_TENANT_ID!,
     process.env.AZURE_CLIENT_ID!,
@@ -1041,6 +1128,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate MIME type against allowlist
+    const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/heic', 'image/heif'];
+
+    // Enforce max file size (10 MB) before reading bytes (avoids unnecessary memory allocation)
+    const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+    if (photo.size > MAX_PHOTO_BYTES) {
+      return NextResponse.json(
+        { success: false, error: 'File too large. Maximum size is 10 MB' },
+        { status: 413 }
+      );
+    }
+
+    // Sanitize filename: strip directory traversal, allow only safe chars
+    const rawName = photo.name ?? 'photo.jpg';
+    const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/^\.+/, '_');
+
     // Verify inspection exists and get vehicle info
     const pool = await getPool();
     const inspectionResult = await pool.request()
@@ -1055,9 +1158,21 @@ export async function POST(request: NextRequest) {
     }
 
     const inspection = inspectionResult.recordset[0];
+
+    // Read file bytes and validate MIME type from actual file signature (not client-supplied Content-Type,
+    // which can be trivially spoofed). fileTypeFromBuffer inspects the magic bytes of the file.
     const buffer = Buffer.from(await photo.arrayBuffer());
+    const { fileTypeFromBuffer } = await import('file-type');
+    const detected = await fileTypeFromBuffer(buffer);
+    if (!detected || !ALLOWED_MIME_TYPES.includes(detected.mime)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid file type. Allowed: JPEG, PNG, HEIC' },
+        { status: 400 }
+      );
+    }
+
     const timestamp = Date.now();
-    const ext = photo.name?.split('.').pop() || 'jpg';
+    const ext = safeName.split('.').pop()?.toLowerCase() || 'jpg';
     const fileName = `${timestamp}-${photoType}.${ext}`;
     const inspectionDate = inspection.inspection_date
       ? new Date(inspection.inspection_date).toISOString().split('T')[0]
@@ -1130,6 +1245,8 @@ experimental: {
   },
 },
 ```
+
+> **Streaming note**: the current implementation uses `Buffer.from(await photo.arrayBuffer())` which holds the entire file in memory before uploading to OneDrive. For files above ~50 MB, replace with a [OneDrive large file upload session](https://learn.microsoft.com/en-us/graph/api/driveitem-createuploadsession) that streams chunks of 4–10 MB directly from the incoming `ReadableStream`, avoiding peak memory doubling. This is not required for the current 10 MB photo limit but should be addressed if the limit is raised.
 
 - [ ] **Step 6: Verify build**
 
@@ -1458,32 +1575,51 @@ export async function setStoredUser(user: Record<string, unknown>): Promise<void
   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
 }
 
+// Module-level mutex to prevent concurrent refresh races
+let refreshPromise: Promise<string | null> | null = null;
+
 async function refreshTokenIfNeeded(): Promise<string | null> {
+  // If a refresh is already in flight, wait for it instead of issuing a parallel request
+  if (refreshPromise) return refreshPromise;
+
   const token = await getToken();
   if (!token) return null;
 
+  let decoded: { exp: number };
   try {
-    const decoded = jwtDecode<{ exp: number }>(token);
-    const expiresIn = decoded.exp * 1000 - Date.now();
-    const twoHours = 2 * 60 * 60 * 1000;
-
-    if (expiresIn < twoHours && expiresIn > 0) {
-      const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.success && data.data.token) {
-          await setToken(data.data.token);
-          return data.data.token;
-        }
-      }
-    }
-    return token;
+    decoded = jwtDecode<{ exp: number }>(token);
   } catch {
-    return token;
+    // Malformed token — treat as expired, clear it
+    await clearToken();
+    return null;
   }
+
+  const expiresIn = decoded.exp * 1000 - Date.now();
+  const twoHours = 2 * 60 * 60 * 1000;
+
+  if (expiresIn < twoHours && expiresIn > 0) {
+    refreshPromise = (async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.data.token) {
+            await setToken(data.data.token);
+            return data.data.token;
+          }
+        }
+        return token;
+      } finally {
+        refreshPromise = null;
+      }
+    })();
+    return refreshPromise;
+  }
+
+  return token;
 }
 
 export async function apiFetch(
@@ -1775,12 +1911,38 @@ Set up SQLite for local inspection storage and the sync engine.
 ```typescript
 // apps/mobile/lib/database.ts
 import * as SQLite from 'expo-sqlite';
+import * as SecureStore from 'expo-secure-store';
+import * as Crypto from 'expo-crypto';
+import { v4 as uuidv4 } from 'uuid';
+
+const DB_NAME = 'gbcr_mobile.db';
+const DB_KEY_STORE = 'gbcr_db_key';
+
+/** Retrieve or generate the SQLite encryption key stored in the device keychain. */
+async function getOrCreateDbKey(): Promise<string> {
+  let key = await SecureStore.getItemAsync(DB_KEY_STORE);
+  if (!key) {
+    // Generate a random 32-byte key encoded as hex
+    const random = await Crypto.getRandomBytesAsync(32);
+    key = Array.from(random).map(b => b.toString(16).padStart(2, '0')).join('');
+    await SecureStore.setItemAsync(DB_KEY_STORE, key, {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    });
+  }
+  return key;
+}
 
 let db: SQLite.SQLiteDatabase | null = null;
 
 export async function getDatabase(): Promise<SQLite.SQLiteDatabase> {
   if (db) return db;
-  db = await SQLite.openDatabaseAsync('gbcr_mobile.db');
+  db = await SQLite.openDatabaseAsync(DB_NAME);
+
+  // Apply SQLCipher encryption key before any other operations.
+  // expo-sqlite uses SQLCipher on iOS/Android when PRAGMA key is set immediately after open.
+  const key = await getOrCreateDbKey();
+  await db.execAsync(`PRAGMA key = '${key}';`);
+
   await initializeDatabase(db);
   return db;
 }
@@ -1790,6 +1952,7 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
     CREATE TABLE IF NOT EXISTS local_inspections (
       local_id INTEGER PRIMARY KEY AUTOINCREMENT,
       server_id INTEGER,
+      client_uuid TEXT UNIQUE,
       inspector_id INTEGER NOT NULL,
       booking_id INTEGER,
       vehicle_assetnum TEXT NOT NULL,
@@ -1854,16 +2017,19 @@ async function initializeDatabase(database: SQLite.SQLiteDatabase): Promise<void
 export async function saveLocalInspection(inspection: Record<string, unknown>): Promise<number> {
   const db = await getDatabase();
   const now = new Date().toISOString();
+  // Ensure every inspection has a stable client UUID for idempotent server sync
+  const clientUuid = (inspection.client_uuid as string | undefined) || uuidv4();
   const result = await db.runAsync(
     `INSERT INTO local_inspections (
-      inspector_id, booking_id, vehicle_assetnum, vehicle_regno,
+      client_uuid, inspector_id, booking_id, vehicle_assetnum, vehicle_regno,
       inspection_type, status, inspection_date, mileage_reading, fuel_level,
       cleanliness_interior, cleanliness_exterior, exterior_condition, interior_condition,
       functionality_check, tire_condition, safety_equipment, smell_condition, overall_notes,
       checklist_data, accessories_present, inspector_signature, customer_signature,
       customer_acknowledged, gps_latitude, gps_longitude, sync_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_sync', ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_sync', ?, ?)`,
     [
+      clientUuid,
       inspection.inspector_id, inspection.booking_id || null,
       inspection.vehicle_assetnum, inspection.vehicle_regno,
       inspection.inspection_type, inspection.status || 'draft',
@@ -1889,7 +2055,21 @@ export async function updateLocalInspection(
   updates: Record<string, unknown>
 ): Promise<void> {
   const db = await getDatabase();
-  const fields = Object.keys(updates);
+
+  // Whitelist of allowed columns — prevents SQL injection via arbitrary key names
+  const ALLOWED_FIELDS = new Set([
+    'server_id', 'booking_id', 'vehicle_assetnum', 'vehicle_regno', 'inspection_type',
+    'status', 'inspection_date', 'mileage_reading', 'fuel_level',
+    'cleanliness_interior', 'cleanliness_exterior', 'exterior_condition', 'interior_condition',
+    'functionality_check', 'tire_condition', 'safety_equipment', 'smell_condition',
+    'overall_notes', 'checklist_data', 'accessories_present',
+    'inspector_signature', 'customer_signature', 'customer_acknowledged',
+    'gps_latitude', 'gps_longitude', 'sync_status', 'sync_error',
+  ]);
+
+  const fields = Object.keys(updates).filter(f => ALLOWED_FIELDS.has(f));
+  if (fields.length === 0) return; // nothing to update
+
   const setClause = fields.map(f => `${f} = ?`).join(', ');
   const values = fields.map(f => updates[f]);
   values.push(new Date().toISOString());
@@ -1984,6 +2164,39 @@ export async function markPhotoUploaded(localId: number): Promise<void> {
   const db = await getDatabase();
   await db.runAsync('UPDATE local_photos SET uploaded = 1 WHERE local_id = ?', [localId]);
 }
+
+// -- Draft persistence (survives app restart, keyed by a stable draft_key) --
+
+export async function saveDraftInspection(draftKey: string, data: Record<string, unknown>): Promise<void> {
+  const db = await getDatabase();
+  await db.execAsync(`
+    CREATE TABLE IF NOT EXISTS inspection_drafts (
+      draft_key TEXT PRIMARY KEY,
+      data TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+  const now = new Date().toISOString();
+  await db.runAsync(
+    `INSERT INTO inspection_drafts (draft_key, data, updated_at) VALUES (?, ?, ?)
+     ON CONFLICT(draft_key) DO UPDATE SET data = excluded.data, updated_at = excluded.updated_at`,
+    [draftKey, JSON.stringify(data), now]
+  );
+}
+
+export async function loadDraftInspection(draftKey: string): Promise<Record<string, unknown> | null> {
+  const db = await getDatabase();
+  const row = await db.getFirstAsync<{ data: string }>(
+    'SELECT data FROM inspection_drafts WHERE draft_key = ?',
+    [draftKey]
+  );
+  return row ? JSON.parse(row.data) : null;
+}
+
+export async function clearDraftInspection(draftKey: string): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('DELETE FROM inspection_drafts WHERE draft_key = ?', [draftKey]);
+}
 ```
 
 - [ ] **Step 2: Commit**
@@ -2031,9 +2244,10 @@ import {
   updateLocalInspection,
   markPhotoUploaded,
 } from './database';
-import { isWifiConnected } from './network';
-import { API_BASE_URL } from './config';
-import * as SecureStore from 'expo-secure-store';
+import NetInfo from '@react-native-community/netinfo';
+
+// Send at most 50 inspections per POST /api/inspections/sync call (matches server MAX_BATCH_SIZE)
+const BATCH_SIZE = 50;
 
 const MAX_RETRIES = 5;
 
@@ -2042,8 +2256,9 @@ export async function syncPendingInspections(): Promise<{
   failed: number;
   skipped: number;
 }> {
-  const wifi = await isWifiConnected();
-  if (!wifi) return { synced: 0, failed: 0, skipped: 0 };
+  // Require any internet connectivity (not WiFi-only) — cellular data is fine for background sync
+  const state = await NetInfo.fetch();
+  if (!state.isConnected) return { synced: 0, failed: 0, skipped: 0 };
 
   const pending = await getLocalInspections('pending_sync') as Array<Record<string, unknown>>;
   const failed = await getLocalInspections('failed') as Array<Record<string, unknown>>;
@@ -2054,78 +2269,84 @@ export async function syncPendingInspections(): Promise<{
   let syncedCount = 0;
   let failedCount = 0;
 
-  // Prepare batch payload
-  const inspectionsPayload = [];
-  for (const inspection of toSync) {
-    const damages = await getDamagesForInspection(inspection.local_id as number);
-    inspectionsPayload.push({
-      local_id: inspection.local_id,
-      vehicle_assetnum: inspection.vehicle_assetnum,
-      vehicle_regno: inspection.vehicle_regno,
-      inspection_type: inspection.inspection_type,
-      status: inspection.status,
-      inspection_date: inspection.inspection_date,
-      mileage_reading: inspection.mileage_reading,
-      fuel_level: inspection.fuel_level,
-      cleanliness_interior: inspection.cleanliness_interior,
-      cleanliness_exterior: inspection.cleanliness_exterior,
-      exterior_condition: inspection.exterior_condition,
-      interior_condition: inspection.interior_condition,
-      functionality_check: inspection.functionality_check,
-      tire_condition: inspection.tire_condition,
-      safety_equipment: inspection.safety_equipment,
-      smell_condition: inspection.smell_condition,
-      overall_notes: inspection.overall_notes,
-      checklist_data: inspection.checklist_data ? JSON.parse(inspection.checklist_data as string) : null,
-      accessories_present: inspection.accessories_present ? JSON.parse(inspection.accessories_present as string) : null,
-      inspector_signature: inspection.inspector_signature,
-      customer_signature: inspection.customer_signature,
-      customer_acknowledged: inspection.customer_acknowledged === 1,
-      gps_latitude: inspection.gps_latitude,
-      gps_longitude: inspection.gps_longitude,
-      damages: damages,
-    });
+  // Process in batches to respect server MAX_BATCH_SIZE=50
+  for (let offset = 0; offset < toSync.length; offset += BATCH_SIZE) {
+    const batch = toSync.slice(offset, offset + BATCH_SIZE);
 
-    await updateLocalInspection(inspection.local_id as number, { sync_status: 'syncing' });
-  }
-
-  try {
-    const res = await apiFetch('/api/inspections/sync', {
-      method: 'POST',
-      body: JSON.stringify({ inspections: inspectionsPayload }),
-    });
-
-    if (!res.ok) throw new Error(`Sync API returned ${res.status}`);
-
-    const data = await res.json();
-
-    for (const result of data.results) {
-      if (result.status === 'synced') {
-        await updateLocalInspection(result.local_id, {
-          server_id: result.server_id,
-          sync_status: 'synced',
-          sync_error: null,
-        });
-        // Upload photos for this inspection
-        await uploadPhotosForInspection(result.local_id, result.server_id);
-        syncedCount++;
-      } else {
-        await updateLocalInspection(result.local_id, {
-          sync_status: 'failed',
-          sync_error: 'Server rejected inspection',
-        });
-        failedCount++;
-      }
-    }
-  } catch (error) {
-    // Mark all as failed
-    for (const inspection of toSync) {
-      await updateLocalInspection(inspection.local_id as number, {
-        sync_status: 'failed',
-        sync_error: error instanceof Error ? error.message : 'Unknown error',
+    // Prepare batch payload
+    const inspectionsPayload = [];
+    for (const inspection of batch) {
+      const damages = await getDamagesForInspection(inspection.local_id as number);
+      inspectionsPayload.push({
+        local_id: inspection.local_id,
+        client_uuid: inspection.client_uuid,   // idempotency key
+        vehicle_assetnum: inspection.vehicle_assetnum,
+        vehicle_regno: inspection.vehicle_regno,
+        inspection_type: inspection.inspection_type,
+        status: inspection.status,
+        inspection_date: inspection.inspection_date,
+        mileage_reading: inspection.mileage_reading,
+        fuel_level: inspection.fuel_level,
+        cleanliness_interior: inspection.cleanliness_interior,
+        cleanliness_exterior: inspection.cleanliness_exterior,
+        exterior_condition: inspection.exterior_condition,
+        interior_condition: inspection.interior_condition,
+        functionality_check: inspection.functionality_check,
+        tire_condition: inspection.tire_condition,
+        safety_equipment: inspection.safety_equipment,
+        smell_condition: inspection.smell_condition,
+        overall_notes: inspection.overall_notes,
+        checklist_data: inspection.checklist_data ? JSON.parse(inspection.checklist_data as string) : null,
+        accessories_present: inspection.accessories_present ? JSON.parse(inspection.accessories_present as string) : null,
+        inspector_signature: inspection.inspector_signature,
+        customer_signature: inspection.customer_signature,
+        customer_acknowledged: inspection.customer_acknowledged === 1,
+        gps_latitude: inspection.gps_latitude,
+        gps_longitude: inspection.gps_longitude,
+        damages: damages,
       });
+
+      await updateLocalInspection(inspection.local_id as number, { sync_status: 'syncing' });
     }
-    failedCount = toSync.length;
+
+    try {
+      const res = await apiFetch('/api/inspections/sync', {
+        method: 'POST',
+        body: JSON.stringify({ inspections: inspectionsPayload }),
+      });
+
+      if (!res.ok) throw new Error(`Sync API returned ${res.status}`);
+
+      const data = await res.json();
+
+      for (const result of data.results) {
+        if (result.status === 'synced') {
+          await updateLocalInspection(result.local_id, {
+            server_id: result.server_id,
+            sync_status: 'synced',
+            sync_error: null,
+          });
+          // Upload photos for this inspection
+          await uploadPhotosForInspection(result.local_id, result.server_id);
+          syncedCount++;
+        } else {
+          await updateLocalInspection(result.local_id, {
+            sync_status: 'failed',
+            sync_error: result.error || 'Server rejected inspection',
+          });
+          failedCount++;
+        }
+      }
+    } catch (error) {
+      // Mark this batch as failed
+      for (const inspection of batch) {
+        await updateLocalInspection(inspection.local_id as number, {
+          sync_status: 'failed',
+          sync_error: error instanceof Error ? error.message : 'Unknown error',
+        });
+      }
+      failedCount += batch.length;
+    }
   }
 
   return { synced: syncedCount, failed: failedCount, skipped: 0 };
@@ -2137,8 +2358,6 @@ async function uploadPhotosForInspection(
 ): Promise<void> {
   const photos = await getPhotosForInspection(localInspectionId) as Array<Record<string, unknown>>;
   const pending = photos.filter(p => p.uploaded === 0);
-
-  const token = await SecureStore.getItemAsync('gbcr_auth_token');
 
   for (const photo of pending) {
     try {
@@ -2158,11 +2377,9 @@ async function uploadPhotosForInspection(
       if (photo.gps_latitude) formData.append('gps_latitude', String(photo.gps_latitude));
       if (photo.gps_longitude) formData.append('gps_longitude', String(photo.gps_longitude));
 
-      const res = await fetch(`${API_BASE_URL}/api/inspections/photos/upload`, {
+      // Use apiFetch so the Authorization header is automatically attached (no manual token read)
+      const res = await apiFetch('/api/inspections/photos/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
         body: formData,
       });
 
@@ -2454,9 +2671,14 @@ Replace placeholder with full chat interface:
 - Message list (FlatList, inverted for newest at bottom)
 - Text input with send button
 - Quick prompt chips above input: "Fleet status", "Idle vehicles", "Upcoming maintenance"
-- No-WiFi banner: "Connect to WiFi to use AI Chat"
+- "Clear chat" action in header (resets message list to empty)
+- Offline banner when `!state.isConnected` (cellular and WiFi both supported — no WiFi-only restriction)
+- Conversation history bounded to the last **50 messages** in React state; older messages are discarded to prevent unbounded memory growth
 - SSE streaming: consume the existing `/api/ai/chat` endpoint which returns server-sent events
 - Parse SSE format: `data: {JSON}\n\n` lines, accumulate assistant message token by token
+- Use an `AbortController` tied to component unmount / "clear chat" to cancel in-flight SSE requests
+- On SSE error (`event: error` or network failure), show an inline error bubble with a "Retry" option
+- Reconnect with exponential backoff (1s → 2s → 4s, max 3 attempts) on transient network errors
 - Conversation stored in React state (not persisted — chat resets on app restart)
 
 - [ ] **Step 3: Verify chat works**
@@ -2551,16 +2773,94 @@ git commit -m "feat: add push notification registration and handling"
 
 **Files:**
 - Modify: `apps/mobile/app/(tabs)/alerts.tsx`
+- Modify: `apps/mobile/lib/database.ts` (add notifications table)
+
+- [ ] **Step 0: Add notification persistence to database.ts**
+
+Append to `apps/mobile/lib/database.ts` the notifications table and CRUD helpers:
+
+```typescript
+// -- Notification persistence --
+
+// Add to initializeDatabase():
+//   CREATE TABLE IF NOT EXISTS notifications (
+//     id INTEGER PRIMARY KEY AUTOINCREMENT,
+//     title TEXT NOT NULL,
+//     body TEXT,
+//     data TEXT,
+//     is_read INTEGER DEFAULT 0,
+//     received_at TEXT NOT NULL,
+//     expires_at TEXT
+//   );
+
+export async function saveNotification(notification: {
+  title: string;
+  body?: string;
+  data?: Record<string, unknown>;
+  expiresAt?: string;
+}): Promise<number> {
+  const db = await getDatabase();
+  const now = new Date().toISOString();
+  const result = await db.runAsync(
+    `INSERT INTO notifications (title, body, data, is_read, received_at, expires_at)
+     VALUES (?, ?, ?, 0, ?, ?)`,
+    [
+      notification.title,
+      notification.body ?? null,
+      notification.data ? JSON.stringify(notification.data) : null,
+      now,
+      notification.expiresAt ?? null,
+    ]
+  );
+  return result.lastInsertRowId;
+}
+
+export async function loadNotifications(): Promise<unknown[]> {
+  const db = await getDatabase();
+  return db.getAllAsync(
+    'SELECT * FROM notifications ORDER BY received_at DESC LIMIT 200'
+  );
+}
+
+export async function markNotificationRead(id: number): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync('UPDATE notifications SET is_read = 1 WHERE id = ?', [id]);
+}
+
+export async function cleanupExpiredNotifications(): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    `DELETE FROM notifications WHERE expires_at IS NOT NULL AND expires_at < ?`,
+    [new Date().toISOString()]
+  );
+}
+```
+
+Also add the `notifications` table creation to `initializeDatabase()`:
+
+```sql
+CREATE TABLE IF NOT EXISTS notifications (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  body TEXT,
+  data TEXT,
+  is_read INTEGER DEFAULT 0,
+  received_at TEXT NOT NULL,
+  expires_at TEXT
+);
+```
 
 - [ ] **Step 1: Build alerts screen**
 
 Replace placeholder with:
-- List of received notifications (stored in React state, populated from notification listener)
+- On mount: load persisted notifications from SQLite via `loadNotifications()`; call `cleanupExpiredNotifications()`
+- List of notifications (SQLite-backed, survives app restarts)
 - Each notification shows: title, body, timestamp
 - Unread indicator (bold text)
+- Tap to mark as read (`markNotificationRead(id)`)
 - Pull-to-refresh
 - Empty state: "No notifications yet"
-- Notification listener that adds new push notifications to the list
+- Notification listener saves incoming notifications via `saveNotification()` and appends to list state
 
 Use `Notifications.addNotificationReceivedListener()` and `Notifications.addNotificationResponseReceivedListener()` to capture notifications.
 
@@ -2717,7 +3017,56 @@ A full-screen overlay that shows "A new version is required" with a link to the 
 
 - [ ] **Step 2: Add version check to root layout**
 
-On app startup (in `_layout.tsx`), call `/api/app-config` and compare the response's `minVersion` against the current app version (from `expo-constants`). If `forceUpdate` is true and version is below minimum, show the `ForceUpdateScreen` overlay.
+On app startup (in `_layout.tsx`), call `/api/app-config` and compare the response's `minVersion` against the current app version (from `expo-constants`). The version check must degrade gracefully when offline:
+
+```typescript
+import * as Application from 'expo-application';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const MIN_VERSION_CACHE_KEY = 'gbcr_min_version_cache';
+
+async function checkAppVersion(): Promise<'ok' | 'update_required' | 'offline_warning'> {
+  let minVersion: string | null = null;
+  let forceUpdate = false;
+
+  try {
+    // Try live fetch with a 5s timeout to avoid blocking startup indefinitely
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`${API_BASE_URL}/api/app-config`, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (res.ok) {
+      const data = await res.json();
+      minVersion = data.data?.minVersion ?? null;
+      forceUpdate = data.data?.forceUpdate ?? false;
+      // Cache the latest values so we can use them offline
+      if (minVersion) {
+        await AsyncStorage.setItem(MIN_VERSION_CACHE_KEY, JSON.stringify({ minVersion, forceUpdate }));
+      }
+    }
+  } catch {
+    // Offline or network error — fall back to last-known cached value
+    const cached = await AsyncStorage.getItem(MIN_VERSION_CACHE_KEY).catch(() => null);
+    if (cached) {
+      try { ({ minVersion, forceUpdate } = JSON.parse(cached)); } catch { /* ignore */ }
+    }
+    // If no cache, show a non-blocking banner rather than blocking the app
+    if (!minVersion) return 'offline_warning';
+  }
+
+  if (!minVersion) return 'ok';
+
+  const currentVersion = Application.nativeApplicationVersion ?? '0.0.0';
+  const isBelow = currentVersion.localeCompare(minVersion, undefined, { numeric: true }) < 0;
+
+  return forceUpdate && isBelow ? 'update_required' : 'ok';
+}
+```
+
+- If the result is `'update_required'`, show the `ForceUpdateScreen` overlay (blocks app use).
+- If the result is `'offline_warning'`, show a dismissible banner "Could not check for updates — please connect to the internet." Do **not** block navigation.
+- If the result is `'ok'`, proceed normally.
 
 - [ ] **Step 3: Commit**
 
@@ -2818,6 +3167,89 @@ Ensure root `.gitignore` includes:
 git add -A
 git commit -m "chore: final integration cleanup for GBCR mobile app v1"
 ```
+
+---
+
+## Testing Strategy
+
+### Unit Tests (Jest + React Native Testing Library)
+
+- `apps/mobile/lib/api.ts` — mock `SecureStore` and `fetch`; test `refreshTokenIfNeeded` races (two concurrent calls → single HTTP request), malformed JWT → `clearToken`, expired token (no expiry window) → returns as-is
+- `apps/mobile/lib/database.ts` — use `expo-sqlite` in-memory mock; test `updateLocalInspection` rejects unknown fields (whitelist), `saveDraftInspection` round-trip, `saveNotification` → `loadNotifications` → `markNotificationRead`
+- `apps/web/src/app/api/inspections/sync/route.ts` — mock `getUserFromRequest` + `getPool`; test batch > 50 → 413, duplicate `client_uuid` → idempotent 200, `inspector_id` always equals JWT userId
+
+### Integration Tests (Jest + msw for HTTP mocking)
+
+- Auth flow: login → token stored → `/api/auth/me` validates → logout clears token
+- Sync flow: create local inspection → `syncPendingInspections()` → server returns `synced` → `sync_status='synced'` in SQLite
+- Photo flow: `savePhotoRecord` → sync marks inspection synced → `uploadPhotosForInspection` calls `/api/inspections/photos/upload` → `markPhotoUploaded`
+- Token refresh race: trigger two concurrent `apiFetch` calls when token < 2h until expiry → only one POST to `/api/auth/refresh`
+
+### E2E Tests (Detox on Android Emulator)
+
+- Login with valid credentials → inspection list visible
+- Create inspection (all 6 steps) → saved in SQLite with `sync_status='pending_sync'`
+- Simulate offline → pull-to-refresh → `skipped: 0` returned, status unchanged
+- Restore network → pull-to-refresh → inspection synced, `server_id` set
+- Force-update: mock `/api/app-config` returning `minVersion > currentVersion` → `ForceUpdateScreen` shown; block navigation
+- Push notification received while app is foregrounded → appears in Alerts tab and persists after restart
+
+### Pre-Merge Checks
+
+```bash
+# Type-check mobile
+cd apps/mobile && npx tsc --noEmit
+
+# Type-check web
+cd apps/web && npx tsc --noEmit
+
+# Lint
+npx eslint apps/
+
+# Unit + integration tests
+npx jest --coverage
+
+# Build web (CI gate)
+cd apps/web && npx next build
+```
+
+---
+
+## Pre-Deployment Checklist
+
+Before submitting a production build:
+
+### Environment & Secrets
+- [ ] All required env vars set in production `.env` (no placeholders): `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, `ONEDRIVE_DRIVE_ID`, `JWT_SECRET`, `DB_SERVER`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE`
+- [ ] `NODE_ENV=production` on the web server
+- [ ] `DB_ENCRYPT=true` and `DB_TRUST_SERVER_CERT` unset (or `false`) in production
+- [ ] SSO cookie `secure: true` verified (requires HTTPS)
+- [ ] `API_BASE_URL` in `apps/mobile/lib/config.ts` points to production domain (not `192.168.x.x`)
+
+### Schema
+- [ ] `client_uuid TEXT UNIQUE` column added to `inspections` table (for idempotency)
+- [ ] `inspection_drafts` table migration applied
+- [ ] `notifications` SQLite table included (mobile-side, no server migration needed)
+- [ ] `push_tokens` composite unique constraint `UNIQUE (user_id, expo_push_token)` verified
+
+### Security
+- [ ] File upload route: MIME allowlist confirmed, 10 MB limit enforced
+- [ ] `/api/inspections/sync` batch size limit 50 confirmed
+- [ ] All SQL queries use parameterised inputs (no string concatenation)
+- [ ] Error responses do not leak stack traces (check all `catch` blocks)
+- [ ] HTTPS enforced at reverse proxy / load balancer (HTTP → HTTPS redirect)
+
+### Mobile Build
+- [ ] `eas build --profile production --platform all` succeeds
+- [ ] iOS bundle identifier matches Apple Developer portal
+- [ ] Android package name matches Google Play console
+- [ ] Push notification certificates / keys configured in EAS dashboard
+- [ ] App version bumped in `app.json` (`version`, `ios.buildNumber`, `android.versionCode`)
+
+### Web Deployment
+- [ ] `npx next build` passes with zero errors
+- [ ] Health check endpoint responds after deploy (e.g. `GET /api/app-config`)
+- [ ] Rollback plan: previous Docker image tagged and available
 
 ---
 

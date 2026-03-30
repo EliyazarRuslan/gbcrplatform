@@ -60,6 +60,10 @@ Mobile App (Expo) → Next.js API (existing routes) → MSSQL (MAXDB76 + Platfor
 
 ### Authentication — Mobile Adaptation
 
+> **HTTPS is required.** All API traffic from the mobile app must be over HTTPS. The JWT is transmitted in the `Authorization` header; transmitting it over plain HTTP exposes it to interception. The reverse proxy / load balancer must enforce HTTPS-only.
+
+> **Offline token expiry:** When the device has been offline long enough that the stored JWT has expired, `apiFetch` will detect the expiry via `jwtDecode` before sending requests and clear the token, redirecting to the login screen. The user must re-authenticate when connectivity is restored — there is no way to silently refresh an already-expired token without a server round-trip.
+
 The existing web auth uses `httpOnly` cookies (`setTokenCookie()` in `src/lib/auth.ts`), which are incompatible with React Native (no browser cookie jar). Required backend changes:
 
 1. **Modify `/api/auth/login`** to return the JWT in the response body (e.g., `{ token, user }`) in addition to setting the cookie (backward-compatible with web)
@@ -155,11 +159,13 @@ Photos upload to a shared OneDrive via Microsoft Graph API, organized by vehicle
 ```
 GBCR Inspections/
 └── SLK1234A/
-    └── 2026-03-24_pre-rental/
+    └── 2026-03-24_pre-rental_456/   ← format: {date}_{inspection-type}_{server-inspection-id}
         ├── photo_001.jpg
         ├── photo_002.jpg
         └── damage_front_001.jpg
 ```
+
+> **Folder naming:** The folder path includes the server-assigned `inspection_id` (e.g. `_456`) to prevent collisions when the same vehicle has multiple inspections of the same type on the same day. The server constructs the folder path using the `server_id` returned from `/api/inspections/sync` before calling OneDrive upload.
 
 - **Azure AD app registration** with client credentials flow (application permissions: `Files.ReadWrite.All`). Client ID and secret stored as server environment variables.
 - **Server-side upload:** Mobile sends photo to Next.js API → API uploads to OneDrive via `@microsoft/microsoft-graph-client` → returns OneDrive URL. This avoids exposing Graph API credentials to the mobile app.
@@ -200,9 +206,10 @@ Push tokens stored in a new `PUSH_TOKENS` table linked to the user.
 
 **2. AI Chat Tab**
 - Chat interface (same GPT-4o-mini integration as web)
-- Conversation history
+- Conversation history (bounded to last 50 messages in-memory; cleared on restart)
 - Quick prompt buttons for common fleet queries
-- Requires WiFi connectivity
+- "Clear chat" action in header
+- Requires any internet connectivity (WiFi or cellular)
 
 **3. Alerts Tab**
 - Notification center (list of received push notifications)
@@ -282,7 +289,7 @@ Request body:
 }
 ```
 
-Response body:
+Response body (partial-failure semantics — HTTP 200 even when some items fail; inspect per-item `status`):
 ```json
 {
   "results": [
@@ -290,10 +297,21 @@ Response body:
       "local_id": 1,
       "server_id": 456,
       "status": "synced"
+    },
+    {
+      "local_id": 2,
+      "server_id": null,
+      "status": "failed",
+      "error": "vehicle_assetnum is required"
     }
   ]
 }
 ```
+
+- The outer HTTP status is **200 OK** as long as the request itself was valid (authenticated, within batch limit). Per-item success/failure is indicated by the `status` field (`"synced"` or `"failed"`).
+- A failed item's `error` string is safe to display to the user and log to the mobile console.
+- The mobile client must check each result independently and update `sync_status` per inspection: `"synced"` or `"failed"` with the error message stored in `sync_error`.
+- Items with `status: "failed"` will be retried on the next sync cycle (respecting the 5-retry backoff limit).
 
 Photos are uploaded separately after sync, referencing the `server_id` returned.
 
@@ -314,7 +332,7 @@ Multipart form data: `photo` (file), `inspection_id` (server ID), `photo_type`, 
 | created_at | DATETIME | Token registration time |
 | updated_at | DATETIME | Last updated |
 
-Unique constraint on `expo_push_token`. A user can have multiple devices (multiple tokens). Invalid tokens detected via Expo push receipts API and marked `is_active = 0`.
+Unique constraint on `(user_id, expo_push_token)` — a given token can only appear once per user, but the same physical device could theoretically be shared across users. A user can have multiple devices (multiple tokens). Invalid tokens detected via Expo push receipts API and marked `is_active = 0`.
 
 ### Schema Modifications to Existing Tables
 
@@ -349,10 +367,10 @@ Unique constraint on `expo_push_token`. A user can have multiple devices (multip
 
 ## Connectivity Model
 
-- App connects via **company WiFi** — no cellular data considerations
-- Offline mode for inspections when away from WiFi (parking basements, outdoor lots)
-- AI Chat and push notifications require WiFi connectivity
-- Sync engine checks for WiFi specifically (not just any network)
+- Offline mode for inspections when there is no network connectivity (parking basements, outdoor lots)
+- AI Chat and sync work on **any network connection** (WiFi or cellular) — there is no WiFi-only restriction
+- The sync engine requires `state.isConnected === true` (any network type); cellular data is acceptable for syncing inspection data and photos
+- Push notifications are delivered by APNs/FCM regardless of network type
 
 ## Permission Handling
 
@@ -368,7 +386,7 @@ The app requires several device permissions. Handle gracefully when denied:
 ## Error & Empty States
 
 - **No inspections:** Empty state with "Start your first inspection" CTA
-- **No WiFi for AI Chat:** "Connect to WiFi to use AI Chat" with retry button
+- **No internet for AI Chat:** "No internet connection — AI Chat requires internet access" with retry button
 - **Sync failed:** Red badge on offline queue, tap to see error details and retry
 - **Camera unavailable:** Disable photo button, allow text-only inspection with warning
 

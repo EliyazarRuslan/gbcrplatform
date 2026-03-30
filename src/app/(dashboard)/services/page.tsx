@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { SkeletonTable } from '@/components/ui/Skeleton';
@@ -15,7 +14,6 @@ interface WorkOrder {
 }
 
 export default function ServicesPage() {
-  const router = useRouter();
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -81,7 +79,11 @@ export default function ServicesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {workOrders.map(wo => (
+                  {workOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-8 text-center text-sm text-neutral-400">No work orders found</td>
+                    </tr>
+                  ) : workOrders.map(wo => (
                     <tr key={wo.wonum} className="border-b border-neutral-100 hover:bg-neutral-50">
                       <td className="px-4 py-3"><Link href={`/services/${wo.wonum}`} className="text-blue-600 hover:underline font-medium">{wo.wonum}</Link></td>
                       <td className="px-4 py-3 truncate max-w-[250px]">{wo.description}</td>
@@ -113,10 +115,10 @@ export default function ServicesPage() {
               </div>
             ) : (
               workOrders.map((wo) => (
-                <div
+                <Link
                   key={wo.wonum}
-                  onClick={() => router.push(`/services/${wo.wonum}`)}
-                  className="bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                  href={`/services/${wo.wonum}`}
+                  className="block bg-white rounded-xl border border-neutral-200/80 p-4 active:bg-neutral-50"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -133,7 +135,7 @@ export default function ServicesPage() {
                     <span className="text-neutral-400">{formatDate(wo.reportdate)}</span>
                     <span className="font-medium text-neutral-700">{formatCurrency((wo.actlabcost || 0) + (wo.actmatcost || 0))}</span>
                   </div>
-                </div>
+                </Link>
               ))
             )}
             {/* Mobile pagination */}

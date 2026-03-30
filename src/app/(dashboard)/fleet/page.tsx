@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   useReactTable, getCoreRowModel, getSortedRowModel,
   flexRender, ColumnDef, SortingState,
@@ -68,7 +67,6 @@ const CATEGORY_COLORS: Record<number, string> = {
 };
 
 export default function FleetPage() {
-  const router = useRouter();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, hiredOut: 0, notReady: 0, idle: 0, booked: 0, utilizationRate: 0 });
   const [loading, setLoading] = useState(true);
@@ -356,10 +354,10 @@ export default function FleetPage() {
               vehicles.map((v) => {
                 const color = v.category_id ? (CATEGORY_COLORS[v.category_id] || 'bg-neutral-50 text-neutral-600 border-neutral-200') : null;
                 return (
-                  <div
+                  <Link
                     key={v.assetnum}
-                    onClick={() => router.push(`/fleet/${v.assetnum}`)}
-                    className="bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                    href={`/fleet/${v.assetnum}`}
+                    className="block bg-white rounded-xl border border-neutral-200/80 p-4 active:bg-neutral-50"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
@@ -380,7 +378,7 @@ export default function FleetPage() {
                     {v.customer_code && (
                       <p className="text-xs text-neutral-400 mt-1">Customer: {v.customer_code}</p>
                     )}
-                  </div>
+                  </Link>
                 );
               })
             )}

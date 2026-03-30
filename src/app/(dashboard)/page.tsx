@@ -27,28 +27,28 @@ interface FleetStats {
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<FleetStats | null>(null);
+  const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/fleet/stats')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setStats(data.data);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch('/api/fleet/stats').then(r => r.json()),
+      fetch('/api/auth/me').then(r => r.json()),
+    ]).then(([statsData, userData]) => {
+      if (statsData.success) setStats(statsData.data);
+      if (userData.success) setUserName(userData.data.full_name?.split(' ')[0] || '');
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
       <div className="space-y-6 animate-fade-in">
-        <h1 className="text-2xl font-bold text-neutral-900">Dashboard</h1>
+        <div className="skeleton h-28 w-full rounded-2xl" />
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           <SkeletonChart /><SkeletonChart />
         </div>
       </div>
@@ -58,24 +58,34 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-sidebar via-[#151d35] to-sidebar p-5 sm:p-6 text-white">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-primary/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-1/3 w-48 h-48 bg-primary/5 rounded-full blur-2xl translate-y-1/2" />
+      <div className="relative overflow-hidden rounded-2xl bg-charcoal p-6 sm:p-7 text-white">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-primary/[0.04] rounded-full blur-[60px] translate-y-1/2" />
+        <div className="absolute inset-0 industrial-pattern opacity-30" />
         <div className="relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Fleet Overview</h1>
-              <p className="text-neutral-400 text-sm mt-1">Real-time vehicle status and fleet performance</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div suppressHydrationWarning>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight" suppressHydrationWarning>
+                {(() => {
+                  const hour = new Date().getHours();
+                  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+                  return userName ? `${greeting}, ${userName}` : greeting;
+                })()}
+              </h1>
+              <p className="text-neutral-400 text-[13px] mt-1">Real-time vehicle status and fleet performance</p>
             </div>
-            <p className="text-xs text-neutral-500 hidden sm:block font-mono" suppressHydrationWarning>
-              {new Date().toLocaleDateString('en-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-            </p>
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot" />
+              <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider" suppressHydrationWarning>
+                {new Date().toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 stagger-in">
         <StatCard
           title="Total Fleet"
           value={stats?.total?.toLocaleString() || '0'}
@@ -116,61 +126,35 @@ export default function DashboardPage() {
       </div>
 
       {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {stats && <FleetStatusChart stats={stats} />}
         {stats && <FleetBreakdownChart stats={stats} />}
       </div>
 
       {/* Quick Links */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <a href="/fleet" className="group bg-white rounded-xl border border-neutral-200/80 p-5 hover:shadow-lg hover:shadow-blue-500/5 hover:border-blue-200/60 transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-100 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h8m-8 4h8m-4 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z" />
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-in">
+        {[
+          { href: '/fleet', label: 'Fleet Management', sub: `${stats?.total?.toLocaleString()} vehicles`, bgClass: 'bg-blue-500', icon: 'M8 7h8m-8 4h8m-4 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z' },
+          { href: '/bookings', label: 'Bookings', sub: 'Manage reservations', bgClass: 'bg-emerald-500', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+          { href: '/settings/users', label: 'User Management', sub: 'Manage staff accounts', bgClass: 'bg-violet-500', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+        ].map((link) => (
+          <a key={link.href} href={link.href} className="group card-industrial p-5">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg ${link.bgClass} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
+                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={link.icon} />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-neutral-900 text-[13px] group-hover:text-charcoal transition-colors">{link.label}</p>
+                <p className="text-[11px] text-neutral-400 mt-0.5">{link.sub}</p>
+              </div>
+              <svg className="w-4 h-4 text-neutral-300 group-hover:text-neutral-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-            <div>
-              <p className="font-semibold text-neutral-800 group-hover:text-blue-700 transition-colors text-sm">Fleet Management</p>
-              <p className="text-xs text-neutral-400 mt-0.5">{stats?.total?.toLocaleString()} vehicles</p>
-            </div>
-            <svg className="w-4 h-4 text-neutral-300 ml-auto group-hover:text-blue-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </a>
-        <a href="/bookings" className="group bg-white rounded-xl border border-neutral-200/80 p-5 hover:shadow-lg hover:shadow-emerald-500/5 hover:border-emerald-200/60 transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-neutral-800 group-hover:text-emerald-700 transition-colors text-sm">Bookings</p>
-              <p className="text-xs text-neutral-400 mt-0.5">Manage reservations</p>
-            </div>
-            <svg className="w-4 h-4 text-neutral-300 ml-auto group-hover:text-emerald-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </a>
-        <a href="/settings/users" className="group bg-white rounded-xl border border-neutral-200/80 p-5 hover:shadow-lg hover:shadow-violet-500/5 hover:border-violet-200/60 transition-all duration-300">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-violet-50 text-violet-600 group-hover:bg-violet-100 transition-colors">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-neutral-800 group-hover:text-violet-700 transition-colors text-sm">User Management</p>
-              <p className="text-xs text-neutral-400 mt-0.5">Manage staff accounts</p>
-            </div>
-            <svg className="w-4 h-4 text-neutral-300 ml-auto group-hover:text-violet-400 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-        </a>
+          </a>
+        ))}
       </div>
     </div>
   );

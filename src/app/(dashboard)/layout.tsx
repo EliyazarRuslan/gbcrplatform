@@ -67,7 +67,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Header user={user} />
         </div>
         {/* Mobile header */}
-        <MobileHeader user={user} />
+        <div className="md:hidden">
+          <MobileHeader user={user} />
+        </div>
         <main className="flex-1 overflow-y-auto p-3 md:p-6 pb-[calc(var(--mobile-nav-height)+1rem)] md:pb-6">
           {children}
         </main>

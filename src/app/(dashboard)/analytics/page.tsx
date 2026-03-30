@@ -10,6 +10,13 @@ const AnalyticsCharts = dynamic(() => import('@/components/analytics/AnalyticsCh
   loading: () => <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">{Array.from({ length: 4 }).map((_, i) => <SkeletonChart key={i} />)}</div>,
 });
 
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return '-';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '-';
+  return date.toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
 interface AnalyticsData {
   revenue: { month: string; invoices: number; revenue: number }[];
   agreementStatus: { status: string; count: number; total_invoiced: number }[];
@@ -196,7 +203,7 @@ export default function AnalyticsPage() {
                 <td className="px-5 py-3 text-neutral-600 truncate max-w-[200px]">{o.customer_name}</td>
                 <td className="px-5 py-3 text-neutral-600">{o.invoice_count}</td>
                 <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(o.total_invoiced)}</td>
-                <td className="px-5 py-3 text-right text-neutral-400">{o.last_invoice ? new Date(o.last_invoice).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' }) : '-'}</td>
+                <td className="px-5 py-3 text-right text-neutral-400">{formatDate(o.last_invoice)}</td>
               </tr>
             ))}
             {(data?.topOrders || []).length === 0 && (
@@ -222,7 +229,13 @@ export default function AnalyticsPage() {
             </tr>
           </thead>
           <tbody>
-            {(data?.agreementStatus || []).map(s => (
+            {(data?.agreementStatus || []).length === 0 ? (
+              <tr>
+                <td className="px-5 py-3"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-neutral-100 text-neutral-600">No agreement status</span></td>
+                <td className="px-5 py-3 font-medium text-neutral-700">-</td>
+                <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(0)}</td>
+              </tr>
+            ) : (data?.agreementStatus || []).map(s => (
               <tr key={s.status} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                 <td className="px-5 py-3">
                   <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider ${

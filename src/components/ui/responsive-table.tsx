@@ -29,14 +29,15 @@ export default function ResponsiveTable<T extends Record<string, unknown>>({
   mobileCard,
   onRowClick,
 }: ResponsiveTableProps<T>) {
+  const safePageSize = pagination && pagination.pageSize > 0 ? pagination.pageSize : 1;
   const totalPages = pagination
-    ? Math.ceil(pagination.total / pagination.pageSize)
+    ? Math.ceil(pagination.total / safePageSize)
     : 1;
   const startItem = pagination
-    ? (pagination.page - 1) * pagination.pageSize + 1
+    ? (pagination.page - 1) * safePageSize + 1
     : 1;
   const endItem = pagination
-    ? Math.min(pagination.page * pagination.pageSize, pagination.total)
+    ? Math.min(pagination.page * safePageSize, pagination.total)
     : data.length;
 
   return (

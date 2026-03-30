@@ -29,8 +29,17 @@ export async function GET(request: NextRequest) {
   const savedState = request.cookies.get('sso_state')?.value;
   const stateParts = stateParam.split('|');
   const stateToken = stateParts[0];
-  const redirect = stateParts[1] || '/';
-  const userOrigin = stateParts[2] || '';
+  // Decode redirect and origin from base64 JSON (new format) or fall back to legacy pipe-split format
+  let redirect = '/';
+  let userOrigin = '';
+  try {
+    const decoded = JSON.parse(Buffer.from(stateParts[1] || '', 'base64url').toString('utf-8'));
+    redirect = decoded.redirect || '/';
+    userOrigin = decoded.origin || '';
+  } catch {
+    redirect = stateParts[1] || '/';
+    userOrigin = stateParts[2] || '';
+  }
 
   if (!savedState || savedState !== stateToken) {
     console.error('SSO state mismatch');
@@ -49,7 +58,7 @@ export async function GET(request: NextRequest) {
 
     try {
       const profile = await getUserProfile(tokens.access_token);
-      userEmail = (profile.mail || profile.userPrincipalName).toLowerCase().trim();
+      userEmail = (profile.mail ?? profile.userPrincipalName ?? '').toLowerCase().trim() || undefined;
       userName = profile.displayName;
     } catch {
       // Fall back to ID token claims
@@ -135,8 +144,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Redirect to dashboard using the user's original origin (not the callback origin)
-    const baseUrl = userOrigin || request.nextUrl.origin;
-    const redirectUrl = new URL(redirect || '/', baseUrl);
+    // Validate redirect: must be relative (starts with '/' and not '//')
+    const safeRedirect = /^\/(?!\/)/.test(redirect) ? redirect : '/';
+    // Validate origin: must match the server's own origin
+    const serverOrigin = request.nextUrl.origin;
+    const safeOrigin = (userOrigin && userOrigin === serverOrigin) ? userOrigin : serverOrigin;
+    const redirectUrl = new URL(safeRedirect, safeOrigin);
 
     const response = NextResponse.redirect(redirectUrl);
 
@@ -145,7 +158,8 @@ export async function GET(request: NextRequest) {
 
     return setTokenCookie(response, token);
   } catch (err) {
-    console.error('SSO callback error:', err);
+    const message = err instanceof Error ? err.message : String(err);
+    console.error('SSO callback error:', err instanceof Error ? err.name : 'Error', message);
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('error', 'sso_error');
     return NextResponse.redirect(loginUrl);

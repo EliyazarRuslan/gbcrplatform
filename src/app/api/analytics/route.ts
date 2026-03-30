@@ -113,17 +113,23 @@ export async function GET() {
     const topNames = topCustomersResult.recordset.slice(0, 3).map((c: { customer_id: string }) => c.customer_id);
     let revenueByCustomer: { month: string; segment: string; revenue: number }[] = [];
     if (topNames.length > 0) {
-      const segResult = await ax.request().query(`
+      const segRequest = ax.request();
+      // Build parameterized IN clause to prevent SQL injection
+      const paramPlaceholders = topNames.map((_: string, i: number) => `@p${i}`).join(', ');
+      topNames.forEach((name: string, i: number) => segRequest.input(`p${i}`, name));
+      // Build parameterized CASE expression
+      const caseWhen = topNames.map((_: string, i: number) => `WHEN s.CUSTACCOUNT = @p${i} THEN s.SALESNAME`).join(' ');
+      const segResult = await segRequest.query(`
         SELECT
           FORMAT(i.INVOICEDATE, 'yyyy-MM') as month,
-          CASE WHEN s.CUSTACCOUNT IN ('${topNames.join("','")}') THEN s.SALESNAME ELSE 'Others' END as segment,
+          CASE ${caseWhen} ELSE 'Others' END as segment,
           SUM(i.INVOICEAMOUNTMST) as revenue
         FROM CUSTINVOICEJOUR i
         INNER JOIN SALESTABLE s ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
         WHERE i.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1
           AND i.INVOICEDATE >= DATEADD(MONTH, -12, GETDATE())
         GROUP BY FORMAT(i.INVOICEDATE, 'yyyy-MM'),
-          CASE WHEN s.CUSTACCOUNT IN ('${topNames.join("','")}') THEN s.SALESNAME ELSE 'Others' END
+          CASE ${caseWhen} ELSE 'Others' END
         ORDER BY month, segment
       `);
       revenueByCustomer = segResult.recordset;

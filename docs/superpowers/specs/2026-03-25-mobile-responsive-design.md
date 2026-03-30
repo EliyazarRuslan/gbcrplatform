@@ -224,26 +224,31 @@ Create a manual service worker at `public/sw.js` (do NOT use `next-pwa` — it i
 - Register the service worker from a client component in the root layout via `useEffect` with `'serviceWorker' in navigator` check
 
 ### Meta Tags
-Use Next.js Metadata API in `src/app/layout.tsx` (the root layout already uses `export const metadata`). Do NOT add raw `<meta>` tags — extend the existing metadata export:
+Use Next.js Metadata API in `src/app/layout.tsx`. In **Next.js 14+**, `viewport` is **not** part of `Metadata` — it must be exported separately as a `Viewport` object. Mixing `viewport` into `metadata` will cause a build warning and the field will be silently ignored.
 
 ```typescript
+// src/app/layout.tsx
+import type { Metadata, Viewport } from 'next';
+
 export const metadata: Metadata = {
   // ...existing fields...
   manifest: '/manifest.json',
-  themeColor: '#d4941c',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
     title: 'GBCR',
   },
-  viewport: {
-    width: 'device-width',
-    initialScale: 1,
-    viewportFit: 'cover',  // required for safe area insets
-  },
   icons: {
     apple: '/icons/apple-touch-icon.png',
   },
+};
+
+// Separate named export — required by Next.js 14+ for viewport configuration
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',  // required for safe area insets (notch / Dynamic Island)
+  themeColor: '#d4941c',
 };
 ```
 

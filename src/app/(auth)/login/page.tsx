@@ -22,11 +22,16 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPasswordLogin, setShowPasswordLogin] = useState(false);
+  const [ssoErrorDismissed, setSsoErrorDismissed] = useState(false);
 
   // Check for SSO error from callback redirect
   const ssoError = searchParams.get('error');
-  const ssoErrorMessage = ssoError ? SSO_ERRORS[ssoError] || 'An unexpected error occurred.' : '';
-  const redirectPath = searchParams.get('redirect') || '/';
+  const rawSsoErrorMessage = ssoError ? SSO_ERRORS[ssoError] || 'An unexpected error occurred.' : '';
+  const ssoErrorMessage = ssoErrorDismissed ? '' : rawSsoErrorMessage;
+
+  // Validate redirect path: must be relative, start with '/', not start with '//'
+  const rawRedirect = searchParams.get('redirect') || '/';
+  const redirectPath = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : '/';
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -109,7 +114,10 @@ function LoginForm() {
         <div className="flex items-center gap-3 my-6">
           <div className="flex-1 h-px bg-neutral-100" />
           <button
-            onClick={() => setShowPasswordLogin(!showPasswordLogin)}
+            onClick={() => {
+            setShowPasswordLogin(!showPasswordLogin);
+            setSsoErrorDismissed(true);
+          }}
             className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors uppercase tracking-wider"
           >
             {showPasswordLogin ? 'Hide' : 'or use password'}
@@ -130,7 +138,7 @@ function LoginForm() {
                 autoComplete="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setSsoErrorDismissed(true); }}
                 className="w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3 text-[14px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-white transition-all duration-200"
                 placeholder="you@goldbell.com.sg"
               />

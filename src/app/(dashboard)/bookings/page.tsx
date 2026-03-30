@@ -154,10 +154,12 @@ export default function BookingsPage() {
               </div>
             ) : (
               bookings.map((b) => (
-                <div
+                <button
                   key={b.id}
+                  type="button"
                   onClick={() => router.push(`/fleet/${b.assetnum}`)}
-                  className="bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                  aria-label={`Booking for ${b.assetnum}, ${b.customer_name}, status ${b.status}`}
+                  className="w-full text-left bg-white rounded-xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -177,7 +179,7 @@ export default function BookingsPage() {
                       <span className="text-xs text-neutral-400">{(b as unknown as Record<string, string>).created_by_name}</span>
                     )}
                   </div>
-                </div>
+                </button>
               ))
             )}
           </div>

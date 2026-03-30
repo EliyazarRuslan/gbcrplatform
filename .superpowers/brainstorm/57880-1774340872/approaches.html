@@ -2,7 +2,7 @@
 <p class="subtitle">Field-focused Expo app — Inspections, AI Chat, Push Notifications</p>
 
 <div class="options">
-  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+  <button class="option" data-choice="a" aria-pressed="false">
     <div class="letter">A</div>
     <div class="content">
       <h3>Monorepo — Shared Code</h3>
@@ -27,9 +27,9 @@
         </div>
       </div>
     </div>
-  </div>
+  </button>
 
-  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+  <button class="option" data-choice="b" aria-pressed="false">
     <div class="letter">B</div>
     <div class="content">
       <h3>Separate Repo — Independent App</h3>
@@ -54,9 +54,9 @@
         </div>
       </div>
     </div>
-  </div>
+  </button>
 
-  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+  <button class="option" data-choice="c" aria-pressed="false">
     <div class="letter">C</div>
     <div class="content">
       <h3>Expo in Subfolder — Lightweight Integration</h3>
@@ -81,8 +81,31 @@
         </div>
       </div>
     </div>
-  </div>
+  </button>
 </div>
+
+<script>
+  function toggleSelect(element) {
+    document.querySelectorAll('.option').forEach(function(opt) {
+      opt.classList.remove('selected');
+      opt.setAttribute('aria-pressed', 'false');
+    });
+    element.classList.add('selected');
+    element.setAttribute('aria-pressed', 'true');
+  }
+
+  document.querySelector('.options').addEventListener('click', function(e) {
+    var option = e.target.closest('.option');
+    if (option) toggleSelect(option);
+  });
+
+  document.querySelector('.options').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      var option = e.target.closest('.option');
+      if (option) { e.preventDefault(); toggleSelect(option); }
+    }
+  });
+</script>
 
 <div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border-left: 4px solid #6366f1;">
   <h3 style="margin-top:0; color: #6366f1;">Recommendation: Option A — Monorepo</h3>

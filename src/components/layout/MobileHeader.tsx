@@ -30,8 +30,16 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
   }, []);
 
   const handleSignOut = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' });
+      if (response.ok) {
+        router.push('/login');
+      } else {
+        console.error('Sign out failed:', response.status);
+      }
+    } catch (err) {
+      console.error('Sign out error:', err);
+    }
   };
 
   const initials = user.full_name
@@ -52,7 +60,8 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
       </div>
 
       <div className="flex items-center gap-2.5">
-        <button aria-label="Notifications" className="relative p-2 text-neutral-400 hover:text-neutral-600 transition-colors rounded-lg hover:bg-neutral-50">
+        {/* TODO: wire onNotificationsClick prop when notifications panel is implemented */}
+        <button aria-label="Notifications" disabled aria-disabled="true" className="relative p-2 text-neutral-400 hover:text-neutral-600 transition-colors rounded-lg hover:bg-neutral-50 opacity-60">
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
@@ -72,7 +81,7 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
             <div className="absolute right-0 top-11 w-52 bg-white rounded-xl shadow-xl shadow-black/[0.06] border border-neutral-200 py-1 z-50 animate-scale-in">
               <div className="px-4 py-2.5 border-b border-neutral-100">
                 <p className="text-[13px] font-medium text-neutral-800 truncate">{user.full_name}</p>
-                <p className="text-[10px] text-neutral-400 uppercase tracking-wider">{user.role.replace('_', ' ')}</p>
+                <p className="text-[10px] text-neutral-400 uppercase tracking-wider">{user.role.replace(/_/g, ' ')}</p>
               </div>
               <button
                 onClick={() => { setMenuOpen(false); router.push('/change-password'); }}

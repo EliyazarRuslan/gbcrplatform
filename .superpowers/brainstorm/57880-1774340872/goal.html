@@ -2,32 +2,57 @@
 <p class="subtitle">This shapes the entire architecture, scope, and timeline</p>
 
 <div class="options">
-  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+  <button class="option" data-choice="a" aria-pressed="false">
     <div class="letter">A</div>
     <div class="content">
       <h3>Full Parity</h3>
       <p>Rebuild the entire GBCR platform as native mobile apps — fleet management, bookings, inspections, analytics, AI insights, customer management, and admin. Everything the web app does, but on mobile.</p>
     </div>
-  </div>
-  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+  </button>
+  <button class="option" data-choice="b" aria-pressed="false">
     <div class="letter">B</div>
     <div class="content">
       <h3>Field-Focused</h3>
       <p>Mobile apps for field staff — inspections (with camera/GPS), bookings, fleet status lookups. Admin, analytics, and heavy management stay on the web where they belong.</p>
     </div>
-  </div>
-  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+  </button>
+  <button class="option" data-choice="c" aria-pressed="false">
     <div class="letter">C</div>
     <div class="content">
       <h3>Customer-Facing</h3>
       <p>A separate app for rental customers — browse vehicles, make bookings, view their agreements, track active rentals. Distinct from the internal staff platform.</p>
     </div>
-  </div>
-  <div class="option" data-choice="d" onclick="toggleSelect(this)">
+  </button>
+  <button class="option" data-choice="d" aria-pressed="false">
     <div class="letter">D</div>
     <div class="content">
       <h3>Hybrid (Staff + Customer)</h3>
       <p>Two apps: one for field staff (inspections, bookings, fleet) and one for customers (browse, book, track). Each focused on its audience.</p>
     </div>
-  </div>
+  </button>
 </div>
+
+<script>
+  (function() {
+    function toggleSelect(element) {
+      document.querySelectorAll('.options .option').forEach(function(opt) {
+        opt.classList.remove('selected');
+        opt.setAttribute('aria-pressed', 'false');
+      });
+      element.classList.add('selected');
+      element.setAttribute('aria-pressed', 'true');
+    }
+
+    document.querySelector('.options').addEventListener('click', function(e) {
+      var option = e.target.closest('.option');
+      if (option) toggleSelect(option);
+    });
+
+    document.querySelector('.options').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+        var option = e.target.closest('.option');
+        if (option) { e.preventDefault(); toggleSelect(option); }
+      }
+    });
+  })();
+</script>

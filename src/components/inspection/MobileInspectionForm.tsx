@@ -23,6 +23,11 @@ export default function MobileInspectionForm({ children }: MobileInspectionFormP
   const isFirst = currentStep === 0;
   const isLast = currentStep === totalSteps - 1;
 
+  // Guard: nothing to render if no children were provided
+  if (totalSteps === 0) {
+    return <div className="text-center text-sm text-neutral-400 py-12">No steps configured.</div>;
+  }
+
   return (
     <div className="flex flex-col min-h-[calc(100vh-var(--mobile-nav-height,4rem)-8rem)]">
       {/* Progress bar */}

@@ -39,7 +39,7 @@
           <div style="background: white; border-radius: 12px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);">
             <div style="font-size: 13px; font-weight: 600; color: #333; margin-bottom: 10px;">Recent Inspections</div>
             <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-              <div style="width: 36px; height: 36px; background: #dbeafe; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="width: 36px; height: 36px; background: #dbeafe; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;"><span role="img" aria-label="Vehicle">🚗</span></div>
               <div style="margin-left: 10px; flex: 1;">
                 <div style="font-size: 13px; font-weight: 600; color: #333;">SLK 1234 A</div>
                 <div style="font-size: 11px; color: #888;">Pre-Rental · Toyota Corolla</div>
@@ -47,7 +47,7 @@
               <div style="font-size: 11px; color: #10b981; font-weight: 600;">Done</div>
             </div>
             <div style="display: flex; align-items: center; padding: 10px 0; border-bottom: 1px solid #f0f0f0;">
-              <div style="width: 36px; height: 36px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="width: 36px; height: 36px; background: #fef3c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;"><span role="img" aria-label="Vehicle">🚗</span></div>
               <div style="margin-left: 10px; flex: 1;">
                 <div style="font-size: 13px; font-weight: 600; color: #333;">SBA 5678 B</div>
                 <div style="font-size: 11px; color: #888;">Post-Return · Honda Civic</div>
@@ -55,7 +55,7 @@
               <div style="font-size: 11px; color: #f59e0b; font-weight: 600;">Draft</div>
             </div>
             <div style="display: flex; align-items: center; padding: 10px 0;">
-              <div style="width: 36px; height: 36px; background: #fce4ec; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;">🚗</div>
+              <div style="width: 36px; height: 36px; background: #fce4ec; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 14px;"><span role="img" aria-label="Vehicle">🚗</span></div>
               <div style="margin-left: 10px; flex: 1;">
                 <div style="font-size: 13px; font-weight: 600; color: #333;">SGP 9012 C</div>
                 <div style="font-size: 11px; color: #888;">Ad-Hoc · Hyundai Avante</div>
@@ -66,25 +66,25 @@
         </div>
 
         <!-- Tab bar -->
-        <div style="display: flex; justify-content: space-around; padding: 10px 0 24px; background: white; border-top: 1px solid #eee;">
-          <div style="text-align: center;">
-            <div style="font-size: 20px;">📋</div>
-            <div style="font-size: 10px; color: #6366f1; font-weight: 600; margin-top: 2px;">Inspections</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-size: 20px;">💬</div>
-            <div style="font-size: 10px; color: #888; margin-top: 2px;">AI Chat</div>
-          </div>
-          <div style="text-align: center; position: relative;">
-            <div style="font-size: 20px;">🔔</div>
-            <div style="position: absolute; top: -2px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center;">2</div>
-            <div style="font-size: 10px; color: #888; margin-top: 2px;">Alerts</div>
-          </div>
-          <div style="text-align: center;">
-            <div style="font-size: 20px;">👤</div>
-            <div style="font-size: 10px; color: #888; margin-top: 2px;">Profile</div>
-          </div>
-        </div>
+        <nav role="tablist" aria-label="App navigation" style="display: flex; justify-content: space-around; padding: 10px 0 24px; background: white; border-top: 1px solid #eee;">
+          <button role="tab" aria-selected="true" style="text-align: center; background: none; border: none; cursor: pointer; padding: 0;">
+            <span role="img" aria-label="Inspections" style="font-size: 20px; display: block;">📋</span>
+            <span style="font-size: 10px; color: #6366f1; font-weight: 600; margin-top: 2px; display: block;">Inspections</span>
+          </button>
+          <button role="tab" aria-selected="false" style="text-align: center; background: none; border: none; cursor: pointer; padding: 0;">
+            <span role="img" aria-label="AI Chat" style="font-size: 20px; display: block;">💬</span>
+            <span style="font-size: 10px; color: #888; margin-top: 2px; display: block;">AI Chat</span>
+          </button>
+          <button role="tab" aria-selected="false" style="text-align: center; position: relative; background: none; border: none; cursor: pointer; padding: 0;">
+            <span role="img" aria-label="Alerts" style="font-size: 20px; display: block;">🔔</span>
+            <span aria-label="2 unread alerts" style="position: absolute; top: -2px; right: -4px; background: #ef4444; color: white; border-radius: 50%; width: 16px; height: 16px; font-size: 9px; display: flex; align-items: center; justify-content: center;">2</span>
+            <span style="font-size: 10px; color: #888; margin-top: 2px; display: block;">Alerts</span>
+          </button>
+          <button role="tab" aria-selected="false" style="text-align: center; background: none; border: none; cursor: pointer; padding: 0;">
+            <span role="img" aria-label="Profile" style="font-size: 20px; display: block;">👤</span>
+            <span style="font-size: 10px; color: #888; margin-top: 2px; display: block;">Profile</span>
+          </button>
+        </nav>
       </div>
     </div>
   </div>

@@ -35,7 +35,12 @@ export default function AnalyticsCharts({ data }: Props) {
 
   // Build stacked bar data for revenue by customer segment
   const segments = [...new Set(data.revenueByCustomer.map(r => r.segment))];
-  const months = [...new Set(data.revenueByCustomer.map(r => r.month))].sort();
+  // Sort months chronologically (ISO yyyy-MM strings sort correctly lexicographically, but parse to be explicit)
+  const months = [...new Set(data.revenueByCustomer.map(r => r.month))].sort((a, b) => {
+    const dateA = new Date(a + '-01').getTime();
+    const dateB = new Date(b + '-01').getTime();
+    return dateA - dateB;
+  });
   const stackedData = months.map(m => {
     const row: Record<string, string | number> = { month: m };
     segments.forEach(seg => {

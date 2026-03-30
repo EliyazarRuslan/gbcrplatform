@@ -6,14 +6,16 @@ export async function GET(request: NextRequest) {
   // Generate CSRF state token
   const state = crypto.randomBytes(32).toString('hex');
 
-  // Store redirect path and the user's origin in state
-  const redirect = request.nextUrl.searchParams.get('redirect') || '/';
+  // Validate redirect: must be a relative path starting with '/' and not starting with '//'
+  const rawRedirect = request.nextUrl.searchParams.get('redirect') || '/';
+  const redirect = /^\/(?!\/)/.test(rawRedirect) ? rawRedirect : '/';
+
   const origin = request.headers.get('referer')
     ? new URL(request.headers.get('referer')!).origin
     : request.nextUrl.origin;
 
-  // state format: stateToken|redirect|origin
-  const stateWithRedirect = `${state}|${redirect}|${origin}`;
+  // Encode state components as base64 JSON to avoid '|' collision
+  const stateWithRedirect = `${state}|${Buffer.from(JSON.stringify({ redirect, origin })).toString('base64url')}`;
 
   const authUrl = getAuthorizationUrl(stateWithRedirect);
 
@@ -21,7 +23,7 @@ export async function GET(request: NextRequest) {
   response.cookies.set('sso_state', state, {
     httpOnly: true,
     sameSite: 'lax',
-    secure: false,
+    secure: process.env.NODE_ENV === 'production',
     maxAge: 600,
     path: '/',
   });
