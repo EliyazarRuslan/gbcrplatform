@@ -105,7 +105,7 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
   );
 
   return (
-    <aside className={`hidden md:flex sidebar-gradient text-white flex-col transition-all duration-300 ${collapsed ? 'w-[60px]' : 'w-[240px]'}`}>
+    <aside className={`hidden md:flex sidebar-gradient text-white flex-col transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
       {sidebarContent}
     </aside>
   );

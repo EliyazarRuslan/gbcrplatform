@@ -29,7 +29,7 @@ export default function StatCard({ title, value, subtitle, icon, color, trend }:
           </svg>
         </div>
       </div>
-      <p className="text-[36px] font-bold text-neutral-900 tracking-tight leading-none">{value}</p>
+      <p className="text-[28px] md:text-[42px] font-bold text-neutral-900 tracking-tight leading-none">{value}</p>
       {subtitle && <p className="text-[13px] font-medium text-neutral-400 mt-2">{subtitle}</p>}
       {trend && (
         <p className={`text-[13px] font-bold mt-2 ${trend.value >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>

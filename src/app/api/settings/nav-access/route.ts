@@ -3,24 +3,30 @@ import { requireRole } from '@/lib/auth';
 import { getPool, sql } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
 
+let tableEnsured = false;
+
+async function ensureTable(pool: Awaited<ReturnType<typeof getPool>>) {
+  if (tableEnsured) return;
+  await pool.request().query(`
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'nav_access')
+    CREATE TABLE nav_access (
+      id INT IDENTITY(1,1) PRIMARY KEY,
+      nav_href NVARCHAR(100) NOT NULL,
+      role NVARCHAR(50) NOT NULL,
+      has_access BIT NOT NULL DEFAULT 1,
+      updated_at DATETIME2 DEFAULT GETDATE(),
+      CONSTRAINT UQ_nav_role UNIQUE (nav_href, role)
+    )
+  `);
+  tableEnsured = true;
+}
+
 // GET: Return current nav access config
 export async function GET(request: NextRequest) {
   try {
     await requireRole(request, ['super_admin']);
     const pool = await getPool();
-
-    // Ensure table exists
-    await pool.request().query(`
-      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'nav_access')
-      CREATE TABLE nav_access (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        nav_href NVARCHAR(100) NOT NULL,
-        role NVARCHAR(50) NOT NULL,
-        has_access BIT NOT NULL DEFAULT 1,
-        updated_at DATETIME2 DEFAULT GETDATE(),
-        CONSTRAINT UQ_nav_role UNIQUE (nav_href, role)
-      )
-    `);
+    await ensureTable(pool);
 
     const result = await pool.request().query(`SELECT nav_href, role, has_access FROM nav_access`);
 
@@ -44,19 +50,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const pool = await getPool();
-
-    // Ensure table exists
-    await pool.request().query(`
-      IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'nav_access')
-      CREATE TABLE nav_access (
-        id INT IDENTITY(1,1) PRIMARY KEY,
-        nav_href NVARCHAR(100) NOT NULL,
-        role NVARCHAR(50) NOT NULL,
-        has_access BIT NOT NULL DEFAULT 1,
-        updated_at DATETIME2 DEFAULT GETDATE(),
-        CONSTRAINT UQ_nav_role UNIQUE (nav_href, role)
-      )
-    `);
+    await ensureTable(pool);
 
     for (const update of updates) {
       await pool.request()

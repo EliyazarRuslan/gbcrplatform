@@ -29,6 +29,14 @@ export default function DashboardPage() {
   const [stats, setStats] = useState<FleetStats | null>(null);
   const [userName, setUserName] = useState('');
   const [loading, setLoading] = useState(true);
+  const [greeting, setGreeting] = useState('');
+  const [dateStr, setDateStr] = useState('');
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    setGreeting(hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening');
+    setDateStr(new Date().toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }));
+  }, []);
 
   useEffect(() => {
     Promise.all([
@@ -64,21 +72,19 @@ export default function DashboardPage() {
         <div className="absolute inset-0 industrial-pattern opacity-30" />
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div suppressHydrationWarning>
-              <h1 className="text-2xl sm:text-[34px] font-semibold tracking-tight leading-tight" suppressHydrationWarning>
-                {(() => {
-                  const hour = new Date().getHours();
-                  const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-                  return userName ? `${greeting}, ${userName}` : greeting;
-                })()}
+            <div>
+              <h1 className="text-2xl sm:text-[34px] font-semibold tracking-tight leading-tight">
+                {greeting && userName ? `${greeting}, ${userName}` : greeting || 'Welcome'}
               </h1>
               <p className="text-white/40 text-[14px] font-medium mt-2">Real-time vehicle status and fleet performance</p>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-emerald-400 rounded-full pulse-dot" />
-              <p className="text-[12px] text-white/35 font-semibold uppercase tracking-wider" suppressHydrationWarning>
-                {new Date().toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
-              </p>
+              {dateStr && (
+                <p className="text-[12px] text-white/35 font-semibold uppercase tracking-wider">
+                  {dateStr}
+                </p>
+              )}
             </div>
           </div>
         </div>

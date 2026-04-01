@@ -74,7 +74,7 @@ export default function BookingsPage() {
     <div className="space-y-5 animate-fade-in">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Bookings</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Bookings</h1>
           <p className="text-[15px] font-medium text-neutral-400 mt-0.5">{bookings.length} booking{bookings.length !== 1 ? 's' : ''}</p>
         </div>
         <div className="flex gap-2.5">
@@ -299,16 +299,21 @@ function CreateBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl shadow-black/10 animate-scale-in overflow-y-auto max-h-[85vh]">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="text-xl font-bold text-neutral-900">New Booking</h2>
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]" onClick={onClose}>
+      <div className="absolute inset-x-0 bottom-0 top-[8vh] md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-lg bg-white rounded-t-2xl md:rounded-2xl shadow-2xl shadow-black/10 animate-slide-up md:animate-scale-in" onClick={e => e.stopPropagation()}>
+        {/* Mobile drag handle */}
+        <div className="md:hidden flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-neutral-300" />
+        </div>
+        <div className="flex items-center justify-between px-6 pt-3 pb-3 border-b border-neutral-100">
+          <h2 className="text-[16px] font-bold text-neutral-900">New Booking</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-400 hover:text-neutral-600 transition-colors">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
+        <div className="px-6 py-5 overflow-y-auto overscroll-contain" style={{ maxHeight: 'calc(92vh - 80px)', WebkitOverflowScrolling: 'touch' }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -356,6 +361,7 @@ function CreateBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
             </button>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );

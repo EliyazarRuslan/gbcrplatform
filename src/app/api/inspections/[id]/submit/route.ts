@@ -41,22 +41,10 @@ export async function POST(
       );
     }
 
-    // Validate required fields
+    // Validate required fields — only mileage is mandatory
     const errors: string[] = [];
     if (inspection.mileage_reading === null || inspection.mileage_reading === undefined) {
       errors.push('mileage_reading is required');
-    }
-    if (inspection.fuel_level === null || inspection.fuel_level === undefined) {
-      errors.push('fuel_level is required');
-    }
-
-    // Check at least one photo exists
-    const photoCheck = await pool.request()
-      .input('id', sql.Int, inspectionId)
-      .query(`SELECT COUNT(*) AS cnt FROM inspection_photos WHERE inspection_id = @id`);
-
-    if (photoCheck.recordset[0].cnt === 0) {
-      errors.push('at least one photo is required');
     }
 
     if (errors.length > 0) {

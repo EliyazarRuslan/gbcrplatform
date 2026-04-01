@@ -5,7 +5,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div>
-        <h1 className="text-[28px] font-bold text-neutral-900">Settings</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Settings</h1>
         <p className="mt-1 text-[15px] font-medium text-neutral-500">Manage your platform configuration</p>
       </div>
 

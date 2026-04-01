@@ -15,7 +15,7 @@ export default function AIPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="text-[28px] font-bold">AI Insights</h1>
+      <h1 className="text-3xl font-bold text-neutral-900">AI Insights</h1>
 
       <div className="flex gap-1 border-b border-neutral-200 overflow-x-auto scrollbar-none -mx-4 px-4 md:mx-0 md:px-0">
         {tabs.map(tab => (

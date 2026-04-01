@@ -109,7 +109,7 @@ export default function AnalyticsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[28px] font-bold text-neutral-900 tracking-tight">Analytics</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Analytics</h1>
           <p className="text-[15px] font-medium text-neutral-400 mt-0.5">Active agreements with invoices flowing to D365</p>
         </div>
         <div className="flex items-center gap-2 text-[13px] text-neutral-400 bg-white border border-neutral-200 px-3 py-1.5 rounded-lg">
@@ -121,17 +121,17 @@ export default function AnalyticsPage() {
       {/* KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 stagger-in">
         {kpis.map((kpi) => (
-          <div key={kpi.label} className="card-industrial p-5 group">
+          <div key={kpi.label} className="card-industrial p-4 md:p-5 group overflow-hidden">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider leading-tight">{kpi.label}</p>
-              <div className={`w-8 h-8 ${kpi.color} rounded-lg flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <p className="text-[11px] md:text-[13px] font-bold text-neutral-400 uppercase tracking-wider leading-tight">{kpi.label}</p>
+              <div className={`w-7 h-7 md:w-8 md:h-8 ${kpi.color} rounded-lg flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity shrink-0`}>
+                <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={kpi.icon} />
                 </svg>
               </div>
             </div>
-            <p className="text-2xl font-bold text-neutral-900 tracking-tight">{kpi.value}</p>
-            <p className="text-[13px] font-medium text-neutral-400 mt-1">{kpi.sub}</p>
+            <p className="text-[22px] md:text-[42px] font-bold text-neutral-900 tracking-tighter leading-none truncate">{kpi.value}</p>
+            <p className="text-[11px] md:text-[13px] font-medium text-neutral-400 mt-1">{kpi.sub}</p>
           </div>
         ))}
       </div>

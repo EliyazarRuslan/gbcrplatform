@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromRequest } from '@/lib/auth';
-import { getPool } from '@/lib/db';
+import { getPool, sql } from '@/lib/db';
 import { navItems } from '@/lib/nav-items';
 
 // GET: Return nav items filtered by user role + DB overrides
@@ -19,9 +19,9 @@ export async function GET(request: NextRequest) {
 
     try {
       const pool = await getPool();
-      const result = await pool.request().query(
-        `SELECT nav_href, role, has_access FROM nav_access WHERE role = '${role}'`
-      );
+      const result = await pool.request()
+        .input('role', sql.NVarChar(50), role)
+        .query('SELECT nav_href, role, has_access FROM nav_access WHERE role = @role');
 
       if (result.recordset.length > 0) {
         const overrides = new Map(

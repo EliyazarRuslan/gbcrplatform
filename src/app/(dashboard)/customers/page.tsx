@@ -89,7 +89,7 @@ export default function CustomersPage() {
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex items-center justify-between">
-        <h1 className="text-[28px] font-bold">Customers</h1>
+        <h1 className="text-3xl font-bold text-neutral-900">Customers</h1>
         <span className="text-[15px] font-medium text-neutral-500">{pagination.total.toLocaleString()} customers</span>
       </div>
 

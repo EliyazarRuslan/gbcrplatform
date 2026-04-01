@@ -323,7 +323,7 @@ export default function UserManagementPage() {
             <span>/</span>
             <span className="text-neutral-700">User Management</span>
           </div>
-          <h1 className="text-[28px] font-bold text-neutral-900">User Management</h1>
+          <h1 className="text-3xl font-bold text-neutral-900">User Management</h1>
         </div>
         <Button
           onClick={openCreateModal}

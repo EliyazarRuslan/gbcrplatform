@@ -816,13 +816,15 @@ function SubmitSection({
   const hasFuel = !!data.fuel_level;
   const hasInspectorSig = !!data.inspector_signature;
 
+  const canSubmit = hasMileage;
+
   const completionItems = [
-    { label: 'Photos captured', value: `${photoCount}/${PHOTO_SLOTS.length}`, ok: photoCount >= PHOTO_SLOTS.length },
-    { label: 'Checklist items', value: `${checklistFilled}/5`, ok: checklistFilled === 5 },
-    { label: 'Mileage reading', value: hasMileage ? 'Recorded' : 'Missing', ok: hasMileage },
-    { label: 'Fuel level', value: hasFuel ? 'Recorded' : 'Missing', ok: hasFuel },
-    { label: 'Inspector signature', value: hasInspectorSig ? 'Signed' : 'Missing', ok: hasInspectorSig },
-    { label: 'Damages recorded', value: String(data.damages.length), ok: true },
+    { label: 'Mileage reading', value: hasMileage ? 'Recorded' : 'Required', ok: hasMileage, required: true },
+    { label: 'Photos captured', value: `${photoCount}/${PHOTO_SLOTS.length}`, ok: photoCount > 0, required: false },
+    { label: 'Checklist items', value: `${checklistFilled}/5`, ok: checklistFilled > 0, required: false },
+    { label: 'Fuel level', value: hasFuel ? 'Recorded' : 'Optional', ok: hasFuel, required: false },
+    { label: 'Inspector signature', value: hasInspectorSig ? 'Signed' : 'Optional', ok: hasInspectorSig, required: false },
+    { label: 'Damages recorded', value: String(data.damages.length), ok: true, required: false },
   ];
 
   if (!isEditable) {
@@ -861,13 +863,19 @@ function SubmitSection({
           ))}
         </div>
 
+        {!canSubmit && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-[14px] font-medium text-amber-700">
+            Please record the mileage reading before submitting.
+          </div>
+        )}
+
         {submitError && (
           <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-[14px] font-medium text-red-700">
             {submitError}
           </div>
         )}
 
-        <Button onClick={onSubmit} loading={submitting} size="lg" className="w-full">
+        <Button onClick={onSubmit} loading={submitting} disabled={!canSubmit} size="lg" className="w-full">
           Submit Inspection
         </Button>
       </div>
