@@ -54,8 +54,8 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
       <div className="flex items-center gap-2.5">
         <img src="/goldbell-logo.svg" alt="Goldbell" className="w-8 h-8 rounded-lg" />
         <div className="leading-tight">
-          <span className="font-semibold text-[13px] text-neutral-900 tracking-wide uppercase">Goldbell</span>
-          <span className="text-[9px] text-neutral-400 block tracking-[0.15em] uppercase">Fleet Platform</span>
+          <span className="font-bold text-[14px] text-neutral-900 tracking-wide uppercase">Goldbell</span>
+          <span className="text-[10px] font-semibold text-neutral-400 block tracking-[0.15em] uppercase">Fleet Platform</span>
         </div>
       </div>
 
@@ -72,7 +72,7 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="User menu"
             aria-expanded={menuOpen}
-            className="w-8 h-8 rounded-lg bg-charcoal text-white text-[11px] font-semibold flex items-center justify-center"
+            className="w-8 h-8 rounded-lg bg-charcoal text-white text-[12px] font-bold flex items-center justify-center"
           >
             {initials}
           </button>
@@ -80,18 +80,18 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
           {menuOpen && (
             <div className="absolute right-0 top-11 w-52 bg-white rounded-xl shadow-xl shadow-black/[0.06] border border-neutral-200 py-1 z-50 animate-scale-in">
               <div className="px-4 py-2.5 border-b border-neutral-100">
-                <p className="text-[13px] font-medium text-neutral-800 truncate">{user.full_name}</p>
-                <p className="text-[10px] text-neutral-400 uppercase tracking-wider">{user.role.replace(/_/g, ' ')}</p>
+                <p className="text-[14px] font-semibold text-neutral-800 truncate">{user.full_name}</p>
+                <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider">{user.role.replace(/_/g, ' ')}</p>
               </div>
               <button
                 onClick={() => { setMenuOpen(false); router.push('/change-password'); }}
-                className="w-full text-left px-4 py-2.5 text-[13px] text-neutral-600 hover:bg-neutral-50 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-[14px] font-medium text-neutral-600 hover:bg-neutral-50 transition-colors"
               >
                 Change Password
               </button>
               <button
                 onClick={handleSignOut}
-                className="w-full text-left px-4 py-2.5 text-[13px] text-red-600 hover:bg-red-50 transition-colors"
+                className="w-full text-left px-4 py-2.5 text-[14px] font-medium text-red-600 hover:bg-red-50 transition-colors"
               >
                 Sign Out
               </button>

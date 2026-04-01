@@ -24,8 +24,8 @@ export default function StarRating({ value, onChange, label }: StarRatingProps) 
             <svg
               className="w-8 h-8 transition-colors"
               viewBox="0 0 24 24"
-              fill={star <= value ? '#d4941c' : 'none'}
-              stroke={star <= value ? '#d4941c' : '#d1d5db'}
+              fill={star <= value ? '#c8a04a' : 'none'}
+              stroke={star <= value ? '#c8a04a' : '#d1d5db'}
               strokeWidth={1.5}
             >
               <path

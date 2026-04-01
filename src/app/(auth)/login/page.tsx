@@ -72,7 +72,7 @@ function LoginForm() {
   return (
     <div className="bg-white rounded-2xl shadow-2xl shadow-black/20 overflow-hidden">
       {/* Gold accent bar */}
-      <div className="h-1 bg-gradient-to-r from-primary via-primary-light to-primary" />
+      <div className="h-1" style={{ background: 'linear-gradient(to right, #c8a04a, #d4b96a, #c8a04a)' }} />
 
       <div className="px-8 py-10">
         {/* Logo - mobile only */}
@@ -81,13 +81,13 @@ function LoginForm() {
         </div>
 
         <div className="mb-8">
-          <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Sign in</h2>
-          <p className="text-[13px] text-neutral-400 mt-1.5">Access the fleet management platform</p>
+          <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Sign in</h2>
+          <p className="text-[15px] font-medium text-neutral-400 mt-1.5">Access the fleet management platform</p>
         </div>
 
         {/* SSO or password error */}
         {(ssoErrorMessage || error) && (
-          <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-[13px] text-red-700 flex items-start gap-2.5">
+          <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-[14px] font-medium text-red-700 flex items-start gap-2.5">
             <svg className="w-4 h-4 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
@@ -98,7 +98,7 @@ function LoginForm() {
         {/* SSO Button */}
         <button
           onClick={handleSSOLogin}
-          className="w-full flex items-center justify-center gap-3 rounded-xl px-4 py-3.5 text-[13px] font-semibold text-white bg-charcoal hover:bg-charcoal-light active:bg-charcoal-dark shadow-lg shadow-black/10 transition-all duration-200 uppercase tracking-wider"
+          className="w-full flex items-center justify-center gap-3 rounded-xl px-4 py-3.5 text-[15px] font-bold text-white bg-charcoal hover:bg-charcoal-light active:bg-charcoal-dark shadow-lg shadow-black/10 transition-all duration-200 uppercase tracking-wider"
         >
           {/* Microsoft logo */}
           <svg className="w-4 h-4" viewBox="0 0 21 21" fill="none">
@@ -118,7 +118,7 @@ function LoginForm() {
             setShowPasswordLogin(!showPasswordLogin);
             setSsoErrorDismissed(true);
           }}
-            className="text-[11px] text-neutral-400 hover:text-neutral-600 transition-colors uppercase tracking-wider"
+            className="text-[12px] font-medium text-neutral-400 hover:text-neutral-600 transition-colors uppercase tracking-wider"
           >
             {showPasswordLogin ? 'Hide' : 'or use password'}
           </button>
@@ -129,7 +129,7 @@ function LoginForm() {
         {showPasswordLogin && (
           <form onSubmit={handleSubmit} noValidate className="space-y-5 animate-fade-in">
             <div>
-              <label htmlFor="email" className="block text-[12px] font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+              <label htmlFor="email" className="block text-[13px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
                 Email address
               </label>
               <input
@@ -139,13 +139,13 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setSsoErrorDismissed(true); }}
-                className="w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3 text-[14px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-white transition-all duration-200"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3 text-[15px] font-medium text-neutral-900 placeholder-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#c8a04a]/20 focus:border-[#c8a04a]/40 focus:bg-white transition-all duration-200"
                 placeholder="you@goldbell.com.sg"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-[12px] font-semibold text-neutral-500 uppercase tracking-wider mb-2">
+              <label htmlFor="password" className="block text-[13px] font-bold text-neutral-500 uppercase tracking-wider mb-2">
                 Password
               </label>
               <input
@@ -155,7 +155,7 @@ function LoginForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3 text-[14px] text-neutral-900 placeholder-neutral-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:bg-white transition-all duration-200"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50/80 px-4 py-3 text-[15px] font-medium text-neutral-900 placeholder-neutral-300 focus:outline-none focus:ring-2 focus:ring-[#c8a04a]/20 focus:border-[#c8a04a]/40 focus:bg-white transition-all duration-200"
                 placeholder="Enter your password"
               />
             </div>
@@ -163,7 +163,7 @@ function LoginForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[13px] font-semibold text-charcoal bg-neutral-100 hover:bg-neutral-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-[15px] font-bold text-charcoal bg-neutral-100 hover:bg-neutral-200 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading && (
                 <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -177,7 +177,7 @@ function LoginForm() {
         )}
 
         <div className="mt-6 pt-5 border-t border-neutral-100 text-center">
-          <p className="text-[11px] text-neutral-400 tracking-wide">Goldbell Car Rental &middot; Fleet Management System</p>
+          <p className="text-[12px] font-medium text-neutral-400 tracking-wide">Goldbell Car Rental &middot; Fleet Management System</p>
         </div>
       </div>
     </div>

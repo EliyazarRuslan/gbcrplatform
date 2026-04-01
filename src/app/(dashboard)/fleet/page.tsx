@@ -126,7 +126,7 @@ export default function FleetPage() {
       accessorKey: 'registration_no',
       header: 'Reg No',
       cell: ({ row }) => (
-        <Link href={`/fleet/${row.original.assetnum}`} className="text-primary hover:text-primary-dark font-semibold transition-colors">
+        <Link href={`/fleet/${row.original.assetnum}`} className="text-primary hover:text-primary-dark font-bold transition-colors">
           {row.original.registration_no || row.original.assetnum}
         </Link>
       ),
@@ -136,7 +136,7 @@ export default function FleetPage() {
       accessorKey: 'description',
       header: 'Description',
       cell: ({ getValue }) => (
-        <span className="truncate max-w-[200px] block text-neutral-600" title={getValue() as string}>
+        <span className="truncate max-w-[200px] block text-neutral-600 font-medium" title={getValue() as string}>
           {getValue() as string}
         </span>
       ),
@@ -169,7 +169,7 @@ export default function FleetPage() {
         if (!category_id || !category_name) return <span className="text-neutral-300">-</span>;
         const color = CATEGORY_COLORS[category_id] || 'bg-neutral-50 text-neutral-600 border-neutral-200';
         return (
-          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium border ${color}`}>
+          <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[13px] font-bold border ${color}`}>
             {category_name}
           </span>
         );
@@ -199,8 +199,8 @@ export default function FleetPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-neutral-900 tracking-tight">Fleet Management</h1>
-          <p className="text-sm text-neutral-400 mt-0.5">{stats.total.toLocaleString()} vehicles in fleet</p>
+          <h1 className="text-3xl font-bold text-neutral-900 tracking-tight">Fleet Management</h1>
+          <p className="text-[15px] font-medium text-neutral-400 mt-0.5">{stats.total.toLocaleString()} vehicles in fleet</p>
         </div>
       </div>
 
@@ -236,14 +236,14 @@ export default function FleetPage() {
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
             placeholder="Search by asset, reg no, description..."
-            className="w-full pl-10 pr-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 text-[15px] font-medium bg-white border border-neutral-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all"
           />
         </div>
         <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
           <select
             value={statusFilter}
             onChange={(e) => handleStatusChange(e.target.value)}
-            className="shrink-0 px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
+            className="shrink-0 px-4 py-2.5 text-[15px] font-medium bg-white border border-neutral-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
           >
             <option value="">All Statuses</option>
             <option value="HIRED OUT">HIRED OUT</option>
@@ -254,7 +254,7 @@ export default function FleetPage() {
           <select
             value={categoryFilter}
             onChange={(e) => handleCategoryChange(e.target.value)}
-            className="shrink-0 px-4 py-2 text-sm bg-white border border-neutral-200/80 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
+            className="shrink-0 px-4 py-2.5 text-[15px] font-medium bg-white border border-neutral-200/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all appearance-none cursor-pointer"
           >
             {CATEGORY_OPTIONS.map((opt) => (
               <option key={opt.id} value={opt.id}>{opt.label}</option>
@@ -262,7 +262,7 @@ export default function FleetPage() {
           </select>
           <button
             onClick={handleSearch}
-            className="shrink-0 px-5 py-2 text-sm bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl hover:shadow-md hover:shadow-primary/20 transition-all font-medium"
+            className="shrink-0 px-5 py-2.5 text-[15px] bg-gradient-to-r from-primary to-primary-dark text-white rounded-2xl hover:shadow-md hover:shadow-primary/20 transition-all font-bold"
           >
             Search
           </button>
@@ -272,9 +272,9 @@ export default function FleetPage() {
       {/* Table — desktop only */}
       {loading ? <SkeletonTable rows={10} cols={9} /> : (
         <>
-          <div className="hidden md:block bg-white rounded-xl border border-neutral-200/80 overflow-hidden shadow-sm shadow-neutral-900/[0.03]">
+          <div className="hidden md:block bg-white rounded-2xl border border-neutral-200/80 overflow-hidden shadow-sm shadow-neutral-900/[0.03]">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+              <table className="w-full text-[15px]">
                 <thead>
                   {table.getHeaderGroups().map((hg) => (
                     <tr key={hg.id} className="border-b border-neutral-100 bg-neutral-50/80">
@@ -282,7 +282,7 @@ export default function FleetPage() {
                         <th
                           key={header.id}
                           onClick={header.column.getToggleSortingHandler()}
-                          className="px-4 py-3 text-left text-[11px] font-semibold text-neutral-400 uppercase tracking-wider cursor-pointer hover:text-neutral-600 select-none transition-colors"
+                          className="px-4 py-3 text-left text-[13px] font-bold text-neutral-400 uppercase tracking-wider cursor-pointer hover:text-neutral-600 select-none transition-colors"
                         >
                           <div className="flex items-center gap-1">
                             {flexRender(header.column.columnDef.header, header.getContext())}
@@ -296,7 +296,7 @@ export default function FleetPage() {
                 <tbody>
                   {table.getRowModel().rows.length === 0 ? (
                     <tr>
-                      <td colSpan={columns.length} className="px-4 py-12 text-center text-neutral-400 text-sm">
+                      <td colSpan={columns.length} className="px-4 py-12 text-center text-neutral-400 text-[15px] font-medium">
                         <div className="flex flex-col items-center gap-2">
                           <svg className="w-8 h-8 text-neutral-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -309,7 +309,7 @@ export default function FleetPage() {
                     table.getRowModel().rows.map((row) => (
                       <tr key={row.id} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                         {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 text-neutral-700">
+                          <td key={cell.id} className="px-4 py-3 text-neutral-700 font-medium">
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
@@ -322,21 +322,21 @@ export default function FleetPage() {
 
             {/* Pagination */}
             <div className="flex items-center justify-between px-4 py-3 border-t border-neutral-100 bg-neutral-50/50">
-              <span className="text-xs text-neutral-400 font-medium">
+              <span className="text-[13px] text-neutral-400 font-semibold">
                 Page {page} of {totalPages} ({pagination.total.toLocaleString()} total)
               </span>
               <div className="flex gap-2">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3.5 py-1.5 text-xs font-medium border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
+                  className="px-3.5 py-1.5 text-[13px] font-bold border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
                 >
                   Previous
                 </button>
                 <button
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={page >= totalPages}
-                  className="px-3.5 py-1.5 text-xs font-medium border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
+                  className="px-3.5 py-1.5 text-[13px] font-bold border border-neutral-200/80 rounded-lg disabled:opacity-40 hover:bg-white hover:border-neutral-300 transition-all"
                 >
                   Next
                 </button>
@@ -347,7 +347,7 @@ export default function FleetPage() {
           {/* Mobile: card list */}
           <div className="md:hidden space-y-3">
             {vehicles.length === 0 ? (
-              <div className="bg-white rounded-xl border border-neutral-200 px-4 py-12 text-center text-sm text-neutral-400">
+              <div className="bg-white rounded-2xl border border-neutral-200 px-4 py-12 text-center text-[15px] font-medium text-neutral-400">
                 No vehicles found
               </div>
             ) : (
@@ -357,26 +357,26 @@ export default function FleetPage() {
                   <Link
                     key={v.assetnum}
                     href={`/fleet/${v.assetnum}`}
-                    className="block bg-white rounded-xl border border-neutral-200/80 p-4 active:bg-neutral-50"
+                    className="block bg-white rounded-2xl border border-neutral-200/80 p-4 active:bg-neutral-50"
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold text-primary text-sm">{v.registration_no || v.assetnum}</p>
-                        <p className="text-xs text-neutral-500 mt-0.5">{v.assetnum}</p>
+                        <p className="font-bold text-primary text-[15px]">{v.registration_no || v.assetnum}</p>
+                        <p className="text-[13px] font-medium text-neutral-500 mt-0.5">{v.assetnum}</p>
                       </div>
                       <StatusBadge status={v.status} />
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-2">
-                      {v.model && <span className="text-xs text-neutral-600">{v.model}</span>}
-                      {v.year_mfg && <span className="text-xs text-neutral-400">{v.year_mfg}</span>}
+                      {v.model && <span className="text-[13px] font-medium text-neutral-600">{v.model}</span>}
+                      {v.year_mfg && <span className="text-[13px] font-medium text-neutral-400">{v.year_mfg}</span>}
                       {color && v.category_name && (
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-medium border ${color}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-lg text-[13px] font-bold border ${color}`}>
                           {v.category_name}
                         </span>
                       )}
                     </div>
                     {v.customer_code && (
-                      <p className="text-xs text-neutral-400 mt-1">Customer: {v.customer_code}</p>
+                      <p className="text-[13px] font-medium text-neutral-400 mt-1">Customer: {v.customer_code}</p>
                     )}
                   </Link>
                 );
@@ -385,21 +385,21 @@ export default function FleetPage() {
             {/* Mobile pagination */}
             {pagination.total > 0 && (
               <div className="flex items-center justify-between mt-3 px-1">
-                <p className="text-xs text-neutral-500">
+                <p className="text-[13px] font-semibold text-neutral-500">
                   Page {page} of {totalPages}
                 </p>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={page <= 1}
-                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 text-[13px] font-bold rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Prev
                   </button>
                   <button
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={page >= totalPages}
-                    className="px-3 py-1.5 text-xs rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="px-3 py-1.5 text-[13px] font-bold rounded-lg border border-neutral-300 text-neutral-600 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     Next
                   </button>

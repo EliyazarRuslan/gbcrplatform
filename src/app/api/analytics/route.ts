@@ -5,35 +5,52 @@ import { getMaxPool } from '@/lib/maxdb';
 // D365 SALESSTATUS: 1=Open/Active, 3=Invoiced, 4=Cancelled
 // DATAAREAID 'gbe' = Goldbell Engineering (GBCR)
 
+export const maxDuration = 120;
+
 export async function GET() {
   try {
     const [ax, mx] = await Promise.all([getAxPool(), getMaxPool()]);
 
     // Run all queries in parallel
+    // Run AX and Maximo queries separately to handle timeouts better
+    // Maximo queries (fast)
+    const [woTypeResult, statusDist] = await Promise.all([
+      mx.request().query(`
+        SELECT worktype, COUNT(*) as count
+        FROM workorder WITH (NOLOCK) WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
+        GROUP BY worktype ORDER BY count DESC
+      `),
+      mx.request().query(`
+        SELECT status, COUNT(*) as count
+        FROM asset WITH (NOLOCK) WHERE siteid = 'GBCR'
+          AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
+        GROUP BY status ORDER BY count DESC
+      `),
+    ]);
+
+    // AX queries (slower - run with NOLOCK hints for performance)
+    const axReq = () => { const r = ax.request(); r.timeout = 90000; return r; };
+
     const [
       revenueResult,
       agreementStatusResult,
       activeValueResult,
       topCustomersResult,
       topOrdersResult,
-      woTypeResult,
-      statusDist,
     ] = await Promise.all([
-      // Monthly invoice revenue from active agreements (last 12 months)
-      ax.request().query(`
+      axReq().query(`
         SELECT FORMAT(i.INVOICEDATE, 'yyyy-MM') as month,
           COUNT(DISTINCT i.INVOICEID) as invoices,
           SUM(i.INVOICEAMOUNTMST) as revenue
-        FROM CUSTINVOICEJOUR i
+        FROM CUSTINVOICEJOUR i WITH (NOLOCK)
         WHERE i.DATAAREAID = 'gbe'
           AND i.INVOICEDATE >= DATEADD(MONTH, -12, GETDATE())
-          AND EXISTS (SELECT 1 FROM SALESTABLE s WHERE s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1)
+          AND EXISTS (SELECT 1 FROM SALESTABLE s WITH (NOLOCK) WHERE s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1)
         GROUP BY FORMAT(i.INVOICEDATE, 'yyyy-MM')
         ORDER BY month
       `),
 
-      // Agreement status summary
-      ax.request().query(`
+      axReq().query(`
         SELECT
           CASE s.SALESSTATUS
             WHEN 1 THEN 'Active'
@@ -44,40 +61,37 @@ export async function GET() {
           END as status,
           COUNT(*) as count,
           ISNULL(SUM(s.SMMSALESAMOUNTTOTAL), 0) as total_invoiced
-        FROM SALESTABLE s
+        FROM SALESTABLE s WITH (NOLOCK)
         WHERE s.DATAAREAID = 'gbe'
         GROUP BY s.SALESSTATUS
         ORDER BY count DESC
       `),
 
-      // Active agreements with invoices - summary KPIs
-      ax.request().query(`
+      axReq().query(`
         SELECT
-          (SELECT COUNT(*) FROM SALESTABLE WHERE DATAAREAID = 'gbe' AND SALESSTATUS = 1) as active_count,
+          (SELECT COUNT(*) FROM SALESTABLE WITH (NOLOCK) WHERE DATAAREAID = 'gbe' AND SALESSTATUS = 1) as active_count,
           COUNT(DISTINCT i.INVOICEID) as invoice_count,
           ISNULL(SUM(i.INVOICEAMOUNTMST), 0) as total_invoiced
-        FROM CUSTINVOICEJOUR i
+        FROM CUSTINVOICEJOUR i WITH (NOLOCK)
         WHERE i.DATAAREAID = 'gbe'
-          AND EXISTS (SELECT 1 FROM SALESTABLE s WHERE s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1)
+          AND EXISTS (SELECT 1 FROM SALESTABLE s WITH (NOLOCK) WHERE s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1)
       `),
 
-      // Top 10 customers by invoiced amount (active agreements)
-      ax.request().query(`
+      axReq().query(`
         SELECT TOP 10
           s.CUSTACCOUNT as customer_id,
           MAX(s.SALESNAME) as customer_name,
           COUNT(DISTINCT s.SALESID) as agreement_count,
           COUNT(DISTINCT i.INVOICEID) as invoice_count,
           SUM(i.INVOICEAMOUNTMST) as total_invoiced
-        FROM CUSTINVOICEJOUR i
-        INNER JOIN SALESTABLE s ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
+        FROM CUSTINVOICEJOUR i WITH (NOLOCK)
+        INNER JOIN SALESTABLE s WITH (NOLOCK) ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
         WHERE i.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1
         GROUP BY s.CUSTACCOUNT
         ORDER BY total_invoiced DESC
       `),
 
-      // Top 10 sales orders by invoiced amount (active)
-      ax.request().query(`
+      axReq().query(`
         SELECT TOP 10
           i.SALESID,
           MAX(s.CUSTACCOUNT) as customer_id,
@@ -86,26 +100,11 @@ export async function GET() {
           SUM(i.INVOICEAMOUNTMST) as total_invoiced,
           MIN(i.INVOICEDATE) as first_invoice,
           MAX(i.INVOICEDATE) as last_invoice
-        FROM CUSTINVOICEJOUR i
-        INNER JOIN SALESTABLE s ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
+        FROM CUSTINVOICEJOUR i WITH (NOLOCK)
+        INNER JOIN SALESTABLE s WITH (NOLOCK) ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
         WHERE i.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1
         GROUP BY i.SALESID
         ORDER BY total_invoiced DESC
-      `),
-
-      // Work orders by type from Maximo
-      mx.request().query(`
-        SELECT worktype, COUNT(*) as count
-        FROM workorder WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
-        GROUP BY worktype ORDER BY count DESC
-      `),
-
-      // Fleet status from Maximo
-      mx.request().query(`
-        SELECT status, COUNT(*) as count
-        FROM asset WHERE siteid = 'GBCR'
-          AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
-        GROUP BY status ORDER BY count DESC
       `),
     ]);
 
@@ -114,18 +113,16 @@ export async function GET() {
     let revenueByCustomer: { month: string; segment: string; revenue: number }[] = [];
     if (topNames.length > 0) {
       const segRequest = ax.request();
-      // Build parameterized IN clause to prevent SQL injection
-      const paramPlaceholders = topNames.map((_: string, i: number) => `@p${i}`).join(', ');
+      segRequest.timeout = 90000;
       topNames.forEach((name: string, i: number) => segRequest.input(`p${i}`, name));
-      // Build parameterized CASE expression
       const caseWhen = topNames.map((_: string, i: number) => `WHEN s.CUSTACCOUNT = @p${i} THEN s.SALESNAME`).join(' ');
       const segResult = await segRequest.query(`
         SELECT
           FORMAT(i.INVOICEDATE, 'yyyy-MM') as month,
           CASE ${caseWhen} ELSE 'Others' END as segment,
           SUM(i.INVOICEAMOUNTMST) as revenue
-        FROM CUSTINVOICEJOUR i
-        INNER JOIN SALESTABLE s ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
+        FROM CUSTINVOICEJOUR i WITH (NOLOCK)
+        INNER JOIN SALESTABLE s WITH (NOLOCK) ON s.SALESID = i.SALESID AND s.DATAAREAID = 'gbe'
         WHERE i.DATAAREAID = 'gbe' AND s.SALESSTATUS = 1
           AND i.INVOICEDATE >= DATEADD(MONTH, -12, GETDATE())
         GROUP BY FORMAT(i.INVOICEDATE, 'yyyy-MM'),

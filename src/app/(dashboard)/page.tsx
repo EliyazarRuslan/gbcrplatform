@@ -58,25 +58,25 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Welcome Banner */}
-      <div className="relative overflow-hidden rounded-2xl bg-charcoal p-6 sm:p-7 text-white">
-        <div className="absolute top-0 right-0 w-72 h-72 bg-primary/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
-        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-primary/[0.04] rounded-full blur-[60px] translate-y-1/2" />
+      <div className="relative overflow-hidden rounded-2xl bg-charcoal p-7 sm:p-8 text-white">
+        <div className="absolute top-0 right-0 w-72 h-72 bg-[#c8a04a]/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />
+        <div className="absolute bottom-0 left-1/4 w-48 h-48 bg-[#c8a04a]/[0.04] rounded-full blur-[60px] translate-y-1/2" />
         <div className="absolute inset-0 industrial-pattern opacity-30" />
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div suppressHydrationWarning>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight" suppressHydrationWarning>
+              <h1 className="text-2xl sm:text-[34px] font-semibold tracking-tight leading-tight" suppressHydrationWarning>
                 {(() => {
                   const hour = new Date().getHours();
                   const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
                   return userName ? `${greeting}, ${userName}` : greeting;
                 })()}
               </h1>
-              <p className="text-neutral-400 text-[13px] mt-1">Real-time vehicle status and fleet performance</p>
+              <p className="text-white/40 text-[14px] font-medium mt-2">Real-time vehicle status and fleet performance</p>
             </div>
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot" />
-              <p className="text-[11px] text-neutral-500 font-medium uppercase tracking-wider" suppressHydrationWarning>
+              <div className="w-2 h-2 bg-emerald-400 rounded-full pulse-dot" />
+              <p className="text-[12px] text-white/35 font-semibold uppercase tracking-wider" suppressHydrationWarning>
                 {new Date().toLocaleDateString('en-SG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
               </p>
             </div>
@@ -134,22 +134,22 @@ export default function DashboardPage() {
       {/* Quick Links */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 stagger-in">
         {[
-          { href: '/fleet', label: 'Fleet Management', sub: `${stats?.total?.toLocaleString()} vehicles`, bgClass: 'bg-blue-500', icon: 'M8 7h8m-8 4h8m-4 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z' },
-          { href: '/bookings', label: 'Bookings', sub: 'Manage reservations', bgClass: 'bg-emerald-500', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
-          { href: '/settings/users', label: 'User Management', sub: 'Manage staff accounts', bgClass: 'bg-violet-500', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
+          { href: '/fleet', label: 'Fleet Management', sub: `${stats?.total?.toLocaleString()} vehicles`, bgClass: 'bg-blue-600', icon: 'M8 7h8m-8 4h8m-4 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z' },
+          { href: '/bookings', label: 'Bookings', sub: 'Manage reservations', bgClass: 'bg-emerald-600', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+          { href: '/settings/users', label: 'User Management', sub: 'Manage staff accounts', bgClass: 'bg-violet-600', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
         ].map((link) => (
-          <a key={link.href} href={link.href} className="group card-industrial p-5">
-            <div className="flex items-center gap-3">
-              <div className={`w-10 h-10 rounded-lg ${link.bgClass} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
+          <a key={link.href} href={link.href} className="group card-industrial p-6">
+            <div className="flex items-center gap-4">
+              <div className={`w-11 h-11 rounded-xl ${link.bgClass} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={link.icon} />
                 </svg>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-neutral-900 text-[13px] group-hover:text-charcoal transition-colors">{link.label}</p>
-                <p className="text-[11px] text-neutral-400 mt-0.5">{link.sub}</p>
+                <p className="font-bold text-neutral-900 text-[15px] group-hover:text-charcoal transition-colors">{link.label}</p>
+                <p className="text-[13px] text-neutral-400 mt-0.5 font-medium">{link.sub}</p>
               </div>
-              <svg className="w-4 h-4 text-neutral-300 group-hover:text-neutral-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5 text-neutral-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>

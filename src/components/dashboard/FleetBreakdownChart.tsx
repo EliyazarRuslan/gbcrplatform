@@ -34,14 +34,14 @@ export default function FleetBreakdownChart({ stats }: { stats: FleetStats }) {
   return (
     <div className="card-industrial p-5">
       <div className="mb-5">
-        <h3 className="font-semibold text-neutral-900 text-[14px]">Fleet Status Breakdown</h3>
-        <p className="text-[11px] text-neutral-400 mt-0.5">{stats.utilizationRate.toFixed(1)}% utilization rate</p>
+        <h3 className="font-bold text-neutral-900 text-[15px]">Fleet Status Breakdown</h3>
+        <p className="text-[12px] font-bold text-neutral-400 mt-0.5">{stats.utilizationRate.toFixed(1)}% utilization rate</p>
       </div>
       <ResponsiveContainer width="100%" height={260}>
         <BarChart data={data} layout="vertical" margin={{ left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e1e3ea" />
-          <XAxis type="number" tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
-          <YAxis type="category" dataKey="name" tick={{ fontSize: 11, fill: '#636878' }} width={80} axisLine={false} tickLine={false} />
+          <XAxis type="number" tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
+          <YAxis type="category" dataKey="name" tick={{ fontSize: 13, fontWeight: 700, fill: '#636878' }} width={80} axisLine={false} tickLine={false} />
           <Tooltip
             formatter={(value) => [Number(value).toLocaleString(), 'Vehicles']}
             contentStyle={tooltipStyle}

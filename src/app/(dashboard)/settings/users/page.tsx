@@ -278,7 +278,7 @@ export default function UserManagementPage() {
       key: 'last_login_at',
       header: 'Last Login',
       render: (row) => (
-        <span className="text-neutral-500 text-xs">{formatDate(row.last_login_at)}</span>
+        <span className="text-neutral-500 text-[13px] font-medium">{formatDate(row.last_login_at)}</span>
       ),
     },
     {
@@ -288,21 +288,21 @@ export default function UserManagementPage() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => openEditModal(row)}
-            className="text-xs px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+            className="text-[13px] font-bold px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
           >
             Edit
           </button>
           {row.status === 'active' && (
             <button
               onClick={() => handleDeactivate(row)}
-              className="text-xs px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+              className="text-[13px] font-bold px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
             >
               Deactivate
             </button>
           )}
           <button
             onClick={() => handleResetPassword(row)}
-            className="text-xs px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+            className="text-[13px] font-bold px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
           >
             Reset PW
           </button>
@@ -316,14 +316,14 @@ export default function UserManagementPage() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-sm text-neutral-500 mb-1">
+          <div className="flex items-center gap-2 text-[15px] font-medium text-neutral-500 mb-1">
             <Link href="/settings" className="hover:text-primary transition-colors">
               Settings
             </Link>
             <span>/</span>
             <span className="text-neutral-700">User Management</span>
           </div>
-          <h1 className="text-2xl font-bold text-neutral-900">User Management</h1>
+          <h1 className="text-[28px] font-bold text-neutral-900">User Management</h1>
         </div>
         <Button
           onClick={openCreateModal}
@@ -353,12 +353,12 @@ export default function UserManagementPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search by name or email..."
-          className="px-4 py-2 text-sm bg-white border border-neutral-200 rounded-lg w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="px-4 py-2 text-[14px] font-medium bg-white border border-neutral-200 rounded-lg w-full sm:w-72 focus:outline-none focus:ring-2 focus:ring-primary-light"
         />
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="px-3 py-2 text-[14px] font-medium bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
         >
           {roleFilterOptions.map((o) => (
             <option key={o.value} value={o.value}>
@@ -369,7 +369,7 @@ export default function UserManagementPage() {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-3 py-2 text-sm bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
+          className="px-3 py-2 text-[14px] font-medium bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light"
         >
           {statusFilterOptions.map((o) => (
             <option key={o.value} value={o.value}>
@@ -378,7 +378,7 @@ export default function UserManagementPage() {
           ))}
         </select>
         {total > 0 && (
-          <span className="text-sm text-neutral-500 ml-auto">
+          <span className="text-[15px] font-medium text-neutral-500 ml-auto">
             {total} user{total !== 1 ? 's' : ''}
           </span>
         )}
@@ -388,13 +388,13 @@ export default function UserManagementPage() {
       <div className="md:hidden space-y-3">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-xl border border-neutral-200 p-4 animate-pulse space-y-2">
+            <div key={i} className="bg-white rounded-2xl border border-neutral-200 p-4 animate-pulse space-y-2">
               <div className="h-4 bg-neutral-200 rounded w-32" />
               <div className="h-3 bg-neutral-100 rounded w-48" />
             </div>
           ))
         ) : users.length === 0 ? (
-          <p className="text-center py-8 text-sm text-neutral-400">No users found. Try adjusting your filters or add a new user.</p>
+          <p className="text-center py-8 text-[15px] font-medium text-neutral-400">No users found. Try adjusting your filters or add a new user.</p>
         ) : (
           users.map(row => {
             const variantMap: Record<User['status'], 'success' | 'destructive' | 'warning'> = {
@@ -403,11 +403,11 @@ export default function UserManagementPage() {
               suspended: 'warning',
             };
             return (
-              <div key={row.id} className="bg-white rounded-xl border border-neutral-200 p-4 space-y-2">
+              <div key={row.id} className="bg-white rounded-2xl border border-neutral-200 p-4 space-y-2">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
-                    <p className="font-semibold text-neutral-900 text-sm truncate">{row.full_name}</p>
-                    <p className="text-xs text-neutral-400 truncate">{row.email}</p>
+                    <p className="font-semibold text-neutral-900 text-[15px] truncate">{row.full_name}</p>
+                    <p className="text-[13px] font-medium text-neutral-400 truncate">{row.email}</p>
                   </div>
                   <Badge variant={variantMap[row.status]}>
                     {row.status.charAt(0).toUpperCase() + row.status.slice(1)}
@@ -415,26 +415,26 @@ export default function UserManagementPage() {
                 </div>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Badge variant="info">{getRoleLabel(row.role)}</Badge>
-                  <span className="text-xs text-neutral-400">Last login: {formatDate(row.last_login_at)}</span>
+                  <span className="text-[13px] font-medium text-neutral-400">Last login: {formatDate(row.last_login_at)}</span>
                 </div>
                 <div className="flex items-center gap-2 pt-1">
                   <button
                     onClick={() => openEditModal(row)}
-                    className="text-xs px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+                    className="text-[13px] font-bold px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
                   >
                     Edit
                   </button>
                   {row.status === 'active' && (
                     <button
                       onClick={() => handleDeactivate(row)}
-                      className="text-xs px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
+                      className="text-[13px] font-bold px-2 py-1 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                     >
                       Deactivate
                     </button>
                   )}
                   <button
                     onClick={() => handleResetPassword(row)}
-                    className="text-xs px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
+                    className="text-[13px] font-bold px-2 py-1 rounded border border-neutral-300 text-neutral-600 hover:bg-neutral-100 transition-colors"
                   >
                     Reset PW
                   </button>
@@ -449,15 +449,15 @@ export default function UserManagementPage() {
             <button
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="text-sm px-3 py-1.5 rounded border border-neutral-200 disabled:opacity-40"
+              className="text-[15px] font-bold px-3 py-1.5 rounded border border-neutral-200 disabled:opacity-40"
             >
               Prev
             </button>
-            <span className="text-xs text-neutral-500">Page {page} of {Math.ceil(total / pageSize)}</span>
+            <span className="text-[13px] font-medium text-neutral-500">Page {page} of {Math.ceil(total / pageSize)}</span>
             <button
               onClick={() => setPage(p => Math.min(Math.ceil(total / pageSize), p + 1))}
               disabled={page >= Math.ceil(total / pageSize)}
-              className="text-sm px-3 py-1.5 rounded border border-neutral-200 disabled:opacity-40"
+              className="text-[15px] font-bold px-3 py-1.5 rounded border border-neutral-200 disabled:opacity-40"
             >
               Next
             </button>

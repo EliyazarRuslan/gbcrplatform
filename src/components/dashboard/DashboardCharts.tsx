@@ -56,15 +56,15 @@ export default function DashboardCharts() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Revenue vs Profit */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-4">Revenue & Profit Trend</h3>
+      <div className="bg-white rounded-2xl border border-black/[0.07] p-5">
+        <h3 className="text-[15px] font-bold text-neutral-700 mb-4">Revenue & Profit Trend</h3>
         <ResponsiveContainer width="100%" height={280}>
           <AreaChart data={profitData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={formatK} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontWeight: 700 }} />
+            <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fontWeight: 700 }} />
             <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '13px', fontWeight: 600 }} />
             <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fill="#3b82f680" name="Revenue" />
             <Area type="monotone" dataKey="profit" stroke="#10b981" fill="#10b98180" name="Profit" />
           </AreaChart>
@@ -72,8 +72,8 @@ export default function DashboardCharts() {
       </div>
 
       {/* WO by Type */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-4">Work Orders by Type</h3>
+      <div className="bg-white rounded-2xl border border-black/[0.07] p-5">
+        <h3 className="text-[15px] font-bold text-neutral-700 mb-4">Work Orders by Type</h3>
         <ResponsiveContainer width="100%" height={280}>
           <PieChart>
             <Pie
@@ -95,13 +95,13 @@ export default function DashboardCharts() {
       </div>
 
       {/* Fleet Status Distribution */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-4">Fleet Status Distribution</h3>
+      <div className="bg-white rounded-2xl border border-black/[0.07] p-5">
+        <h3 className="text-[15px] font-bold text-neutral-700 mb-4">Fleet Status Distribution</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={analytics?.statusDistribution || []} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis type="number" tick={{ fontSize: 11 }} />
-            <YAxis type="category" dataKey="status" tick={{ fontSize: 11 }} width={100} />
+            <XAxis type="number" tick={{ fontSize: 12, fontWeight: 700 }} />
+            <YAxis type="category" dataKey="status" tick={{ fontSize: 12, fontWeight: 700 }} width={100} />
             <Tooltip />
             <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} name="Vehicles" />
           </BarChart>
@@ -109,15 +109,15 @@ export default function DashboardCharts() {
       </div>
 
       {/* Labor Cost Trend */}
-      <div className="bg-white rounded-xl border border-neutral-200 p-5">
-        <h3 className="text-sm font-semibold text-neutral-700 mb-4">Labor Cost Trend</h3>
+      <div className="bg-white rounded-2xl border border-black/[0.07] p-5">
+        <h3 className="text-[15px] font-bold text-neutral-700 mb-4">Labor Cost Trend</h3>
         <ResponsiveContainer width="100%" height={280}>
           <BarChart data={analytics?.laborCost || []}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={formatK} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontWeight: 700 }} />
+            <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fontWeight: 700 }} />
             <Tooltip formatter={(v) => `$${Number(v).toLocaleString()}`} />
-            <Legend />
+            <Legend wrapperStyle={{ fontSize: '13px', fontWeight: 600 }} />
             <Bar dataKey="cost" fill="#ef4444" radius={[4, 4, 0, 0]} name="Labor Cost" />
           </BarChart>
         </ResponsiveContainer>

@@ -33,7 +33,7 @@ export default function Card({
         <div className="flex items-start justify-between gap-4 px-5 py-4 border-b border-neutral-100">
           <div className="min-w-0">
             {title && (
-              <h3 className="font-semibold text-neutral-900 text-[14px]">{title}</h3>
+              <h3 className="font-bold text-neutral-900 text-[15px]">{title}</h3>
             )}
             {description && (
               <p className="text-xs text-neutral-400 mt-0.5">{description}</p>

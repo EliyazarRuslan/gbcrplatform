@@ -18,9 +18,8 @@ const config: sql.config = {
   password: process.env.AXDB_PASSWORD!,
   port: parsedPort,
   options: {
-    // Enable TLS in production; allow override via DB_ENCRYPT for local dev
-    encrypt: process.env.DB_ENCRYPT !== 'false',
-    trustServerCertificate: process.env.NODE_ENV !== 'production' && process.env.DB_TRUST_SERVER_CERT === 'true',
+    encrypt: false,
+    trustServerCertificate: true,
   },
   pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
   requestTimeout: 60000,

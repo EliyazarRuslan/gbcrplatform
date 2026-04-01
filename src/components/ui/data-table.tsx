@@ -112,7 +112,7 @@ export default function DataTable<T extends Record<string, unknown>>({
     : data.length;
 
   return (
-    <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
+    <div className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -121,7 +121,7 @@ export default function DataTable<T extends Record<string, unknown>>({
                 <th
                   key={col.key}
                   className={cn(
-                    'px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-neutral-500',
+                    'px-4 py-3 text-left text-[13px] font-bold uppercase tracking-wide text-neutral-500',
                     col.sortable && 'cursor-pointer select-none hover:text-neutral-700',
                     col.className,
                   )}

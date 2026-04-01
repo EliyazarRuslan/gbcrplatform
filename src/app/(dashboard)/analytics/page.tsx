@@ -109,10 +109,10 @@ export default function AnalyticsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 tracking-tight">Analytics</h1>
-          <p className="text-[13px] text-neutral-400 mt-0.5">Active agreements with invoices flowing to D365</p>
+          <h1 className="text-[28px] font-bold text-neutral-900 tracking-tight">Analytics</h1>
+          <p className="text-[15px] font-medium text-neutral-400 mt-0.5">Active agreements with invoices flowing to D365</p>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-neutral-400 bg-white border border-neutral-200 px-3 py-1.5 rounded-lg">
+        <div className="flex items-center gap-2 text-[13px] text-neutral-400 bg-white border border-neutral-200 px-3 py-1.5 rounded-lg">
           <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot" />
           <span className="font-medium uppercase tracking-wider">D365 F&O Live</span>
         </div>
@@ -123,7 +123,7 @@ export default function AnalyticsPage() {
         {kpis.map((kpi) => (
           <div key={kpi.label} className="card-industrial p-5 group">
             <div className="flex items-start justify-between mb-3">
-              <p className="text-[11px] font-semibold text-neutral-400 uppercase tracking-wider leading-tight">{kpi.label}</p>
+              <p className="text-[13px] font-bold text-neutral-400 uppercase tracking-wider leading-tight">{kpi.label}</p>
               <div className={`w-8 h-8 ${kpi.color} rounded-lg flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
                 <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={kpi.icon} />
@@ -131,7 +131,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
             <p className="text-2xl font-bold text-neutral-900 tracking-tight">{kpi.value}</p>
-            <p className="text-[11px] text-neutral-400 mt-1">{kpi.sub}</p>
+            <p className="text-[13px] font-medium text-neutral-400 mt-1">{kpi.sub}</p>
           </div>
         ))}
       </div>
@@ -142,20 +142,20 @@ export default function AnalyticsPage() {
       <div className="card-industrial overflow-hidden">
         <div className="px-5 py-4 border-b border-neutral-100 flex items-center justify-between">
           <div>
-            <h3 className="font-semibold text-[14px] text-neutral-900">Top Customers</h3>
-            <p className="text-[11px] text-neutral-400 mt-0.5">By total invoiced amount (active agreements)</p>
+            <h3 className="font-bold text-[16px] text-neutral-900">Top Customers</h3>
+            <p className="text-[13px] font-medium text-neutral-400 mt-0.5">By total invoiced amount (active agreements)</p>
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[15px]">
           <thead>
             <tr className="border-b border-neutral-100 bg-neutral-50/60">
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">#</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Customer</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Account</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Orders</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Invoices</th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">#</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Customer</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Account</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Orders</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Invoices</th>
+              <th className="px-5 py-3 text-right text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
             </tr>
           </thead>
           <tbody>
@@ -163,7 +163,7 @@ export default function AnalyticsPage() {
               <tr key={c.customer_id} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                 <td className="px-5 py-3 text-neutral-300 font-medium">{i + 1}</td>
                 <td className="px-5 py-3 font-medium text-neutral-800 truncate max-w-[220px]">{c.customer_name}</td>
-                <td className="px-5 py-3 text-neutral-400 font-mono text-[12px]">{c.customer_id}</td>
+                <td className="px-5 py-3 text-neutral-400 font-mono text-[13px]">{c.customer_id}</td>
                 <td className="px-5 py-3 text-neutral-600">{c.agreement_count}</td>
                 <td className="px-5 py-3 text-neutral-600">{c.invoice_count}</td>
                 <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(c.total_invoiced)}</td>
@@ -180,26 +180,26 @@ export default function AnalyticsPage() {
       {/* Top Sales Orders */}
       <div className="card-industrial overflow-hidden">
         <div className="px-5 py-4 border-b border-neutral-100">
-          <h3 className="font-semibold text-[14px] text-neutral-900">Top Active Sales Orders</h3>
-          <p className="text-[11px] text-neutral-400 mt-0.5">By invoiced amount in D365</p>
+          <h3 className="font-bold text-[16px] text-neutral-900">Top Active Sales Orders</h3>
+          <p className="text-[13px] font-medium text-neutral-400 mt-0.5">By invoiced amount in D365</p>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[15px]">
           <thead>
             <tr className="border-b border-neutral-100 bg-neutral-50/60">
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">#</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Sales ID</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Customer</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Invoices</th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Last Invoice</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">#</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Sales ID</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Customer</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Invoices</th>
+              <th className="px-5 py-3 text-right text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
+              <th className="px-5 py-3 text-right text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Last Invoice</th>
             </tr>
           </thead>
           <tbody>
             {(data?.topOrders || []).map((o, i) => (
               <tr key={o.SALESID} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                 <td className="px-5 py-3 text-neutral-300 font-medium">{i + 1}</td>
-                <td className="px-5 py-3 font-mono text-[12px] text-neutral-700">{o.SALESID}</td>
+                <td className="px-5 py-3 font-mono text-[13px] text-neutral-700">{o.SALESID}</td>
                 <td className="px-5 py-3 text-neutral-600 truncate max-w-[200px]">{o.customer_name}</td>
                 <td className="px-5 py-3 text-neutral-600">{o.invoice_count}</td>
                 <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(o.total_invoiced)}</td>
@@ -217,28 +217,28 @@ export default function AnalyticsPage() {
       {/* Agreement Status */}
       <div className="card-industrial overflow-hidden">
         <div className="px-5 py-4 border-b border-neutral-100">
-          <h3 className="font-semibold text-[14px] text-neutral-900">Agreement Status Breakdown</h3>
+          <h3 className="font-bold text-[16px] text-neutral-900">Agreement Status Breakdown</h3>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full text-[13px]">
+        <table className="w-full text-[15px]">
           <thead>
             <tr className="border-b border-neutral-100 bg-neutral-50/60">
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Status</th>
-              <th className="px-5 py-3 text-left text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Count</th>
-              <th className="px-5 py-3 text-right text-[10px] font-semibold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Status</th>
+              <th className="px-5 py-3 text-left text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Count</th>
+              <th className="px-5 py-3 text-right text-[12px] font-bold text-neutral-400 uppercase tracking-wider">Total Invoiced</th>
             </tr>
           </thead>
           <tbody>
             {(data?.agreementStatus || []).length === 0 ? (
               <tr>
-                <td className="px-5 py-3"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider bg-neutral-100 text-neutral-600">No agreement status</span></td>
+                <td className="px-5 py-3"><span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold uppercase tracking-wider bg-neutral-100 text-neutral-600">No agreement status</span></td>
                 <td className="px-5 py-3 font-medium text-neutral-700">-</td>
                 <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(0)}</td>
               </tr>
             ) : (data?.agreementStatus || []).map(s => (
               <tr key={s.status} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                 <td className="px-5 py-3">
-                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider ${
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold uppercase tracking-wider ${
                     s.status === 'Active' ? 'bg-emerald-50 text-emerald-700' :
                     s.status === 'Invoiced' ? 'bg-blue-50 text-blue-700' :
                     s.status === 'Cancelled' ? 'bg-red-50 text-red-600' :

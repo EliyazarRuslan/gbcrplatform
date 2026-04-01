@@ -247,7 +247,7 @@ export default function InspectionDetailPage() {
   if (error || !data) {
     return (
       <div className="text-center py-12">
-        <p className="text-neutral-500 mb-4">{error || 'Inspection not found'}</p>
+        <p className="text-[15px] font-medium text-neutral-500 mb-4">{error || 'Inspection not found'}</p>
         <Link href="/inspections" className="text-primary hover:underline">
           Back to Inspections
         </Link>
@@ -272,7 +272,7 @@ export default function InspectionDetailPage() {
         <div className="space-y-1">
           <Link
             href="/inspections"
-            className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-primary transition-colors"
+            className="inline-flex items-center gap-1 text-[13px] font-medium text-neutral-500 hover:text-primary transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -280,7 +280,7 @@ export default function InspectionDetailPage() {
             Back to Inspections
           </Link>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-neutral-900">Inspection #{data.id}</h1>
+            <h1 className="text-[26px] font-bold text-neutral-900">Inspection #{data.id}</h1>
             <Badge variant={typeBadgeVariant[data.inspection_type] || 'default'}>
               {typeLabels[data.inspection_type] || data.inspection_type}
             </Badge>
@@ -288,10 +288,10 @@ export default function InspectionDetailPage() {
               {statusLabels[data.status] || data.status}
             </Badge>
           </div>
-          <p className="text-sm text-neutral-500">
-            Vehicle: <span className="font-medium text-neutral-700">{data.vehicle_assetnum}</span>
+          <p className="text-[14px] font-medium text-neutral-500">
+            Vehicle: <span className="font-semibold text-neutral-700">{data.vehicle_assetnum}</span>
             {data.vehicle_regno && (
-              <> &middot; <span className="font-medium text-neutral-700">{data.vehicle_regno}</span></>
+              <> &middot; <span className="font-semibold text-neutral-700">{data.vehicle_regno}</span></>
             )}
             {data.inspection_date && (
               <> &middot; {formatDate(data.inspection_date)}</>
@@ -311,7 +311,7 @@ export default function InspectionDetailPage() {
           <button
             key={s.id}
             onClick={() => setActiveSection(s.id)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors touch-manipulation ${
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-[14px] font-bold whitespace-nowrap transition-colors touch-manipulation ${
               activeSection === s.id
                 ? 'bg-primary text-white'
                 : 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200'
@@ -427,13 +427,13 @@ function PassFailToggle({
 }) {
   return (
     <div className="flex items-center justify-between py-3 border-b border-neutral-100 last:border-0">
-      <span className="text-sm font-medium text-neutral-700">{label}</span>
+      <span className="text-[15px] font-semibold text-neutral-700">{label}</span>
       <div className="flex gap-2">
         <button
           type="button"
           disabled={disabled}
           onClick={() => onChange('pass')}
-          className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors touch-manipulation ${
+          className={`px-4 py-2 text-[14px] rounded-lg font-bold transition-colors touch-manipulation ${
             value === 'pass'
               ? 'bg-green-100 text-green-800 ring-2 ring-green-300'
               : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
@@ -445,7 +445,7 @@ function PassFailToggle({
           type="button"
           disabled={disabled}
           onClick={() => onChange('fail')}
-          className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors touch-manipulation ${
+          className={`px-4 py-2 text-[14px] rounded-lg font-bold transition-colors touch-manipulation ${
             value === 'fail'
               ? 'bg-red-100 text-red-800 ring-2 ring-red-300'
               : 'bg-neutral-100 text-neutral-500 hover:bg-neutral-200'
@@ -646,7 +646,7 @@ function DamagesSection({
         {/* Damage Form (shown after tapping on diagram) */}
         {showForm && isEditable && (
           <div className="p-4 bg-amber-50 rounded-lg border border-amber-200 space-y-4 animate-fade-in">
-            <p className="text-sm font-medium text-amber-800">
+            <p className="text-[14px] font-semibold text-amber-800">
               Mark damage at position ({form.diagram_x.toFixed(2)}, {form.diagram_y.toFixed(2)}) on {form.diagram_view} view
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -677,7 +677,7 @@ function DamagesSection({
                 onChange={(e) => setForm({ ...form, is_pre_existing: e.target.checked })}
                 className="w-5 h-5 rounded border-neutral-300 text-primary focus:ring-primary"
               />
-              <span className="text-sm text-neutral-700">Pre-existing damage</span>
+              <span className="text-[14px] font-medium text-neutral-700">Pre-existing damage</span>
             </label>
             <div className="flex gap-2 justify-end">
               <Button size="sm" variant="ghost" onClick={() => setShowForm(false)}>Cancel</Button>
@@ -689,18 +689,18 @@ function DamagesSection({
         {/* Damage List */}
         {data.damages.length > 0 && (
           <div className="space-y-3">
-            <h4 className="text-sm font-medium text-neutral-700">Recorded Damages</h4>
+            <h4 className="text-[14px] font-bold text-neutral-700">Recorded Damages</h4>
             {data.damages.map((d, i) => (
               <div key={d.id} className="flex items-start justify-between p-3 bg-white border border-neutral-200 rounded-lg">
                 <div className="space-y-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <span className="w-6 h-6 rounded-full bg-red-500 text-white text-xs flex items-center justify-center font-bold shrink-0">{i + 1}</span>
-                    <span className="text-sm font-medium text-neutral-900 capitalize">{d.damage_type.replace('_', ' ')}</span>
-                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${severityColor[d.severity] || 'bg-neutral-100 text-neutral-700'}`}>{d.severity}</span>
-                    <span className="text-xs text-neutral-400 capitalize">{d.diagram_view} view</span>
+                    <span className="text-[14px] font-semibold text-neutral-900 capitalize">{d.damage_type.replace('_', ' ')}</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[12px] font-bold ${severityColor[d.severity] || 'bg-neutral-100 text-neutral-700'}`}>{d.severity}</span>
+                    <span className="text-[12px] font-medium text-neutral-400 capitalize">{d.diagram_view} view</span>
                     {d.is_pre_existing && <Badge variant="warning" size="sm">Pre-existing</Badge>}
                   </div>
-                  {d.description && <p className="text-sm text-neutral-600 ml-8">{d.description}</p>}
+                  {d.description && <p className="text-[14px] font-medium text-neutral-600 ml-8">{d.description}</p>}
                 </div>
                 {isEditable && (
                   <button onClick={() => handleDelete(d.id)} disabled={deleting === d.id}
@@ -828,7 +828,7 @@ function SubmitSection({
   if (!isEditable) {
     return (
       <Card title="Inspection Submitted">
-        <p className="text-sm text-neutral-500">
+        <p className="text-[15px] font-medium text-neutral-500">
           This inspection has been submitted and is no longer editable.
           Current status: <Badge variant={statusBadgeVariant[data.status] || 'default'}>{statusLabels[data.status] || data.status}</Badge>
         </p>
@@ -842,9 +842,9 @@ function SubmitSection({
         <div className="space-y-2">
           {completionItems.map((item) => (
             <div key={item.label} className="flex items-center justify-between py-2 border-b border-neutral-100 last:border-0">
-              <span className="text-sm text-neutral-700">{item.label}</span>
+              <span className="text-[14px] font-medium text-neutral-700">{item.label}</span>
               <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${item.ok ? 'text-green-700' : 'text-amber-600'}`}>
+                <span className={`text-[14px] font-semibold ${item.ok ? 'text-green-700' : 'text-amber-600'}`}>
                   {item.value}
                 </span>
                 {item.ok ? (
@@ -862,7 +862,7 @@ function SubmitSection({
         </div>
 
         {submitError && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-[14px] font-medium text-red-700">
             {submitError}
           </div>
         )}

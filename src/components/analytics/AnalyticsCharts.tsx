@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area,
 } from 'recharts';
 
-const COLORS = ['#32373c', '#d4941c', '#3b82f6', '#10b981', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
+const COLORS = ['#32373c', '#c8a04a', '#3b82f6', '#10b981', '#8b5cf6', '#06b6d4', '#ec4899', '#f97316'];
 
 interface Props {
   data: {
@@ -55,22 +55,22 @@ export default function AnalyticsCharts({ data }: Props) {
       {/* Monthly Invoice Revenue */}
       <div className="card-industrial p-5">
         <div className="mb-5">
-          <h3 className="text-[14px] font-semibold text-neutral-900">Monthly Invoice Revenue</h3>
-          <p className="text-[11px] text-neutral-400 mt-0.5">Last 12 months, SGD equivalent</p>
+          <h3 className="text-[15px] font-bold text-neutral-900">Monthly Invoice Revenue</h3>
+          <p className="text-[12px] font-bold text-neutral-400 mt-0.5">Last 12 months, SGD equivalent</p>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={data.revenue}>
             <defs>
               <linearGradient id="revenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#d4941c" stopOpacity={0.25} />
-                <stop offset="100%" stopColor="#d4941c" stopOpacity={0.02} />
+                <stop offset="0%" stopColor="#c8a04a" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#c8a04a" stopOpacity={0.02} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#e1e3ea" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={formatK} tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} width={60} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} width={60} />
             <Tooltip contentStyle={chartTooltipStyle} formatter={(v) => [`$${Number(v).toLocaleString()}`, 'Revenue']} />
-            <Area type="monotone" dataKey="revenue" stroke="#d4941c" strokeWidth={2.5} fill="url(#revenueGradient)" name="Revenue" dot={false} activeDot={{ r: 5, fill: '#d4941c', stroke: '#fff', strokeWidth: 2 }} />
+            <Area type="monotone" dataKey="revenue" stroke="#c8a04a" strokeWidth={2.5} fill="url(#revenueGradient)" name="Revenue" dot={false} activeDot={{ r: 5, fill: '#c8a04a', stroke: '#fff', strokeWidth: 2 }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -78,16 +78,16 @@ export default function AnalyticsCharts({ data }: Props) {
       {/* Revenue by Customer Segment */}
       <div className="card-industrial p-5">
         <div className="mb-5">
-          <h3 className="text-[14px] font-semibold text-neutral-900">Revenue by Top Customers</h3>
-          <p className="text-[11px] text-neutral-400 mt-0.5">Top 3 vs others, last 12 months</p>
+          <h3 className="text-[15px] font-bold text-neutral-900">Revenue by Top Customers</h3>
+          <p className="text-[12px] font-bold text-neutral-400 mt-0.5">Top 3 vs others, last 12 months</p>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={stackedData}>
             <CartesianGrid strokeDasharray="3 3" stroke="#e1e3ea" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
-            <YAxis tickFormatter={formatK} tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} width={60} />
+            <XAxis dataKey="month" tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
+            <YAxis tickFormatter={formatK} tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} width={60} />
             <Tooltip contentStyle={chartTooltipStyle} formatter={(v) => `$${Number(v).toLocaleString()}`} />
-            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '11px', color: '#636878' }} />
+            <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: '13px', fontWeight: 600, color: '#636878' }} />
             {segments.map((seg, i) => (
               <Bar
                 key={seg}
@@ -105,15 +105,15 @@ export default function AnalyticsCharts({ data }: Props) {
       {/* WO by Type */}
       <div className="card-industrial p-5">
         <div className="mb-5">
-          <h3 className="text-[14px] font-semibold text-neutral-900">Work Orders by Type</h3>
-          <p className="text-[11px] text-neutral-400 mt-0.5">Last 12 months from Maximo</p>
+          <h3 className="text-[15px] font-bold text-neutral-900">Work Orders by Type</h3>
+          <p className="text-[12px] font-bold text-neutral-400 mt-0.5">Last 12 months from Maximo</p>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <PieChart>
             <Pie data={data.woByType} dataKey="count" nameKey="worktype" cx="50%" cy="50%" innerRadius={55} outerRadius={95}
               label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               labelLine={{ stroke: '#c8cbd5', strokeWidth: 1 }}
-              style={{ fontSize: '11px', fill: '#636878' }}
+              style={{ fontSize: '13px', fontWeight: 700, fill: '#636878' }}
             >
               {data.woByType.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} stroke="white" strokeWidth={2} />)}
             </Pie>
@@ -125,14 +125,14 @@ export default function AnalyticsCharts({ data }: Props) {
       {/* Fleet Status */}
       <div className="card-industrial p-5">
         <div className="mb-5">
-          <h3 className="text-[14px] font-semibold text-neutral-900">Fleet Status Distribution</h3>
-          <p className="text-[11px] text-neutral-400 mt-0.5">Active fleet from Maximo</p>
+          <h3 className="text-[15px] font-bold text-neutral-900">Fleet Status Distribution</h3>
+          <p className="text-[12px] font-bold text-neutral-400 mt-0.5">Active fleet from Maximo</p>
         </div>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={data.statusDistribution} layout="vertical">
             <CartesianGrid strokeDasharray="3 3" stroke="#e1e3ea" horizontal={false} />
-            <XAxis type="number" tick={{ fontSize: 11, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
-            <YAxis type="category" dataKey="status" tick={{ fontSize: 11, fill: '#636878' }} width={90} axisLine={false} tickLine={false} />
+            <XAxis type="number" tick={{ fontSize: 12, fontWeight: 700, fill: '#8e93a3' }} axisLine={false} tickLine={false} />
+            <YAxis type="category" dataKey="status" tick={{ fontSize: 13, fontWeight: 700, fill: '#636878' }} width={90} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={chartTooltipStyle} />
             <Bar dataKey="count" fill="#32373c" radius={[0, 4, 4, 0]} name="Vehicles" barSize={20} />
           </BarChart>

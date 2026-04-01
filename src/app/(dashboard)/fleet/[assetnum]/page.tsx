@@ -87,8 +87,8 @@ function formsDiffer(a: FormState, b: FormState): boolean {
 function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div>
-      <p className="text-sm text-neutral-500">{label}</p>
-      <p className="text-sm font-medium text-neutral-900">{value || '-'}</p>
+      <p className="text-[13px] font-bold text-neutral-500">{label}</p>
+      <p className="text-[15px] font-semibold text-neutral-900">{value || '-'}</p>
     </div>
   );
 }
@@ -179,7 +179,7 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
     return (
       <div className="text-center py-12">
         <p className="text-neutral-500">{fetchError || 'Vehicle not found'}</p>
-        <Link href="/fleet" className="mt-4 inline-block text-sm text-primary hover:underline">← Back to Fleet</Link>
+        <Link href="/fleet" className="mt-4 inline-block text-[15px] font-medium text-primary hover:underline">← Back to Fleet</Link>
       </div>
     );
   }
@@ -188,11 +188,11 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <Link href="/fleet" className="inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-800 transition-colors mb-3">
+        <Link href="/fleet" className="inline-flex items-center gap-1 text-[13px] font-medium text-neutral-500 hover:text-neutral-800 transition-colors mb-3">
           ← Back to Fleet
         </Link>
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-bold text-neutral-900">
+          <h1 className="text-[26px] font-bold text-neutral-900">
             {vehicle.registration_no || vehicle.assetnum} — {vehicle.description}
           </h1>
           <div className="flex items-center gap-2">
@@ -287,10 +287,10 @@ export default function VehicleDetailPage({ params }: { params: Promise<{ assetn
                 </Button>
 
                 {saveSuccess && (
-                  <p className="text-sm text-green-600">Changes saved successfully.</p>
+                  <p className="text-[15px] font-medium text-green-600">Changes saved successfully.</p>
                 )}
                 {saveError && (
-                  <p className="text-sm text-red-600">{saveError}</p>
+                  <p className="text-[15px] font-medium text-red-600">{saveError}</p>
                 )}
               </div>
             </div>
