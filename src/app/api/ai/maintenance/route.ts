@@ -11,7 +11,7 @@ export async function GET() {
         a.totalcost, a.purchaseprice,
         (SELECT TOP 1 actfinish FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND worktype IN ('PM','CM') AND actfinish IS NOT NULL ORDER BY actfinish DESC) as lastService,
         (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND worktype IN ('CM','EM') AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as repairCount12mo,
-        (SELECT ISNULL(SUM(actlabcost + actmatcost), 0) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as costLast12mo,
+        (SELECT COALESCE(SUM(actlabcost + actmatcost), 0) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND reportdate >= DATEADD(YEAR, -1, GETDATE())) as costLast12mo,
         (SELECT COUNT(*) FROM workorder WHERE assetnum = a.assetnum AND siteid = 'GBCR' AND status IN ('APPR','WMATL','INPRG')) as openWOs
       FROM asset a
       WHERE a.siteid = 'GBCR'

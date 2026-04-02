@@ -23,7 +23,7 @@ interface AnalyticsData {
   activeValue: { active_count: number; invoice_count: number; total_invoiced: number };
   topCustomers: { customer_id: string; customer_name: string; agreement_count: number; invoice_count: number; total_invoiced: number }[];
   revenueByCustomer: { month: string; segment: string; revenue: number }[];
-  topOrders: { SALESID: string; customer_id: string; customer_name: string; invoice_count: number; total_invoiced: number; first_invoice: string; last_invoice: string }[];
+  topOrders: { salesid: string; customer_id: string; customer_name: string; invoice_count: number; total_invoiced: number; first_invoice: string; last_invoice: string }[];
   woByType: { worktype: string; count: number }[];
   statusDistribution: { status: string; count: number }[];
 }
@@ -197,9 +197,9 @@ export default function AnalyticsPage() {
           </thead>
           <tbody>
             {(data?.topOrders || []).map((o, i) => (
-              <tr key={o.SALESID} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
+              <tr key={o.salesid} className="border-b border-neutral-50 hover:bg-neutral-50/60 transition-colors">
                 <td className="px-5 py-3 text-neutral-300 font-medium">{i + 1}</td>
-                <td className="px-5 py-3 font-mono text-[13px] text-neutral-700">{o.SALESID}</td>
+                <td className="px-5 py-3 font-mono text-[13px] text-neutral-700">{o.salesid}</td>
                 <td className="px-5 py-3 text-neutral-600 truncate max-w-[200px]">{o.customer_name}</td>
                 <td className="px-5 py-3 text-neutral-600">{o.invoice_count}</td>
                 <td className="px-5 py-3 text-right font-semibold text-neutral-900">{formatCurrency(o.total_invoiced)}</td>

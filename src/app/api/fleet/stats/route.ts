@@ -8,13 +8,13 @@ export async function GET() {
     const result = await pool.request().query(`
       SELECT
         COUNT(*) as total,
-        SUM(CASE WHEN STATUS = 'HIRED OUT' THEN 1 ELSE 0 END) as hiredOut,
-        SUM(CASE WHEN STATUS = 'NOT READY' THEN 1 ELSE 0 END) as notReady,
-        SUM(CASE WHEN STATUS = 'IDLE' THEN 1 ELSE 0 END) as idle,
-        SUM(CASE WHEN STATUS = 'BOOKED' THEN 1 ELSE 0 END) as booked
-      FROM ASSET
-      WHERE SITEID = 'GBCR'
-        AND STATUS NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
+        SUM(CASE WHEN status = 'HIRED OUT' THEN 1 ELSE 0 END) as hiredOut,
+        SUM(CASE WHEN status = 'NOT READY' THEN 1 ELSE 0 END) as notReady,
+        SUM(CASE WHEN status = 'IDLE' THEN 1 ELSE 0 END) as idle,
+        SUM(CASE WHEN status = 'BOOKED' THEN 1 ELSE 0 END) as booked
+      FROM asset
+      WHERE siteid = 'GBCR'
+        AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
     `);
 
     const stats = result.recordset[0];

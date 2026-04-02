@@ -1,33 +1,54 @@
 import sql from 'mssql';
+import { getFabricToken, getFabricServer } from './fabric-auth';
 
-const config: sql.config = {
-  server: process.env.MAXDB_SERVER || 'GBITR01V.goldbell.com.sg',
-  database: process.env.MAXDB_DATABASE || 'MAXDB76',
-  user: process.env.MAXDB_USER || 'ReadUser',
-  password: process.env.MAXDB_PASSWORD || 'G0ldBell123',
-  port: parseInt(process.env.MAXDB_PORT || '1433'),
-  options: { encrypt: false, trustServerCertificate: true },
-  pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
-  requestTimeout: 30000,
-  connectionTimeout: 15000,
+const globalForDb = globalThis as unknown as {
+  maxPool: sql.ConnectionPool | undefined;
+  maxPoolPromise: Promise<sql.ConnectionPool> | undefined;
+  maxTokenExpiry: number;
 };
 
-// Use globalThis to persist across Turbopack HMR
-const globalForDb = globalThis as unknown as { maxPool: sql.ConnectionPool | undefined; maxPoolPromise: Promise<sql.ConnectionPool> | undefined };
+async function buildConfig(): Promise<sql.config> {
+  const token = await getFabricToken();
+  return {
+    server: getFabricServer(),
+    database: process.env.FABRIC_MX_DATABASE || 'GBMXDB01V',
+    options: {
+      encrypt: true,
+      trustServerCertificate: false,
+    },
+    authentication: {
+      type: 'azure-active-directory-access-token',
+      options: { token },
+    },
+    pool: { max: 10, min: 0, idleTimeoutMillis: 30000 },
+    requestTimeout: 120000,
+    connectionTimeout: 15000,
+  };
+}
 
 export async function getMaxPool(): Promise<sql.ConnectionPool> {
-  if (globalForDb.maxPool?.connected) {
+  // Refresh pool every 45 minutes (tokens expire at 60 min)
+  const now = Date.now();
+  if (globalForDb.maxPool?.connected && globalForDb.maxTokenExpiry > now) {
     return globalForDb.maxPool;
+  }
+
+  // Close stale pool if token expired
+  if (globalForDb.maxPool?.connected) {
+    try { await globalForDb.maxPool.close(); } catch { /* ignore */ }
+    globalForDb.maxPool = undefined;
+    globalForDb.maxPoolPromise = undefined;
   }
 
   if (globalForDb.maxPoolPromise) {
     return globalForDb.maxPoolPromise;
   }
 
-  globalForDb.maxPoolPromise = new sql.ConnectionPool(config)
-    .connect()
+  globalForDb.maxPoolPromise = buildConfig()
+    .then((config) => new sql.ConnectionPool(config).connect())
     .then((pool) => {
       globalForDb.maxPool = pool;
+      globalForDb.maxTokenExpiry = now + 45 * 60 * 1000;
       pool.on('error', () => {
         globalForDb.maxPool = undefined;
         globalForDb.maxPoolPromise = undefined;
