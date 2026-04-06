@@ -6,15 +6,18 @@ import { logAudit } from '@/lib/audit';
 const TENANT_ID = process.env.AZURE_AD_TENANT_ID!;
 const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID!;
 const CLIENT_SECRET = process.env.AZURE_AD_CLIENT_SECRET!;
-const REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
+const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state') || '/';
   const error = request.nextUrl.searchParams.get('error');
 
-  // Use localhost as base since that's where the cookie will be set
-  const base = new URL(REDIRECT_URI).origin;
+  // Build origin from Host header so it works from any host (localhost, LAN IP, etc)
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const base = `${protocol}://${host}`;
+  const redirectUri = `${base}/api/auth/sso/callback`;
 
   if (error || !code) {
     console.error('SSO error:', error);
@@ -30,7 +33,7 @@ export async function GET(request: NextRequest) {
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         code,
-        redirect_uri: REDIRECT_URI,
+        redirect_uri: redirectUri,
         grant_type: 'authorization_code',
         scope: 'openid profile email User.Read',
       }),

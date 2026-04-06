@@ -25,7 +25,7 @@ export async function GET() {
     (async () => {
       try {
         const mx = await getMaxPool();
-        const mxReq = () => { const r = mx.request(); r.timeout = 60000; return r; };
+        const mxReq = () => { const r = mx.request(); (r as unknown as { timeout: number }).timeout = 60000; return r; };
         const [woTypeResult, statusDist] = await Promise.all([
           mxReq().query(`
             SELECT worktype, COUNT(*) as count
@@ -50,7 +50,7 @@ export async function GET() {
     (async () => {
       try {
         const ax = await getAxPool();
-        const axReq = () => { const r = ax.request(); r.timeout = 120000; return r; };
+        const axReq = () => { const r = ax.request(); (r as unknown as { timeout: number }).timeout = 120000; return r; };
 
         const [
           revenueResult,
@@ -134,7 +134,7 @@ export async function GET() {
         let revenueByCustomer: { month: string; segment: string; revenue: number }[] = [];
         if (topNames.length > 0) {
           const segRequest = ax.request();
-          segRequest.timeout = 120000;
+          (segRequest as unknown as { timeout: number }).timeout = 120000;
           topNames.forEach((name: string, i: number) => segRequest.input(`p${i}`, name));
           const caseWhen = topNames.map((_: string, i: number) => `WHEN s.custaccount = @p${i} THEN s.salesname`).join(' ');
           const segResult = await segRequest.query(`

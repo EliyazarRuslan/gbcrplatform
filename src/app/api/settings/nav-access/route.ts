@@ -71,7 +71,8 @@ export async function PUT(request: NextRequest) {
     await logAudit({
       userId: authUser.userId,
       action: 'UPDATE_NAV_ACCESS',
-      details: `Updated ${updates.length} nav access rules`,
+      entityType: 'nav_access',
+      newValues: { updatedCount: updates.length },
     });
 
     return NextResponse.json({ success: true });

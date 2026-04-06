@@ -1,0 +1,116 @@
+<h2>LA-ide v1 — Dashboard Layout</h2>
+<p class="subtitle">Which layout feels right for your deploy command center?</p>
+
+<div class="cards">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 1rem; background: #0f1117;">
+      <!-- Layout A: Sidebar + Grid -->
+      <div style="display: flex; height: 280px; gap: 1px; font-size: 11px; color: #94a3b8;">
+        <!-- Sidebar -->
+        <div style="width: 180px; background: #1a1b2e; padding: 12px; flex-shrink: 0; border-radius: 8px 0 0 8px;">
+          <div style="color: #c8a04a; font-weight: bold; font-size: 13px; margin-bottom: 16px;">LA-ide</div>
+          <div style="padding: 6px 8px; background: rgba(99,102,241,0.15); border-radius: 6px; color: #818cf8; margin-bottom: 4px;">Dashboard</div>
+          <div style="padding: 6px 8px; margin-bottom: 4px;">Pipelines</div>
+          <div style="padding: 6px 8px; margin-bottom: 4px;">Servers</div>
+          <div style="padding: 6px 8px; margin-bottom: 4px;">Settings</div>
+          <div style="margin-top: auto; padding-top: 60px;">
+            <div style="padding: 6px 8px; font-size: 10px; color: #475569;">4 projects</div>
+            <div style="padding: 6px 8px; font-size: 10px; color: #475569;">3 servers</div>
+          </div>
+        </div>
+        <!-- Main content -->
+        <div style="flex: 1; background: #12131e; padding: 12px; border-radius: 0 8px 8px 0;">
+          <div style="color: #e2e8f0; font-size: 12px; font-weight: 600; margin-bottom: 10px;">Projects</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div style="background: #1e1f33; border-radius: 8px; padding: 10px; border-left: 3px solid #22c55e;">
+              <div style="color: #e2e8f0; font-size: 11px; font-weight: 600;">gbcr-platform</div>
+              <div style="color: #22c55e; font-size: 9px; margin-top: 4px;">● Live — 2m ago</div>
+              <div style="color: #475569; font-size: 9px; margin-top: 2px;">Vercel · main</div>
+            </div>
+            <div style="background: #1e1f33; border-radius: 8px; padding: 10px; border-left: 3px solid #22c55e;">
+              <div style="color: #e2e8f0; font-size: 11px; font-weight: 600;">gbcr-report-card</div>
+              <div style="color: #22c55e; font-size: 9px; margin-top: 4px;">● Live — 1h ago</div>
+              <div style="color: #475569; font-size: 9px; margin-top: 2px;">Azure VM · prod</div>
+            </div>
+            <div style="background: #1e1f33; border-radius: 8px; padding: 10px; border-left: 3px solid #f59e0b;">
+              <div style="color: #e2e8f0; font-size: 11px; font-weight: 600;">fabric-pipeline</div>
+              <div style="color: #f59e0b; font-size: 9px; margin-top: 4px;">● Deploying...</div>
+              <div style="color: #475569; font-size: 9px; margin-top: 2px;">Azure · staging</div>
+            </div>
+            <div style="background: #1e1f33; border-radius: 8px; padding: 10px; border-left: 3px solid #ef4444;">
+              <div style="color: #e2e8f0; font-size: 11px; font-weight: 600;">maximo-sync</div>
+              <div style="color: #ef4444; font-size: 9px; margin-top: 4px;">● Failed — 3h ago</div>
+              <div style="color: #475569; font-size: 9px; margin-top: 2px;">SSH · 10.0.1.5</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Sidebar + Project Grid</h3>
+      <p>Classic IDE layout. Sidebar nav, project cards in a grid. Each card shows status, last deploy, target. Click a card to drill into its pipeline.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding: 1rem; background: #0f1117;">
+      <!-- Layout B: Command Center -->
+      <div style="height: 280px; background: #12131e; border-radius: 8px; padding: 12px; font-size: 11px; color: #94a3b8;">
+        <!-- Top bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+          <div style="color: #c8a04a; font-weight: bold; font-size: 13px;">LA-ide</div>
+          <div style="display: flex; gap: 8px;">
+            <div style="padding: 4px 10px; background: #1e1f33; border-radius: 6px; font-size: 10px; color: #818cf8;">Dashboard</div>
+            <div style="padding: 4px 10px; font-size: 10px;">Pipelines</div>
+            <div style="padding: 4px 10px; font-size: 10px;">Servers</div>
+          </div>
+        </div>
+        <!-- Stats row -->
+        <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+          <div style="flex: 1; background: #1e1f33; border-radius: 8px; padding: 8px; text-align: center;">
+            <div style="color: #22c55e; font-size: 16px; font-weight: bold;">3</div>
+            <div style="font-size: 9px; color: #475569;">Live</div>
+          </div>
+          <div style="flex: 1; background: #1e1f33; border-radius: 8px; padding: 8px; text-align: center;">
+            <div style="color: #f59e0b; font-size: 16px; font-weight: bold;">1</div>
+            <div style="font-size: 9px; color: #475569;">Deploying</div>
+          </div>
+          <div style="flex: 1; background: #1e1f33; border-radius: 8px; padding: 8px; text-align: center;">
+            <div style="color: #ef4444; font-size: 16px; font-weight: bold;">1</div>
+            <div style="font-size: 9px; color: #475569;">Failed</div>
+          </div>
+        </div>
+        <!-- Project list -->
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; align-items: center; background: #1e1f33; border-radius: 6px; padding: 8px 10px; gap: 10px;">
+            <div style="width: 8px; height: 8px; background: #22c55e; border-radius: 50%;"></div>
+            <div style="flex: 1; color: #e2e8f0; font-weight: 600;">gbcr-platform</div>
+            <div style="font-size: 9px; color: #475569;">Vercel · 2m ago</div>
+            <div style="padding: 3px 8px; background: #22c55e20; color: #22c55e; border-radius: 4px; font-size: 9px;">Deploy</div>
+          </div>
+          <div style="display: flex; align-items: center; background: #1e1f33; border-radius: 6px; padding: 8px 10px; gap: 10px;">
+            <div style="width: 8px; height: 8px; background: #f59e0b; border-radius: 50%; animation: pulse 1.5s infinite;"></div>
+            <div style="flex: 1; color: #e2e8f0; font-weight: 600;">fabric-pipeline</div>
+            <div style="font-size: 9px; color: #475569;">Azure · deploying</div>
+            <div style="padding: 3px 8px; background: #f59e0b20; color: #f59e0b; border-radius: 4px; font-size: 9px;">Logs</div>
+          </div>
+          <div style="display: flex; align-items: center; background: #1e1f33; border-radius: 6px; padding: 8px 10px; gap: 10px;">
+            <div style="width: 8px; height: 8px; background: #ef4444; border-radius: 50%;"></div>
+            <div style="flex: 1; color: #e2e8f0; font-weight: 600;">maximo-sync</div>
+            <div style="font-size: 9px; color: #475569;">SSH · failed 3h ago</div>
+            <div style="padding: 3px 8px; background: #ef444420; color: #ef4444; border-radius: 4px; font-size: 9px;">Retry</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Command Center List</h3>
+      <p>Top nav instead of sidebar. KPI summary up top (live/deploying/failed counts). Projects in a compact list with inline deploy/retry buttons. More data-dense, ops-focused.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 1.5rem; padding: 1.2rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border-left: 4px solid #6366f1;">
+  <h3 style="margin-top: 0; color: #6366f1;">Recommendation: B — Command Center</h3>
+  <p style="margin: 0;">For a deploy-focused v1 with 4-8 projects, the list view is more efficient. You see everything at a glance without clicking into cards. The KPI bar gives instant health status. Sidebar can come in v2 when you add editor/terminal features.</p>
+</div>

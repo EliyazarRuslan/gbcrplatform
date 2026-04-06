@@ -12,16 +12,19 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
   const [visibleItems, setVisibleItems] = useState<NavItem[]>(() => getVisibleItems(userRole));
 
   useEffect(() => {
-    fetch('/api/nav-items')
+    const controller = new AbortController();
+    fetch('/api/nav-items', { signal: controller.signal })
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.data?.length > 0) {
           setVisibleItems(data.data);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
         // Use hardcoded defaults on failure
       });
+    return () => controller.abort();
   }, [userRole]);
 
   const sidebarContent = (

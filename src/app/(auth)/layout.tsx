@@ -8,7 +8,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
       <div className="relative z-10 flex flex-col lg:flex-row items-center gap-16 lg:gap-24 px-6 py-12 max-w-5xl w-full">
         {/* Left branding - desktop only */}
-        <div className="hidden lg:block flex-1 text-center lg:text-left">
+        <div className="max-lg:hidden flex-1 text-center lg:text-left">
           <img src="/goldbell-logo.svg" alt="Goldbell" className="w-12 h-12 rounded-xl mb-10" />
           <h1 className="text-5xl font-bold text-white leading-tight tracking-tight">
             Fleet Management<br />

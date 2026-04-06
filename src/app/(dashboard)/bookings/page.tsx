@@ -16,21 +16,32 @@ export default function BookingsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [showCreate, setShowCreate] = useState(false);
 
-  const fetchBookings = (showLoading = true) => {
+  const fetchBookings = (showLoading = true, signal?: AbortSignal) => {
     if (showLoading) setLoading(true);
     const params = new URLSearchParams();
     if (statusFilter) params.set('status', statusFilter);
-    fetch(`/api/bookings?${params}`)
+    fetch(`/api/bookings?${params}`, signal ? { signal } : undefined)
       .then(r => r.json())
       .then(data => { setBookings(data.bookings || []); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(err => { if (err.name !== 'AbortError') setLoading(false); });
   };
 
-  useEffect(() => { fetchBookings(); }, [statusFilter]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchBookings(true, controller.signal);
+    return () => controller.abort();
+  }, [statusFilter]);
 
   useEffect(() => {
-    const interval = setInterval(() => fetchBookings(false), 10000);
-    return () => clearInterval(interval);
+    let controller: AbortController;
+    const interval = setInterval(() => {
+      controller = new AbortController();
+      fetchBookings(false, controller.signal);
+    }, 10000);
+    return () => {
+      clearInterval(interval);
+      controller?.abort();
+    };
   }, [statusFilter]);
 
   const handleCancel = async (id: string) => {

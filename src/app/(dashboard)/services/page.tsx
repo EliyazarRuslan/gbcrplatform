@@ -22,19 +22,23 @@ export default function ServicesPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
 
-  const fetchData = () => {
+  const fetchData = (signal?: AbortSignal) => {
     setLoading(true);
     const params = new URLSearchParams({ page: String(page), limit: '50' });
     if (search) params.set('search', search);
     if (statusFilter) params.set('status', statusFilter);
     if (typeFilter) params.set('worktype', typeFilter);
-    fetch(`/api/services?${params}`)
+    fetch(`/api/services?${params}`, signal ? { signal } : undefined)
       .then(r => r.json())
       .then(data => { setWorkOrders(data.workOrders || []); setPagination(data.pagination || { total: 0, pages: 0 }); setLoading(false); })
-      .catch(() => setLoading(false));
+      .catch(err => { if (err.name !== 'AbortError') setLoading(false); });
   };
 
-  useEffect(() => { fetchData(); }, [page, statusFilter, typeFilter]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchData(controller.signal);
+    return () => controller.abort();
+  }, [page, statusFilter, typeFilter]);
 
   return (
     <div className="space-y-4 animate-fade-in">

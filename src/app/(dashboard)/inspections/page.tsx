@@ -94,7 +94,7 @@ export default function InspectionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchInspections = async (p = page, showLoading = true) => {
+  const fetchInspections = async (p = page, showLoading = true, signal?: AbortSignal) => {
     if (showLoading) setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -104,13 +104,14 @@ export default function InspectionsPage() {
       if (typeFilter) params.set('type', typeFilter);
       if (statusFilter) params.set('status', statusFilter);
 
-      const res = await fetch(`/api/inspections?${params}`);
+      const res = await fetch(`/api/inspections?${params}`, signal ? { signal } : undefined);
       const json = await res.json();
       if (json.success) {
         setInspections(json.data.inspections);
         setPagination(json.data.pagination);
       }
-    } catch {
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
       // silently fail
     } finally {
       setLoading(false);
@@ -118,13 +119,22 @@ export default function InspectionsPage() {
   };
 
   useEffect(() => {
-    fetchInspections(page);
+    const controller = new AbortController();
+    fetchInspections(page, true, controller.signal);
+    return () => controller.abort();
   }, [page]);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
-    const interval = setInterval(() => fetchInspections(page, false), 10000);
-    return () => clearInterval(interval);
+    let controller: AbortController;
+    const interval = setInterval(() => {
+      controller = new AbortController();
+      fetchInspections(page, false, controller.signal);
+    }, 10000);
+    return () => {
+      clearInterval(interval);
+      controller?.abort();
+    };
   }, [page, typeFilter, statusFilter, search]);
 
   const handleSearch = () => {

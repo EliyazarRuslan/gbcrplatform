@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import StatCard from '@/components/ui/StatCard';
 import { SkeletonCard, SkeletonChart } from '@/components/ui/Skeleton';
 import { formatPercent } from '@/lib/utils';
@@ -39,14 +40,16 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     Promise.all([
-      fetch('/api/fleet/stats').then(r => r.json()),
-      fetch('/api/auth/me').then(r => r.json()),
+      fetch('/api/fleet/stats', { signal: controller.signal }).then(r => r.json()),
+      fetch('/api/auth/me', { signal: controller.signal }).then(r => r.json()),
     ]).then(([statsData, userData]) => {
       if (statsData.success) setStats(statsData.data);
-      if (userData.success) setUserName(userData.data.full_name?.split(' ')[0] || '');
+      if (userData.success) setUserName(userData.data.full_name || '');
       setLoading(false);
-    }).catch(() => setLoading(false));
+    }).catch(err => { if (err.name !== 'AbortError') setLoading(false); });
+    return () => controller.abort();
   }, []);
 
   if (loading) {
@@ -101,7 +104,7 @@ export default function DashboardPage() {
         <StatCard
           title="Hired Out"
           value={stats?.hiredOut?.toLocaleString() || '0'}
-          subtitle={formatPercent(stats ? (stats.hiredOut / stats.total) * 100 : 0)}
+          subtitle={formatPercent(stats && stats.total > 0 ? (stats.hiredOut / stats.total) * 100 : 0)}
           icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
           color="green"
         />
@@ -144,7 +147,7 @@ export default function DashboardPage() {
           { href: '/bookings', label: 'Bookings', sub: 'Manage reservations', bgClass: 'bg-emerald-600', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
           { href: '/settings/users', label: 'User Management', sub: 'Manage staff accounts', bgClass: 'bg-violet-600', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
         ].map((link) => (
-          <a key={link.href} href={link.href} className="group card-industrial p-6">
+          <Link key={link.href} href={link.href} className="group card-industrial p-6">
             <div className="flex items-center gap-4">
               <div className={`w-11 h-11 rounded-xl ${link.bgClass} flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
                 <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -159,7 +162,7 @@ export default function DashboardPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </div>
-          </a>
+          </Link>
         ))}
       </div>
     </div>

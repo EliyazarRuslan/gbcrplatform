@@ -19,11 +19,14 @@ export default function BookingCalendarPage() {
   const [bookings, setBookings] = useState<CalendarBooking[]>([]);
 
   useEffect(() => {
+    const controller = new AbortController();
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth() + 1;
-    fetch(`/api/bookings/calendar?year=${year}&month=${month}`)
+    fetch(`/api/bookings/calendar?year=${year}&month=${month}`, { signal: controller.signal })
       .then(r => r.json())
-      .then(data => setBookings(Array.isArray(data) ? data : []));
+      .then(data => setBookings(Array.isArray(data) ? data : []))
+      .catch(err => { if (err.name !== 'AbortError') throw err; });
+    return () => controller.abort();
   }, [currentDate]);
 
   const monthStart = startOfMonth(currentDate);

@@ -9,8 +9,13 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  useEffect(() => {
+    return () => { abortControllerRef.current?.abort(); };
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || streaming) return;
@@ -20,11 +25,15 @@ export default function AIChat() {
     setInput('');
     setStreaming(true);
 
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.content })) }),
+        signal: controller.signal,
       });
 
       if (!res.ok) throw new Error('Failed');
@@ -49,8 +58,10 @@ export default function AIChat() {
           } catch { /* skip */ }
         }
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, AI service is currently unavailable. Please check your OpenAI API key.' }]);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, AI service is currently unavailable. Please check your OpenAI API key.' }]);
+      }
     }
     setStreaming(false);
   };

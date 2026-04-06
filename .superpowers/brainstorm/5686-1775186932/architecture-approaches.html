@@ -1,0 +1,87 @@
+<h2>LA-ide v1 — Architecture Approaches</h2>
+<p class="subtitle">One-click deploy command center built with Tauri + React/TS</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Monolith Shell</h3>
+      <p>Single Tauri app that handles everything — UI, pipeline execution, SSH connections, cloud API calls, and state management all in one process.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Simplest to build and debug</li>
+            <li>No inter-process communication overhead</li>
+            <li>Single binary distribution</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>A stuck SSH or long build blocks the UI</li>
+            <li>Harder to extend later (editor, terminal, etc.)</li>
+            <li>All-or-nothing restarts</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Core + Agent Architecture</h3>
+      <p>Tauri UI shell talks to a lightweight local <strong>agent daemon</strong> (Rust or Node) that runs pipelines in the background. Agents handle SSH, cloud APIs, and build commands. UI stays responsive.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>UI never blocks — agent runs pipelines independently</li>
+            <li>Agent can run headless (CLI / scheduled deploys)</li>
+            <li>Clean separation: UI = display, Agent = execution</li>
+            <li>Natural path to add editor/terminal in v2</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Slightly more complex initial setup (IPC between UI and agent)</li>
+            <li>Two processes to manage</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Plugin-based Extensible</h3>
+      <p>Full plugin architecture from day 1 — each deploy target (Azure, SSH, Vercel) is a plugin. Core provides pipeline engine, UI framework, and plugin API.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Most extensible — easy to add new deploy targets</li>
+            <li>Clean separation of concerns</li>
+            <li>Could open to community later</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Over-engineered for v1 with 4-8 projects</li>
+            <li>Plugin API design is hard to get right upfront</li>
+            <li>Slowest to ship</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border-left: 4px solid #6366f1;">
+  <h3 style="margin-top: 0; color: #6366f1;">Recommendation: B — Core + Agent</h3>
+  <p style="margin: 0;">Best balance of simplicity and future-proofing. The agent daemon gives you non-blocking pipeline execution, CLI access for automation, and a clean boundary to bolt on editor/terminal features in v2. Not over-engineered like C, not limiting like A.</p>
+</div>

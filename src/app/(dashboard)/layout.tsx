@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header';
 import MobileNav from '@/components/layout/MobileNav';
 import MobileHeader from '@/components/layout/MobileHeader';
 import type { Role } from '@/types/auth';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 interface UserData {
   id: number;
@@ -71,7 +72,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <MobileHeader user={user} />
         </div>
         <main className="flex-1 overflow-y-auto p-3 md:p-6 pb-[calc(var(--mobile-nav-height)+1rem)] md:pb-6">
-          {children}
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
       <MobileNav userRole={user.role} />

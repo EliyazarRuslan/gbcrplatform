@@ -7,7 +7,7 @@ const ALLOWED_ROLES = ['super_admin', 'branch_manager', 'rental_officer', 'inspe
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await requireRole(request, [...ALLOWED_ROLES]);
+    await requireRole(request, [...ALLOWED_ROLES]);
 
     const { searchParams } = new URL(request.url);
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));

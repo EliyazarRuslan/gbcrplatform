@@ -72,6 +72,7 @@ export async function GET(request: NextRequest) {
     const countReq = pool.request();
     if (search) countReq.input('search', sql.NVarChar, `%${search}%`);
     if (status) countReq.input('status', sql.NVarChar, status);
+    let total: number;
     if (categoryAssetnums) {
       const inList = categoryAssetnums.map((_, i) => `@cat${i}`).join(',');
       categoryAssetnums.forEach((an, i) => countReq.input(`cat${i}`, sql.NVarChar, an));
@@ -85,10 +86,10 @@ export async function GET(request: NextRequest) {
       countConditions.push(`a.assetnum IN (${inList})`);
       const countWhere = countConditions.join(' AND ');
       const countResult = await countReq.query(`SELECT COUNT(*) as total FROM asset a WHERE ${countWhere}`);
-      var total = countResult.recordset[0].total;
+      total = countResult.recordset[0].total;
     } else {
       const countResult = await countReq.query(`SELECT COUNT(*) as total FROM asset a WHERE ${whereClause}`);
-      var total = countResult.recordset[0].total;
+      total = countResult.recordset[0].total;
     }
 
     // List assets from Fabric
@@ -116,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     // Enrich with overrides from GBCR_Platform (on GBITR01V)
     const assetnums = result.recordset.map((r: { assetnum: string }) => r.assetnum);
-    let overridesMap: Record<string, { category_id: number | null; category_name: string | null; availability_override: string | null; override_reason: string | null; notes: string | null }> = {};
+    const overridesMap: Record<string, { category_id: number | null; category_name: string | null; availability_override: string | null; override_reason: string | null; notes: string | null }> = {};
 
     if (assetnums.length > 0) {
       const dbPool = await getPool();
