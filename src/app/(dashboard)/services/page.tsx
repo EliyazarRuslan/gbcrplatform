@@ -21,6 +21,7 @@ export default function ServicesPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+  const [searchTrigger, setSearchTrigger] = useState(0);
 
   const fetchData = (signal?: AbortSignal) => {
     setLoading(true);
@@ -38,7 +39,7 @@ export default function ServicesPage() {
     const controller = new AbortController();
     fetchData(controller.signal);
     return () => controller.abort();
-  }, [page, statusFilter, typeFilter]);
+  }, [page, statusFilter, typeFilter, searchTrigger]);
 
   return (
     <div className="space-y-4 animate-fade-in">
@@ -46,7 +47,7 @@ export default function ServicesPage() {
 
       <div className="space-y-2">
         <input type="text" value={search} onChange={e => setSearch(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { setPage(1); fetchData(); } }}
+          onKeyDown={e => { if (e.key === 'Enter') { setPage(1); setSearchTrigger(t => t + 1); } }}
           placeholder="Search WO, asset, description..."
           className="w-full px-4 py-2 text-[14px] font-medium bg-white border border-neutral-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-light" />
         <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
@@ -60,7 +61,7 @@ export default function ServicesPage() {
             <option value="">All Types</option>
             {['PM','CM','SR','EM','CAP'].map(t => <option key={t} value={t}>{t}</option>)}
           </select>
-          <button onClick={() => { setPage(1); fetchData(); }} className="shrink-0 px-4 py-2 text-[14px] font-bold bg-primary text-white rounded-lg hover:bg-primary-dark">Search</button>
+          <button onClick={() => { setPage(1); setSearchTrigger(t => t + 1); }} className="shrink-0 px-4 py-2 text-[14px] font-bold bg-primary text-white rounded-lg hover:bg-primary-dark">Search</button>
         </div>
       </div>
 

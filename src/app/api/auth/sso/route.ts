@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { SignJWT } from 'jose';
 
 const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
 const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
@@ -9,6 +10,19 @@ function sanitizeRedirect(url: string | null): string {
   // Allow only relative paths starting with a single '/' (reject '//' and absolute URLs)
   if (url.startsWith('/') && !url.startsWith('//') && !/^[a-z][a-z\d+\-.]*:/i.test(url)) return url;
   return '/';
+}
+
+function getStateSecret() {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) throw new Error('JWT_SECRET environment variable is required');
+  return new TextEncoder().encode(raw);
+}
+
+async function signState(redirect: string): Promise<string> {
+  return new SignJWT({ redirect })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('10m')
+    .sign(getStateSecret());
 }
 
 export async function GET(request: NextRequest) {
@@ -32,7 +46,7 @@ export async function GET(request: NextRequest) {
     redirect_uri: redirectUri,
     response_mode: 'query',
     scope: 'openid profile email User.Read',
-    state: safeRedirect,
+    state: await signState(safeRedirect),
     prompt: 'select_account',
   });
 

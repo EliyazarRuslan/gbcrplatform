@@ -57,7 +57,7 @@ export async function GET() {
       anomalies.push({
         type: 'COST_SPIKE',
         entity: `${r.assetnum} (${r.gb_regno || 'N/A'})`,
-        severity: (r.totalcost as number) > (r.avgCost as number) + 3 * (r.stdCost as number) ? 'CRITICAL' : 'HIGH',
+        severity: (r.totalcost as number) > (Number(r.avgCost) || 0) + 3 * (Number(r.stdCost) || 0) ? 'CRITICAL' : 'HIGH',
         description: `Labor cost $${((r.totalcost as number) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })} is significantly above fleet average $${((r.avgCost as number) || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
         value: r.totalcost as number,
       });

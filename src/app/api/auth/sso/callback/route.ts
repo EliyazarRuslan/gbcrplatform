@@ -2,6 +2,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { signToken, setTokenCookie } from '@/lib/auth';
 import { getPool, sql } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
+import { jwtVerify } from 'jose';
+
+const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
+const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
+const CLIENT_SECRET = process.env.AZURE_AD_CLIENT_SECRET;
+const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI;
+
+function getStateSecret() {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) throw new Error('JWT_SECRET environment variable is required');
+  return new TextEncoder().encode(raw);
+}
+
+async function verifyState(raw: string): Promise<string> {
+  try {
+    const { payload } = await jwtVerify(raw, getStateSecret());
+    const redirect = typeof payload.redirect === 'string' ? payload.redirect : '/';
+    return redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/';
+  } catch {
+    return '/';
+  }
+}
 
 const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
 const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
@@ -20,7 +42,8 @@ export async function GET(request: NextRequest) {
   }
 
   const code = request.nextUrl.searchParams.get('code');
-  const state = request.nextUrl.searchParams.get('state') || '/';
+  const rawState = request.nextUrl.searchParams.get('state') || '';
+  const state = await verifyState(rawState);
   const error = request.nextUrl.searchParams.get('error');
 
   // Build origin from Host header so it works from any host (localhost, LAN IP, etc)

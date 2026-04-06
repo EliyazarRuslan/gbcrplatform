@@ -32,6 +32,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState('');
   const [dateStr, setDateStr] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -41,6 +43,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const controller = new AbortController();
+    setLoading(true);
+    setError(null);
     Promise.all([
       fetch('/api/fleet/stats', { signal: controller.signal }).then(r => { if (!r.ok) throw new Error(`fleet/stats ${r.status}`); return r.json(); }),
       fetch('/api/auth/me', { signal: controller.signal }).then(r => { if (!r.ok) throw new Error(`auth/me ${r.status}`); return r.json(); }),
@@ -48,9 +52,9 @@ export default function DashboardPage() {
       if (statsData.success) setStats(statsData.data);
       if (userData.success) setUserName(userData.data.full_name || '');
       setLoading(false);
-    }).catch(err => { if (err.name !== 'AbortError') setLoading(false); });
+    }).catch(err => { if (err.name !== 'AbortError') { setError(err.message || 'Failed to load dashboard data'); setLoading(false); } });
     return () => controller.abort();
-  }, []);
+  }, [retryKey]);
 
   if (loading) {
     return (
@@ -68,6 +72,12 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+          <button onClick={() => setRetryKey(k => k + 1)} className="text-sm font-bold text-red-600 hover:text-red-800 shrink-0">Retry</button>
+        </div>
+      )}
       {/* Welcome Banner */}
       <div className="relative overflow-hidden rounded-2xl bg-charcoal p-7 sm:p-8 text-white">
         <div className="absolute top-0 right-0 w-72 h-72 bg-[#c8a04a]/[0.06] rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4" />

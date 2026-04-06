@@ -4,7 +4,7 @@
 <div class="cards" style="display:grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px;">
 
   <!-- Concept 1: Midnight Lux -->
-  <div class="card" data-choice="midnight-lux" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="midnight-lux" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height: 340px; overflow:hidden;">
       <div style="
         background: linear-gradient(135deg, #0a0a0b 0%, #1a1816 50%, #0f0d0a 100%);
@@ -73,7 +73,7 @@
   </div>
 
   <!-- Concept 2: Paper & Ink -->
-  <div class="card" data-choice="paper-ink" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="paper-ink" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height: 340px; overflow:hidden;">
       <div style="
         background: #ffffff;
@@ -143,7 +143,7 @@
   </div>
 
   <!-- Concept 3: Neon Grid -->
-  <div class="card" data-choice="neon-grid" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="neon-grid" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height: 340px; overflow:hidden;">
       <div style="
         background: linear-gradient(180deg, #0b0e17 0%, #0d1120 100%);
@@ -248,7 +248,7 @@
   </div>
 
   <!-- Concept 4: Warm Earth -->
-  <div class="card" data-choice="warm-earth" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="warm-earth" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height: 340px; overflow:hidden;">
       <div style="
         background: #faf8f5;
@@ -326,5 +326,20 @@
   </div>
 
 </div>
+
+<script>
+function toggleSelect(el) {
+  document.querySelectorAll('.card').forEach(function(card) {
+    card.classList.remove('selected');
+  });
+  el.classList.toggle('selected');
+}
+function handleCardKeydown(event, el) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    toggleSelect(el);
+  }
+}
+</script>
 
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@300;400;600&family=DM+Sans:wght@400;500;600&family=Instrument+Serif&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono&family=Space+Mono:wght@400;700&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">

@@ -10,7 +10,7 @@
 <p class="subtitle">Which layout feels right for your deploy command center?</p>
 
 <div class="cards">
-  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+  <div class="card" data-choice="a" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0">
     <div class="card-image" style="padding: 1rem; background: #0f1117;">
       <!-- Layout A: Sidebar + Grid -->
       <div style="display: flex; height: 280px; gap: 1px; font-size: 11px; color: #94a3b8;">
@@ -60,7 +60,7 @@
     </div>
   </div>
 
-  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+  <div class="card" data-choice="b" onclick="toggleSelect(this)" onkeydown="handleCardKeydown(event, this)" tabindex="0">
     <div class="card-image" style="padding: 1rem; background: #0f1117;">
       <!-- Layout B: Command Center -->
       <div style="height: 280px; background: #12131e; border-radius: 8px; padding: 12px; font-size: 11px; color: #94a3b8;">
@@ -129,5 +129,11 @@ function toggleSelect(el) {
     card.classList.remove('selected');
   });
   el.classList.toggle('selected');
+}
+function handleCardKeydown(event, el) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    toggleSelect(el);
+  }
 }
 </script>

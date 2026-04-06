@@ -25,6 +25,7 @@ export default function AIChat() {
     setInput('');
     setStreaming(true);
 
+    abortControllerRef.current?.abort();
     const controller = new AbortController();
     abortControllerRef.current = controller;
 
@@ -83,7 +84,7 @@ export default function AIChat() {
             </svg>
             <h3 className="font-semibold text-neutral-700 mb-2">AI Fleet Assistant</h3>
             <p className="text-sm text-neutral-400 mb-6">Ask me anything about your fleet, bookings, costs, or optimization.</p>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:flex-wrap md:justify-center md:max-w-xl md:mx-auto scrollbar-none">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:px-0 md:flex-wrap md:justify-center md:max-w-xl md:mx-auto scrollbar-none">
               {suggestions.map(s => (
                 <button key={s} onClick={() => { setInput(s); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-full hover:bg-neutral-200 transition-colors whitespace-nowrap">
                   {s}

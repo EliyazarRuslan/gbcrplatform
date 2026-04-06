@@ -580,6 +580,47 @@
 
     .risk-item p strong { color: var(--charcoal); }
 
+    /* ── Limitations & Risks ── */
+    .limit-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .limit-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+      border-left: 3px solid #d4920a;
+    }
+
+    .limit-icon {
+      width: 18px; height: 18px;
+      background: #fff4d6;
+      border: 1.5px solid #d4920a;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+      font-size: 9px;
+      line-height: 1;
+    }
+
+    .limit-item p {
+      font-size: 8.5pt;
+      color: var(--mid);
+      line-height: 1.5;
+    }
+
+    .limit-item p strong { color: var(--charcoal); }
+
     /* ── Recommendation ── */
     .recommendation-box {
       background: var(--gold-muted);
@@ -658,6 +699,8 @@
       .section-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .adv-icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .risk-check { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .limit-icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .limit-item { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .recommendation-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .confidential { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
@@ -1017,10 +1060,49 @@
     </div>
   </section>
 
-  <!-- ── 7. RECOMMENDATION ── -->
+  <!-- ── 7. LIMITATIONS & ACKNOWLEDGED RISKS ── -->
   <section>
     <div class="section-heading">
       <div class="section-num">7</div>
+      <h2>Limitations &amp; Acknowledged Risks</h2>
+    </div>
+    <div class="section-rule"></div>
+    <p style="margin-bottom:10px;">While the in-house approach delivers significant cost and strategic advantages, the following limitations are acknowledged for full transparency and informed decision-making.</p>
+    <div class="limit-list">
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>Key-person dependency.</strong> The platform was primarily developed by a single internal resource. Although documentation and standard patterns reduce this risk, a transition period would be required if the developer were to leave. Mitigation: cross-training a second team member and maintaining up-to-date technical documentation.</p>
+      </div>
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>Developer time not costed separately.</strong> The cost comparison lists "Developer (on payroll) — SGD 0" because the developer is an existing staff member. The actual time invested in building and maintaining the platform represents an opportunity cost that is not captured in the figures above.</p>
+      </div>
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>Ongoing maintenance is an internal responsibility.</strong> Unlike a vendor engagement that includes contracted support and SLAs, all future maintenance — security patches, dependency upgrades, framework updates, and bug fixes — falls on the internal team indefinitely.</p>
+      </div>
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>No contractual SLA for support response.</strong> A vendor typically guarantees response and resolution times. The in-house model relies on internal resource availability, which may be affected by leave, competing priorities, or team capacity.</p>
+      </div>
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>AI tooling dependency.</strong> Development velocity relies on continued access to AI-assisted development tooling (Claude Code Pro). Changes in pricing, availability, or capability of this tool could affect future development speed and cost assumptions.</p>
+      </div>
+      <div class="limit-item">
+        <div class="limit-icon">!</div>
+        <p><strong>No independent security audit or load testing.</strong> The platform has not yet undergone a third-party security penetration test or formal load/stress testing. A vendor engagement would typically include these as part of the delivery. Recommended: schedule an independent security review before expanding the platform's user base.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE BREAK FOR PRINT -->
+  <div class="page-break"></div>
+
+  <!-- ── 8. RECOMMENDATION ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">8</div>
       <h2>Recommendation</h2>
     </div>
     <div class="section-rule"></div>

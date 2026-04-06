@@ -1,5 +1,6 @@
 // Microsoft Entra ID (Azure AD) OAuth2/OIDC configuration
 // No external dependencies — uses standard OAuth2 authorization code flow
+import { createRemoteJWKSet, jwtVerify } from 'jose';
 
 const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
 const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
@@ -88,20 +89,28 @@ export async function exchangeCodeForTokens(code: string): Promise<{
 }
 
 /**
- * Decode JWT ID token payload (without verification — token comes directly from Microsoft)
+ * Verify and decode JWT ID token payload using Microsoft's public JWKS endpoint.
+ * Validates signature, issuer, and audience — safe against token forgery.
  */
-export function decodeIdToken(idToken: string): {
+export async function decodeIdToken(idToken: string): Promise<{
   sub: string;
   name?: string;
   preferred_username?: string;
   email?: string;
   oid?: string;
-} {
-  const parts = idToken.split('.');
-  if (parts.length !== 3) throw new Error('Invalid ID token format');
-
-  const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf-8'));
-  return payload;
+}> {
+  const JWKS = createRemoteJWKSet(
+    new URL(`https://login.microsoftonline.com/${VALIDATED_TENANT_ID}/discovery/v2.0/keys`)
+  );
+  try {
+    const { payload } = await jwtVerify(idToken, JWKS, {
+      issuer: `https://login.microsoftonline.com/${VALIDATED_TENANT_ID}/v2.0`,
+      audience: VALIDATED_CLIENT_ID,
+    });
+    return payload as { sub: string; name?: string; preferred_username?: string; email?: string; oid?: string };
+  } catch (err) {
+    throw new Error(`ID token verification failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }
 
 /**

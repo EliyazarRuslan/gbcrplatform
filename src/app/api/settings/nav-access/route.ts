@@ -64,20 +64,28 @@ export async function PUT(request: NextRequest) {
     const pool = await getPool();
     await ensureTable(pool);
 
-    for (const update of updates) {
-      await pool.request()
-        .input('nav_href', sql.NVarChar(100), update.nav_href)
-        .input('role', sql.NVarChar(50), update.role)
-        .input('has_access', sql.Bit, update.has_access ? 1 : 0)
-        .query(`
-          MERGE nav_access AS target
-          USING (SELECT @nav_href AS nav_href, @role AS role) AS source
-          ON target.nav_href = source.nav_href AND target.role = source.role
-          WHEN MATCHED THEN
-            UPDATE SET has_access = @has_access, updated_at = GETDATE()
-          WHEN NOT MATCHED THEN
-            INSERT (nav_href, role, has_access) VALUES (@nav_href, @role, @has_access);
-        `);
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+    try {
+      for (const update of updates) {
+        await new sql.Request(transaction)
+          .input('nav_href', sql.NVarChar(100), update.nav_href)
+          .input('role', sql.NVarChar(50), update.role)
+          .input('has_access', sql.Bit, update.has_access ? 1 : 0)
+          .query(`
+            MERGE nav_access AS target
+            USING (SELECT @nav_href AS nav_href, @role AS role) AS source
+            ON target.nav_href = source.nav_href AND target.role = source.role
+            WHEN MATCHED THEN
+              UPDATE SET has_access = @has_access, updated_at = GETDATE()
+            WHEN NOT MATCHED THEN
+              INSERT (nav_href, role, has_access) VALUES (@nav_href, @role, @has_access);
+          `);
+      }
+      await transaction.commit();
+    } catch (txErr) {
+      await transaction.rollback();
+      throw txErr;
     }
 
     await logAudit({

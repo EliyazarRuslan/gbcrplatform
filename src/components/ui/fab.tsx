@@ -1,9 +1,11 @@
 'use client';
 
+import type { ReactNode } from 'react';
+
 interface FABProps {
   onClick: () => void;
   label: string;
-  icon?: React.ReactNode;
+  icon?: ReactNode;
 }
 
 export default function FAB({ onClick, label, icon }: FABProps) {
