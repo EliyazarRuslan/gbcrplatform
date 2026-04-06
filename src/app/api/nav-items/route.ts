@@ -43,7 +43,13 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: defaults });
-  } catch {
-    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const isAuthError = /unauthorized|jwt|token|expired/i.test(message);
+    if (isAuthError) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+    console.error('nav-items route error:', err);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
   }
 }

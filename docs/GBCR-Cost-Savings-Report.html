@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GBCR Platform — Cost Savings Analysis</title>
+  <style>
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold:       #c8a04a;
+      --gold-light: #e8c878;
+      --gold-muted: #f5ecd4;
+      --charcoal:   #0e0e10;
+      --ink:        #1a1a1e;
+      --mid:        #4a4a52;
+      --subtle:     #8a8a96;
+      --rule:       #e2e2e8;
+      --surface:    #f9f9fb;
+      --white:      #ffffff;
+      --green:      #2d7a4a;
+      --green-bg:   #eaf4ee;
+      --red:        #b33a2a;
+      --red-bg:     #fbefed;
+
+      --font-sans: 'Georgia', 'Times New Roman', serif;
+      --font-mono: 'Courier New', Courier, monospace;
+
+      --page-width: 210mm;
+      --page-pad:   18mm;
+    }
+
+    html { font-size: 10pt; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      color: var(--ink);
+      background: var(--white);
+      line-height: 1.6;
+    }
+
+    /* ── Page wrapper ── */
+    .page {
+      width: var(--page-width);
+      margin: 0 auto;
+      padding: var(--page-pad);
+      background: var(--white);
+    }
+
+    /* ── Cover / header ── */
+    .cover {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 3px solid var(--gold);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+    }
+
+    .cover-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .logo-block {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-mark {
+      width: 44px;
+      height: 44px;
+      background: var(--charcoal);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .logo-mark svg { display: block; }
+
+    .logo-text {
+      font-size: 13pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      letter-spacing: -0.3px;
+    }
+
+    .logo-sub {
+      font-size: 7.5pt;
+      color: var(--subtle);
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      margin-top: 1px;
+    }
+
+    .doc-meta {
+      text-align: right;
+      font-size: 8pt;
+      color: var(--subtle);
+      line-height: 1.7;
+    }
+
+    .doc-meta strong { color: var(--mid); }
+
+    .cover-title {
+      margin-top: 8px;
+    }
+
+    .cover-title h1 {
+      font-size: 24pt;
+      font-weight: 800;
+      color: var(--charcoal);
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+    }
+
+    .cover-title h1 span { color: var(--gold); }
+
+    .cover-title .subtitle {
+      font-size: 11pt;
+      color: var(--mid);
+      margin-top: 6px;
+      font-weight: 400;
+      letter-spacing: 0.2px;
+    }
+
+    .cover-title .prepared {
+      margin-top: 12px;
+      font-size: 8pt;
+      color: var(--subtle);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    /* ── Savings badges (hero) ── */
+    .hero-badges {
+      display: flex;
+      gap: 16px;
+      margin: 24px 0 0;
+    }
+
+    .badge {
+      flex: 1;
+      background: var(--charcoal);
+      border-radius: 8px;
+      padding: 16px 18px;
+      color: var(--white);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .badge::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--gold);
+    }
+
+    .badge-label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-light);
+      margin-bottom: 4px;
+    }
+
+    .badge-value {
+      font-size: 22pt;
+      font-weight: 800;
+      color: var(--white);
+      line-height: 1;
+    }
+
+    .badge-value small {
+      font-size: 11pt;
+      font-weight: 400;
+      color: var(--gold-light);
+      margin-left: 3px;
+    }
+
+    .badge-desc {
+      font-size: 8pt;
+      color: #aaaabc;
+      margin-top: 4px;
+    }
+
+    /* ── Sections ── */
+    section {
+      margin-bottom: 32px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .section-num {
+      width: 22px;
+      height: 22px;
+      background: var(--gold);
+      color: var(--charcoal);
+      border-radius: 50%;
+      font-size: 8pt;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    h2 {
+      font-size: 13pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      letter-spacing: -0.2px;
+    }
+
+    .section-rule {
+      height: 1px;
+      background: var(--rule);
+      margin-bottom: 14px;
+    }
+
+    p {
+      font-size: 9.5pt;
+      color: var(--mid);
+      line-height: 1.7;
+    }
+
+    /* ── Project Overview ── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .feature-item {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-left: 3px solid var(--gold);
+      border-radius: 5px;
+      padding: 10px 12px;
+    }
+
+    .feature-item strong {
+      display: block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 2px;
+    }
+
+    .feature-item span {
+      font-size: 8pt;
+      color: var(--subtle);
+      line-height: 1.5;
+    }
+
+    /* ── Cost comparison table ── */
+    .comparison-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .cost-card {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--rule);
+    }
+
+    .cost-card-head {
+      padding: 10px 14px;
+      font-size: 9pt;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .cost-card-head .dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vendor-card .cost-card-head { background: var(--red-bg); color: var(--red); }
+    .vendor-card .cost-card-head .dot { background: var(--red); }
+    .inhouse-card .cost-card-head { background: var(--green-bg); color: var(--green); }
+    .inhouse-card .cost-card-head .dot { background: var(--green); }
+
+    .cost-rows { background: var(--white); }
+
+    .cost-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 7px 14px;
+      font-size: 8.5pt;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .cost-row:last-child { border-bottom: none; }
+
+    .cost-row.total {
+      font-weight: 700;
+      font-size: 9pt;
+      background: var(--surface);
+    }
+
+    .vendor-card .cost-row.total .amount { color: var(--red); }
+    .inhouse-card .cost-row.total .amount { color: var(--green); }
+
+    .cost-row .label { color: var(--mid); }
+    .cost-row .amount { color: var(--ink); font-weight: 600; white-space: nowrap; }
+    .cost-row .sub { font-size: 7pt; color: var(--subtle); }
+
+    /* ── Bar chart ── */
+    .chart-section {
+      margin-top: 18px;
+    }
+
+    .chart-label {
+      font-size: 8pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    .chart-wrap {
+      display: flex;
+      gap: 24px;
+      align-items: flex-end;
+      height: 100px;
+      padding: 0 8px;
+      border-bottom: 2px solid var(--rule);
+      position: relative;
+    }
+
+    /* Grid lines */
+    .chart-wrap::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 33%;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .chart-wrap::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      top: 66%;
+      border-top: 1px dashed var(--rule);
+    }
+
+    .bar-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .bar-amount {
+      font-size: 7pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      white-space: nowrap;
+    }
+
+    .bar {
+      width: 100%;
+      max-width: 60px;
+      border-radius: 3px 3px 0 0;
+      position: relative;
+    }
+
+    .bar-vendor-y1 { background: var(--red); height: 75px; }
+    .bar-inhouse-y1 { background: var(--green); height: 3px; }
+    .bar-vendor-3y { background: #c05040; height: 100px; }
+    .bar-inhouse-3y { background: #3d9a5a; height: 11px; }
+
+    .bar-name {
+      font-size: 7pt;
+      color: var(--subtle);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .chart-axis-labels {
+      display: flex;
+      gap: 24px;
+      padding: 0 8px;
+      margin-top: 4px;
+    }
+
+    .chart-axis-labels .axis-label {
+      flex: 1;
+      text-align: center;
+      font-size: 7pt;
+      color: var(--subtle);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chart-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      padding: 0 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 7.5pt;
+      color: var(--mid);
+    }
+
+    .legend-dot {
+      width: 9px; height: 9px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Savings summary ── */
+    .savings-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .savings-card {
+      background: var(--charcoal);
+      border-radius: 8px;
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .savings-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    }
+
+    .savings-card .s-label {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--gold-light);
+      margin-bottom: 6px;
+    }
+
+    .savings-card .s-amount {
+      font-size: 26pt;
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .savings-card .s-percent {
+      display: inline-block;
+      margin-top: 6px;
+      background: var(--gold);
+      color: var(--charcoal);
+      font-size: 10pt;
+      font-weight: 800;
+      padding: 2px 10px;
+      border-radius: 30px;
+    }
+
+    .savings-card .s-desc {
+      margin-top: 8px;
+      font-size: 8pt;
+      color: #8888a0;
+    }
+
+    /* ── Advantages ── */
+    .adv-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .adv-item {
+      background: var(--surface);
+      border: 1px solid var(--rule);
+      border-radius: 6px;
+      padding: 12px 13px;
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .adv-icon {
+      width: 28px; height: 28px;
+      background: var(--gold-muted);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 13px;
+    }
+
+    .adv-text strong {
+      display: block;
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--charcoal);
+      margin-bottom: 2px;
+    }
+
+    .adv-text span {
+      font-size: 7.5pt;
+      color: var(--subtle);
+      line-height: 1.45;
+    }
+
+    /* ── Risk Mitigation ── */
+    .risk-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .risk-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border-radius: 6px;
+      border: 1px solid var(--rule);
+    }
+
+    .risk-check {
+      width: 18px; height: 18px;
+      background: var(--green-bg);
+      border: 1.5px solid var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .risk-check svg { display: block; }
+
+    .risk-item p {
+      font-size: 8.5pt;
+      color: var(--mid);
+      line-height: 1.5;
+    }
+
+    .risk-item p strong { color: var(--charcoal); }
+
+    /* ── Recommendation ── */
+    .recommendation-box {
+      background: var(--gold-muted);
+      border: 1.5px solid var(--gold);
+      border-radius: 8px;
+      padding: 20px 22px;
+      margin-top: 4px;
+    }
+
+    .recommendation-box p {
+      font-size: 9.5pt;
+      color: var(--ink);
+      line-height: 1.7;
+    }
+
+    .recommendation-box p strong { color: var(--charcoal); }
+
+    /* ── Footer ── */
+    .doc-footer {
+      margin-top: 36px;
+      padding-top: 12px;
+      border-top: 2px solid var(--rule);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .doc-footer .footer-left {
+      font-size: 7.5pt;
+      color: var(--subtle);
+    }
+
+    .doc-footer .footer-right {
+      font-size: 7.5pt;
+      color: var(--subtle);
+      text-align: right;
+    }
+
+    .confidential {
+      display: inline-block;
+      background: var(--charcoal);
+      color: var(--gold);
+      font-size: 6.5pt;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-bottom: 2px;
+    }
+
+    /* ── Print ── */
+    @media print {
+      html { font-size: 9.5pt; }
+
+      body { background: white; }
+
+      .page {
+        width: 100%;
+        margin: 0;
+        padding: 14mm 18mm;
+      }
+
+      .page-break { page-break-before: always; }
+
+      @page {
+        size: A4;
+        margin: 14mm 16mm;
+      }
+
+      .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .savings-card { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .cost-card-head { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .logo-mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .section-num { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .adv-icon { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .risk-check { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .recommendation-box { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .confidential { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+
+    @media screen {
+      body { background: #e8e8ee; padding: 24px 0; }
+      .page {
+        box-shadow: 0 4px 32px rgba(0,0,0,0.12);
+        border-radius: 4px;
+        min-height: 297mm;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── COVER ── -->
+  <header class="cover">
+    <div class="cover-top">
+      <div class="logo-block">
+        <div class="logo-mark">
+          <svg width="26" height="26" viewBox="0 0 26 26" fill="none">
+            <rect x="3" y="14" width="8" height="9" rx="1" fill="#c8a04a"/>
+            <rect x="13" y="9" width="8" height="14" rx="1" fill="#e8c878"/>
+            <path d="M5 14 L13 5 L21 9" stroke="#c8a04a" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="logo-text">Goldbell Car Rental</div>
+          <div class="logo-sub">Fleet Management Platform</div>
+        </div>
+      </div>
+      <div class="doc-meta">
+        <div><strong>Document</strong> Cost Savings Analysis</div>
+        <div><strong>Date</strong> April 2026</div>
+        <div><strong>Prepared by</strong> IT Department</div>
+        <div><strong>Version</strong> 1.0 — Final</div>
+      </div>
+    </div>
+
+    <div class="cover-title">
+      <h1>GBCR Platform — <span>Cost Savings</span> Analysis</h1>
+      <div class="subtitle">In-House Development vs External Vendor</div>
+      <div class="prepared">Confidential &nbsp;·&nbsp; Goldbell Car Rental &nbsp;·&nbsp; April 2026</div>
+    </div>
+
+    <div class="hero-badges">
+      <div class="badge">
+        <div class="badge-label">Year 1 Savings</div>
+        <div class="badge-value">SGD 58,760 <small>saved</small></div>
+        <div class="badge-desc">vs. external vendor engagement</div>
+      </div>
+      <div class="badge">
+        <div class="badge-label">3-Year Savings</div>
+        <div class="badge-value">SGD 76,280 <small>saved</small></div>
+        <div class="badge-desc">cumulative over 36 months</div>
+      </div>
+      <div class="badge">
+        <div class="badge-label">Cost Reduction</div>
+        <div class="badge-value">89–95<small>%</small></div>
+        <div class="badge-desc">versus quoted vendor pricing</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── 1. EXECUTIVE SUMMARY ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">1</div>
+      <h2>Executive Summary</h2>
+    </div>
+    <div class="section-rule"></div>
+    <p>
+      Goldbell Car Rental achieved exceptional cost savings by building the GBCR Fleet Management Platform
+      entirely in-house, leveraging AI-assisted development tooling (Claude Code Pro) instead of engaging
+      an external software vendor. An external provider quoted <strong>SGD 50,000</strong> for initial
+      implementation plus <strong>SGD 1,000 per month</strong> in ongoing support — totalling
+      <strong>SGD 86,000 over three years</strong>. The in-house approach delivered the same scope of work
+      for approximately <strong>SGD 3,240 per year</strong> (the cost of the AI development tool alone),
+      representing savings of <strong>95% in Year 1</strong> and <strong>89% over three years</strong>.
+      Beyond pure cost reduction, this approach ensures full intellectual property ownership, zero vendor
+      lock-in, and complete alignment with Goldbell's operational workflows — a strategic capability that
+      can be replicated across future digital transformation initiatives.
+    </p>
+  </section>
+
+  <!-- ── 2. PROJECT OVERVIEW ── -->
+  <section style="page-break-before: always;">
+    <div class="section-heading">
+      <div class="section-num">2</div>
+      <h2>Project Overview — What Was Built</h2>
+    </div>
+    <div class="section-rule"></div>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <strong>Fleet Management Platform</strong>
+        <span>Full-stack web application built with Next.js, React, and TypeScript. Production-grade architecture with server-side rendering and optimised performance.</span>
+      </div>
+      <div class="feature-item">
+        <strong>Real-Time Vehicle Tracking &amp; Booking</strong>
+        <span>Live fleet status, availability calendars, booking workflows, and vehicle assignment — replacing manual spreadsheet-based processes.</span>
+      </div>
+      <div class="feature-item">
+        <strong>Microsoft SSO &amp; Azure AD Integration</strong>
+        <span>Single sign-on via Azure Active Directory. Role-based access control for internal staff with no additional identity infrastructure required.</span>
+      </div>
+      <div class="feature-item">
+        <strong>Enterprise System Integrations</strong>
+        <span>Bidirectional data sync with Microsoft Dynamics AX (ERP), IBM Maximo (asset management), and Microsoft Fabric (analytics platform).</span>
+      </div>
+      <div class="feature-item">
+        <strong>Customer Management &amp; Inspection Workflows</strong>
+        <span>Customer CRM, digital vehicle inspection checklists, condition reporting, defect tracking, and maintenance scheduling.</span>
+      </div>
+      <div class="feature-item">
+        <strong>AI-Powered Analytics &amp; PWA</strong>
+        <span>Embedded analytics dashboards, AI-driven fleet insights, and a Progressive Web App shell for mobile-responsive access on any device.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE BREAK FOR PRINT -->
+  <div class="page-break"></div>
+
+  <!-- ── 3. COST COMPARISON ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">3</div>
+      <h2>Cost Comparison</h2>
+    </div>
+    <div class="section-rule"></div>
+
+    <div class="comparison-wrap">
+      <!-- Vendor -->
+      <div class="cost-card vendor-card">
+        <div class="cost-card-head">
+          <div class="dot"></div>
+          External Vendor
+        </div>
+        <div class="cost-rows">
+          <div class="cost-row">
+            <span class="label">Implementation (one-time)</span>
+            <span class="amount">SGD 50,000</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Support Year 1 <span class="sub">(SGD 1,000 × 12)</span></span>
+            <span class="amount">SGD 12,000</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Support Year 2 <span class="sub">(SGD 1,000 × 12)</span></span>
+            <span class="amount">SGD 12,000</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Support Year 3 <span class="sub">(SGD 1,000 × 12)</span></span>
+            <span class="amount">SGD 12,000</span>
+          </div>
+          <div class="cost-row total">
+            <span class="label">Total (3 Years)</span>
+            <span class="amount">SGD 86,000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- In-house -->
+      <div class="cost-card inhouse-card">
+        <div class="cost-card-head">
+          <div class="dot"></div>
+          In-House Development
+        </div>
+        <div class="cost-rows">
+          <div class="cost-row">
+            <span class="label">Claude Code Pro <span class="sub">(~SGD 270/mo)</span></span>
+            <span class="amount">SGD 3,240/yr</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Azure AD / SSO</span>
+            <span class="amount" style="color:var(--green)">SGD 0</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">MSSQL Database</span>
+            <span class="amount" style="color:var(--green)">SGD 0</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Microsoft Fabric</span>
+            <span class="amount" style="color:var(--green)">SGD 0</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Hosting (company servers)</span>
+            <span class="amount" style="color:var(--green)">SGD 0</span>
+          </div>
+          <div class="cost-row">
+            <span class="label">Developer (on payroll)</span>
+            <span class="amount" style="color:var(--green)">SGD 0</span>
+          </div>
+          <div class="cost-row total">
+            <span class="label">Total (3 Years)</span>
+            <span class="amount">~ SGD 9,720</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="chart-section">
+      <div class="chart-label">Visual Cost Comparison — Vendor vs In-House</div>
+      <div class="chart-wrap">
+        <div class="bar-group">
+          <div class="bar-amount" style="color:var(--red)">SGD 62,000</div>
+          <div class="bar bar-vendor-y1"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-amount" style="color:var(--green)">SGD 3,240</div>
+          <div class="bar bar-inhouse-y1"></div>
+        </div>
+        <div style="width:24px;flex-shrink:0;"></div>
+        <div class="bar-group">
+          <div class="bar-amount" style="color:var(--red)">SGD 86,000</div>
+          <div class="bar bar-vendor-3y"></div>
+        </div>
+        <div class="bar-group">
+          <div class="bar-amount" style="color:var(--green)">SGD 9,720</div>
+          <div class="bar bar-inhouse-3y"></div>
+        </div>
+      </div>
+      <div class="chart-axis-labels">
+        <div class="axis-label" style="grid-column:span 2">Year 1</div>
+        <div class="axis-label" style="flex:0;width:24px;"></div>
+        <div class="axis-label" style="grid-column:span 2">3-Year Total</div>
+      </div>
+      <div class="chart-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div> External Vendor</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div> In-House Development</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4. SAVINGS SUMMARY ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">4</div>
+      <h2>Savings Summary</h2>
+    </div>
+    <div class="section-rule"></div>
+    <div class="savings-grid">
+      <div class="savings-card">
+        <div class="s-label">Year 1 Total Savings</div>
+        <div class="s-amount">SGD 58,760</div>
+        <div><span class="s-percent">95% reduction</span></div>
+        <div class="s-desc">Vendor Year 1: SGD 62,000 &nbsp;·&nbsp; In-House Year 1: SGD 3,240</div>
+      </div>
+      <div class="savings-card">
+        <div class="s-label">3-Year Cumulative Savings</div>
+        <div class="s-amount">SGD 76,280</div>
+        <div><span class="s-percent">89% reduction</span></div>
+        <div class="s-desc">Vendor 3-Year: SGD 86,000 &nbsp;·&nbsp; In-House 3-Year: SGD 9,720</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PAGE BREAK FOR PRINT -->
+  <div class="page-break"></div>
+
+  <!-- ── 5. STRATEGIC ADVANTAGES ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">5</div>
+      <h2>Strategic Advantages</h2>
+    </div>
+    <div class="section-rule"></div>
+    <div class="adv-grid">
+      <div class="adv-item">
+        <div class="adv-icon">&#128275;</div>
+        <div class="adv-text">
+          <strong>Full IP Ownership</strong>
+          <span>All source code, data schemas, and business logic belong entirely to Goldbell. Zero dependency on vendor licensing.</span>
+        </div>
+      </div>
+      <div class="adv-item">
+        <div class="adv-icon">&#9889;</div>
+        <div class="adv-text">
+          <strong>Same-Day Deployment</strong>
+          <span>Features and bug fixes can be deployed immediately — no vendor SLA delays, change-request queues, or release windows.</span>
+        </div>
+      </div>
+      <div class="adv-item">
+        <div class="adv-icon">&#128295;</div>
+        <div class="adv-text">
+          <strong>Custom-Fit Workflows</strong>
+          <span>Platform is built around Goldbell's exact processes. No forced adaptation to generic vendor software patterns.</span>
+        </div>
+      </div>
+      <div class="adv-item">
+        <div class="adv-icon">&#129504;</div>
+        <div class="adv-text">
+          <strong>Internal Knowledge Retention</strong>
+          <span>Deep platform expertise stays within the IT team — no knowledge drain if the vendor relationship ends.</span>
+        </div>
+      </div>
+      <div class="adv-item">
+        <div class="adv-icon">&#128683;</div>
+        <div class="adv-text">
+          <strong>No Change-Request Fees</strong>
+          <span>Scope changes, new features, and integration updates cost nothing beyond internal time — no vendor invoices.</span>
+        </div>
+      </div>
+      <div class="adv-item">
+        <div class="adv-icon">&#128640;</div>
+        <div class="adv-text">
+          <strong>Scalable to Other Units</strong>
+          <span>The same development model — and platform components — can be extended to other Goldbell business units without additional vendor costs.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 6. RISK MITIGATION ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">6</div>
+      <h2>Risk Mitigation</h2>
+    </div>
+    <div class="section-rule"></div>
+    <div class="risk-list">
+      <div class="risk-item">
+        <div class="risk-check">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5.5L4 7.5L8 3" stroke="#2d7a4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p><strong>Source code fully owned and version-controlled.</strong> The complete codebase is managed in a Git repository under Goldbell's control, with full commit history, branching strategy, and code review workflows in place.</p>
+      </div>
+      <div class="risk-item">
+        <div class="risk-check">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5.5L4 7.5L8 3" stroke="#2d7a4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p><strong>Built on mainstream, widely-supported technology.</strong> Next.js, React, TypeScript, and Microsoft SQL Server are industry-standard technologies with large talent pools and long-term vendor support — not proprietary stacks.</p>
+      </div>
+      <div class="risk-item">
+        <div class="risk-check">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5.5L4 7.5L8 3" stroke="#2d7a4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p><strong>Any competent developer can maintain the codebase.</strong> The platform is not dependent on a single individual. Standard patterns, documented APIs, and modern tooling ensure any qualified developer can contribute or take ownership.</p>
+      </div>
+      <div class="risk-item">
+        <div class="risk-check">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+            <path d="M2 5.5L4 7.5L8 3" stroke="#2d7a4a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p><strong>Documentation and architecture are well-structured.</strong> Technical documentation, data models, API specifications, and deployment guides are maintained alongside the codebase to ensure continuity.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 7. RECOMMENDATION ── -->
+  <section>
+    <div class="section-heading">
+      <div class="section-num">7</div>
+      <h2>Recommendation</h2>
+    </div>
+    <div class="section-rule"></div>
+    <div class="recommendation-box">
+      <p>
+        Based on the demonstrated cost savings of <strong>89–95%</strong>, full IP ownership, rapid delivery,
+        and strategic alignment with Goldbell's operational needs, the IT Department strongly recommends
+        <strong>continuing the in-house, AI-assisted development approach for all future digital projects</strong>
+        where scope and complexity are well-understood. This model — leveraging existing infrastructure, existing
+        staff, and AI development tooling — has proven to deliver enterprise-grade software at a fraction of
+        vendor cost while retaining control, flexibility, and institutional knowledge within the organisation.
+        Where external expertise is genuinely required, it should be engaged selectively for narrow, defined
+        deliverables rather than broad platform ownership.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ── -->
+  <footer class="doc-footer">
+    <div class="footer-left">
+      <div class="confidential">Confidential</div><br/>
+      &copy; 2026 Goldbell Car Rental &nbsp;·&nbsp; IT Department
+    </div>
+    <div class="footer-right">
+      GBCR Fleet Management Platform<br/>
+      Cost Savings Analysis &nbsp;·&nbsp; April 2026
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

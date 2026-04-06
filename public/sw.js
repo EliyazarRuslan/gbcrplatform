@@ -22,7 +22,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+      fetch(event.request).catch(async () => {
+        const cached = await caches.match(OFFLINE_URL);
+        return cached || new Response('<!DOCTYPE html><html><body><p>You are offline.</p></body></html>', {
+          status: 503,
+          headers: { 'Content-Type': 'text/html' },
+        });
+      })
     );
   }
 });

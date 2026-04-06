@@ -50,6 +50,7 @@ export default function ResponsiveTable<T extends Record<string, unknown>>({
           pagination={pagination}
           emptyMessage={emptyMessage}
           loading={loading}
+          onRowClick={onRowClick}
         />
       </div>
 

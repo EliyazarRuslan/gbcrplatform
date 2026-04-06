@@ -1,3 +1,11 @@
+<style>
+@keyframes pulse {
+  0%   { opacity: 1; transform: scale(1); }
+  50%  { opacity: 0.5; transform: scale(1.25); }
+  100% { opacity: 1; transform: scale(1); }
+}
+</style>
+
 <h2>LA-ide v1 — Dashboard Layout</h2>
 <p class="subtitle">Which layout feels right for your deploy command center?</p>
 
@@ -114,3 +122,12 @@
   <h3 style="margin-top: 0; color: #6366f1;">Recommendation: B — Command Center</h3>
   <p style="margin: 0;">For a deploy-focused v1 with 4-8 projects, the list view is more efficient. You see everything at a glance without clicking into cards. The KPI bar gives instant health status. Sidebar can come in v2 when you add editor/terminal features.</p>
 </div>
+
+<script>
+function toggleSelect(el) {
+  document.querySelectorAll('.card').forEach(function(card) {
+    card.classList.remove('selected');
+  });
+  el.classList.toggle('selected');
+}
+</script>

@@ -42,8 +42,9 @@ export default function MobileHeader({ user }: MobileHeaderProps) {
     }
   };
 
-  const initials = user.full_name
+  const initials = (user.full_name || '')
     .split(' ')
+    .filter(Boolean)
     .map((n) => n[0])
     .join('')
     .toUpperCase()

@@ -156,7 +156,7 @@ export async function GET() {
         return {
           revenue: revenueResult.recordset,
           agreementStatus: agreementStatusResult.recordset,
-          activeValue: activeValueResult.recordset[0],
+          activeValue: activeValueResult.recordset.length > 0 ? activeValueResult.recordset[0] : empty.activeValue,
           topCustomers: topCustomersResult.recordset,
           revenueByCustomer,
           topOrders: topOrdersResult.recordset,

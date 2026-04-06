@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface BottomSheetProps {
   open: boolean;
@@ -10,14 +10,22 @@ interface BottomSheetProps {
 }
 
 export default function BottomSheet({ open, onClose, title, children }: BottomSheetProps) {
+  const prevOverflowRef = useRef('');
+
   useEffect(() => {
     if (open) {
+      prevOverflowRef.current = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') onClose();
+      };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = prevOverflowRef.current;
+        document.removeEventListener('keydown', handleKeyDown);
+      };
     }
-    return () => { document.body.style.overflow = ''; };
-  }, [open]);
+  }, [open, onClose]);
 
   if (!open) return null;
 
@@ -33,7 +41,6 @@ export default function BottomSheet({ open, onClose, title, children }: BottomSh
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? 'sheet-title' : undefined}
-        onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
         className="fixed bottom-0 left-0 right-0 z-[51] bg-white rounded-t-2xl shadow-2xl max-h-[90vh] flex flex-col animate-slide-up"
       >
         <div className="relative flex items-center justify-between px-4 pt-4 pb-2 border-b border-neutral-100">

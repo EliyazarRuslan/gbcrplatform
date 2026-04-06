@@ -25,7 +25,7 @@ export default function BookingCalendarPage() {
     fetch(`/api/bookings/calendar?year=${year}&month=${month}`, { signal: controller.signal })
       .then(r => r.json())
       .then(data => setBookings(Array.isArray(data) ? data : []))
-      .catch(err => { if (err.name !== 'AbortError') throw err; });
+      .catch(err => { if (err.name !== 'AbortError') console.error('Calendar fetch error:', err); });
     return () => controller.abort();
   }, [currentDate]);
 

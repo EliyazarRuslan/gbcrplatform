@@ -28,13 +28,14 @@ export default function Modal({
   // Lock body scroll when open
   useEffect(() => {
     if (!open) return;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', handleKey);
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = prevOverflow;
       document.removeEventListener('keydown', handleKey);
     };
   }, [open, onClose]);

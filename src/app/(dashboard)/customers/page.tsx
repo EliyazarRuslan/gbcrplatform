@@ -206,8 +206,12 @@ export default function CustomersPage() {
               customers.map((c) => (
                 <div
                   key={c.customer_code}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => router.push(`/customers/${c.customer_code}`)}
-                  className="bg-white rounded-2xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50"
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/customers/${c.customer_code}`); } }}
+                  aria-label={`View customer ${c.name || c.customer_code}`}
+                  className="bg-white rounded-2xl border border-neutral-200/80 p-4 cursor-pointer active:bg-neutral-50 focus:outline-none focus:ring-2 focus:ring-primary-light"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div>

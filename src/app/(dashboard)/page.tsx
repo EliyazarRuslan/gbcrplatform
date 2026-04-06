@@ -42,8 +42,8 @@ export default function DashboardPage() {
   useEffect(() => {
     const controller = new AbortController();
     Promise.all([
-      fetch('/api/fleet/stats', { signal: controller.signal }).then(r => r.json()),
-      fetch('/api/auth/me', { signal: controller.signal }).then(r => r.json()),
+      fetch('/api/fleet/stats', { signal: controller.signal }).then(r => { if (!r.ok) throw new Error(`fleet/stats ${r.status}`); return r.json(); }),
+      fetch('/api/auth/me', { signal: controller.signal }).then(r => { if (!r.ok) throw new Error(`auth/me ${r.status}`); return r.json(); }),
     ]).then(([statsData, userData]) => {
       if (statsData.success) setStats(statsData.data);
       if (userData.success) setUserName(userData.data.full_name || '');

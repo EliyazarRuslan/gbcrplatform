@@ -85,3 +85,12 @@
   <h3 style="margin-top: 0; color: #6366f1;">Recommendation: B — Core + Agent</h3>
   <p style="margin: 0;">Best balance of simplicity and future-proofing. The agent daemon gives you non-blocking pipeline execution, CLI access for automation, and a clean boundary to bolt on editor/terminal features in v2. Not over-engineered like C, not limiting like A.</p>
 </div>
+
+<script>
+function toggleSelect(el) {
+  document.querySelectorAll('.option').forEach(function(opt) {
+    opt.classList.remove('selected');
+  });
+  el.classList.toggle('selected');
+}
+</script>

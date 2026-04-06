@@ -24,6 +24,7 @@ interface DataTableProps<T> {
   pagination?: PaginationProps;
   emptyMessage?: string;
   loading?: boolean;
+  onRowClick?: (row: T) => void;
 }
 
 type SortDirection = 'asc' | 'desc' | null;
@@ -68,6 +69,7 @@ export default function DataTable<T extends Record<string, unknown>>({
   pagination,
   emptyMessage = 'No data available.',
   loading = false,
+  onRowClick,
 }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<SortDirection>(null);
@@ -176,7 +178,8 @@ export default function DataTable<T extends Record<string, unknown>>({
               sortedData.map((row, rowIdx) => (
                 <tr
                   key={rowIdx}
-                  className="hover:bg-neutral-50 transition-colors"
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                  className={cn('hover:bg-neutral-50 transition-colors', onRowClick && 'cursor-pointer')}
                 >
                   {columns.map((col) => (
                     <td

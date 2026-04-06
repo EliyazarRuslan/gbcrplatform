@@ -42,7 +42,7 @@ export default function Select({
         id={selectId}
         required={required}
         className={cn(
-          'w-full rounded-lg border px-4 py-2.5 text-base md:text-sm text-neutral-900 transition-colors appearance-none bg-white min-h-[44px]',
+          'w-full rounded-lg border px-4 py-2.5 text-sm text-neutral-900 transition-colors appearance-none bg-white min-h-[44px]',
           'focus:outline-none focus:ring-2 focus:ring-primary-light focus:border-primary',
           error
             ? 'border-red-500 focus:border-red-500 focus:ring-red-200'

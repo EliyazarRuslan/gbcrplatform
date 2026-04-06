@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         client_id: CLIENT_ID,
         client_secret: CLIENT_SECRET,
         code,
-        redirect_uri: redirectUri,
+        redirect_uri: STATIC_REDIRECT_URI || redirectUri,
         grant_type: 'authorization_code',
         scope: 'openid profile email User.Read',
       }),
