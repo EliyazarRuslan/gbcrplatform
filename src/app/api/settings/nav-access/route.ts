@@ -43,10 +43,22 @@ export async function PUT(request: NextRequest) {
   try {
     const authUser = await requireRole(request, ['super_admin']);
     const body = await request.json();
-    const { updates } = body as { updates: Array<{ nav_href: string; role: string; has_access: boolean }> };
+    const { updates } = body as { updates: Array<unknown> };
 
     if (!updates || !Array.isArray(updates)) {
       return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const isValidItem = (item: unknown): item is { nav_href: string; role: string; has_access: boolean } => {
+      if (typeof item !== 'object' || item === null) return false;
+      const { nav_href, role, has_access } = item as Record<string, unknown>;
+      return typeof nav_href === 'string' && nav_href.trim() !== '' &&
+             typeof role === 'string' && role.trim() !== '' &&
+             typeof has_access === 'boolean';
+    };
+
+    if (!updates.every(isValidItem)) {
+      return NextResponse.json({ success: false, error: 'Invalid payload: bad update item' }, { status: 400 });
     }
 
     const pool = await getPool();

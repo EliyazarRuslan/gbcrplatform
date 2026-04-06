@@ -45,7 +45,7 @@ All pages: Dashboard, Fleet, Bookings, Inspections, Services, Customers, Analyti
 2. `src/app/globals.css` — Update all CSS variables, colors, typography scale
 3. `src/app/(dashboard)/layout.tsx` — Redesign sidebar to collapsed icon-only dark style
 4. `src/app/(dashboard)/page.tsx` — Dashboard with new KPI card style
-5. `src/app/components/StatCard.tsx` — Bigger, bolder numbers
-6. `src/app/components/StatusBadge.tsx` — Dot-based status indicators
+5. `src/components/ui/StatCard.tsx` — Bigger, bolder numbers
+6. `src/components/ui/StatusBadge.tsx` — Dot-based status indicators
 7. All page files — Apply new font sizes and weights
 8. `src/app/(auth)/login/page.tsx` — Update login page to match new aesthetic

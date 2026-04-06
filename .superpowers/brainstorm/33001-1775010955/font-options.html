@@ -7,7 +7,7 @@
 <div class="cards" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
 
   <!-- Option A: Sora -->
-  <div class="card" data-choice="sora" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="sora" role="button" tabindex="0" aria-label="Select Sora font" onclick="toggleSelect(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSelect(this);}" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height:260px; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #0a0a0b 0%, #1a1816 50%, #0f0d0a 100%); height:100%; padding:20px; position:relative; overflow:hidden;">
         <div style="position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(200,160,74,0.08) 0%, transparent 70%); border-radius:50%;"></div>
@@ -40,7 +40,7 @@
   </div>
 
   <!-- Option B: Plus Jakarta Sans -->
-  <div class="card" data-choice="jakarta" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="jakarta" role="button" tabindex="0" aria-label="Select Plus Jakarta Sans font" onclick="toggleSelect(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSelect(this);}" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height:260px; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #0a0a0b 0%, #1a1816 50%, #0f0d0a 100%); height:100%; padding:20px; position:relative; overflow:hidden;">
         <div style="position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(200,160,74,0.08) 0%, transparent 70%); border-radius:50%;"></div>
@@ -73,7 +73,7 @@
   </div>
 
   <!-- Option C: Manrope -->
-  <div class="card" data-choice="manrope" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <div class="card" data-choice="manrope" role="button" tabindex="0" aria-label="Select Manrope font" onclick="toggleSelect(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSelect(this);}" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height:260px; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #0a0a0b 0%, #1a1816 50%, #0f0d0a 100%); height:100%; padding:20px; position:relative; overflow:hidden;">
         <div style="position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(200,160,74,0.08) 0%, transparent 70%); border-radius:50%;"></div>
@@ -105,8 +105,8 @@
     </div>
   </div>
 
-  <!-- Option D: General Sans (via CDN fallback to DM Sans which is similar) -->
-  <div class="card" data-choice="dm-sans" onclick="toggleSelect(this)" style="overflow:hidden; border:none;">
+  <!-- Option D: DM Sans (via CDN) -->
+  <div class="card" data-choice="dm-sans" role="button" tabindex="0" aria-label="Select DM Sans font" onclick="toggleSelect(this)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSelect(this);}" style="overflow:hidden; border:none;">
     <div class="card-image" style="padding:0; height:260px; overflow:hidden;">
       <div style="background:linear-gradient(135deg, #0a0a0b 0%, #1a1816 50%, #0f0d0a 100%); height:100%; padding:20px; position:relative; overflow:hidden;">
         <div style="position:absolute; top:-40px; right:-40px; width:180px; height:180px; background:radial-gradient(circle, rgba(200,160,74,0.08) 0%, transparent 70%); border-radius:50%;"></div>
@@ -139,3 +139,14 @@
   </div>
 
 </div>
+
+<script>
+function toggleSelect(card) {
+  document.querySelectorAll('.card').forEach(function(c) {
+    c.classList.remove('selected');
+    c.removeAttribute('aria-pressed');
+  });
+  card.classList.add('selected');
+  card.setAttribute('aria-pressed', 'true');
+}
+</script>

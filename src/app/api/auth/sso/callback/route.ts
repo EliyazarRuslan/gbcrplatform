@@ -3,12 +3,22 @@ import { signToken, setTokenCookie } from '@/lib/auth';
 import { getPool, sql } from '@/lib/db';
 import { logAudit } from '@/lib/audit';
 
-const TENANT_ID = process.env.AZURE_AD_TENANT_ID!;
-const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID!;
-const CLIENT_SECRET = process.env.AZURE_AD_CLIENT_SECRET!;
-const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
+const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
+const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
+const CLIENT_SECRET = process.env.AZURE_AD_CLIENT_SECRET;
+const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI;
 
 export async function GET(request: NextRequest) {
+  if (!TENANT_ID || !CLIENT_ID || !CLIENT_SECRET || !STATIC_REDIRECT_URI) {
+    const missing = ['AZURE_AD_TENANT_ID', 'AZURE_AD_CLIENT_ID', 'AZURE_AD_CLIENT_SECRET', 'AZURE_AD_REDIRECT_URI']
+      .filter(k => !process.env[k]);
+    console.error('SSO callback misconfigured: missing env vars:', missing.join(', '));
+    return NextResponse.json(
+      { error: `SSO not configured: missing env vars: ${missing.join(', ')}` },
+      { status: 500 }
+    );
+  }
+
   const code = request.nextUrl.searchParams.get('code');
   const state = request.nextUrl.searchParams.get('state') || '/';
   const error = request.nextUrl.searchParams.get('error');

@@ -1,7 +1,7 @@
 # GBCR Platform Reference Documentation
 
 Date: 2026-03-30
-Project Path: `/Users/eliyazar/Documents/MX Project/gbcr-platform`
+Project Path: `<project-root>`
 Prepared For: project reference and handover use
 
 ## 1. Executive Summary
@@ -586,7 +586,7 @@ The `[id]` booking route exists in the repo even though it was not expanded in t
 
 `POST /api/users`
 - creates new user
-- default temporary password is `Temp@123` when not supplied
+- a temporary password is generated and provided via internal credentials procedures when not supplied
 - marks `must_change_password = 1`
 
 `GET /api/users/[id]`
@@ -594,7 +594,7 @@ The `[id]` booking route exists in the repo even though it was not expanded in t
 
 `PUT /api/users/[id]`
 - updates user data
-- can also reset password to `Temp@123`
+- can also reset the user's password via internal credentials procedures
 
 `PUT /api/users/[id]/deactivate`
 - prevents self-deactivation

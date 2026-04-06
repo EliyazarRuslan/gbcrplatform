@@ -4,6 +4,13 @@ const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
 const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
 const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
 
+function sanitizeRedirect(url: string | null): string {
+  if (!url) return '/';
+  // Allow only relative paths starting with a single '/' (reject '//' and absolute URLs)
+  if (url.startsWith('/') && !url.startsWith('//') && !/^[a-z][a-z\d+\-.]*:/i.test(url)) return url;
+  return '/';
+}
+
 export async function GET(request: NextRequest) {
   if (!TENANT_ID || !CLIENT_ID) {
     return NextResponse.json(
@@ -12,7 +19,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const redirect = request.nextUrl.searchParams.get('redirect') || '/';
+  const safeRedirect = sanitizeRedirect(request.nextUrl.searchParams.get('redirect'));
 
   // Build redirect URI from the Host header so SSO works from any host
   const host = request.headers.get('host') || 'localhost:3000';
@@ -25,7 +32,7 @@ export async function GET(request: NextRequest) {
     redirect_uri: redirectUri,
     response_mode: 'query',
     scope: 'openid profile email User.Read',
-    state: redirect,
+    state: safeRedirect,
     prompt: 'select_account',
   });
 

@@ -40,6 +40,7 @@ export default function NavAccessControl() {
 
     try {
       const res = await fetch('/api/settings/nav-access');
+      if (!res.ok) throw new Error(`Failed to load nav access config: ${res.status}`);
       const data = await res.json();
       if (data.success && data.data.length > 0) {
         for (const row of data.data) {

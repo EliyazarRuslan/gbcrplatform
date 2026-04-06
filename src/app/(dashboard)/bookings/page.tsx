@@ -33,14 +33,15 @@ export default function BookingsPage() {
   }, [statusFilter]);
 
   useEffect(() => {
-    let controller: AbortController;
+    let currentController: AbortController | null = null;
     const interval = setInterval(() => {
-      controller = new AbortController();
-      fetchBookings(false, controller.signal);
+      currentController?.abort();
+      currentController = new AbortController();
+      fetchBookings(false, currentController.signal);
     }, 10000);
     return () => {
       clearInterval(interval);
-      controller?.abort();
+      currentController?.abort();
     };
   }, [statusFilter]);
 

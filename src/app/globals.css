@@ -124,6 +124,13 @@ body {
 .stagger-in > *:nth-child(7) { animation-delay: 360ms; }
 .stagger-in > *:nth-child(8) { animation-delay: 420ms; }
 
+@media (prefers-reduced-motion: reduce) {
+  .stagger-in > * {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 .skeleton {
   background: linear-gradient(90deg, #e1e3ea 25%, #f0f1f5 50%, #e1e3ea 75%);
   background-size: 200% 100%;

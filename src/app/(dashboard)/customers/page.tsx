@@ -155,8 +155,11 @@ export default function CustomersPage() {
                   {table.getRowModel().rows.map((row) => (
                     <tr
                       key={row.id}
+                      role="button"
+                      tabIndex={0}
                       onClick={() => router.push(`/customers/${row.original.customer_code}`)}
-                      className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer"
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); router.push(`/customers/${row.original.customer_code}`); } }}
+                      className="border-b border-neutral-100 hover:bg-neutral-50 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-light"
                     >
                       {row.getVisibleCells().map((cell) => (
                         <td key={cell.id} className="px-4 py-3 text-[15px] font-medium text-neutral-700">

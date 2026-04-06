@@ -126,14 +126,15 @@ export default function InspectionsPage() {
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
-    let controller: AbortController;
+    let currentController: AbortController | null = null;
     const interval = setInterval(() => {
-      controller = new AbortController();
-      fetchInspections(page, false, controller.signal);
+      currentController?.abort();
+      currentController = new AbortController();
+      fetchInspections(page, false, currentController.signal);
     }, 10000);
     return () => {
       clearInterval(interval);
-      controller?.abort();
+      currentController?.abort();
     };
   }, [page, typeFilter, statusFilter, search]);
 

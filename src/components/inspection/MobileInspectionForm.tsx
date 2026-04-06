@@ -71,6 +71,7 @@ export default function MobileInspectionForm({ children }: MobileInspectionFormP
           </button>
         )}
         {isLast && (
+          // The submit action for the final step is expected to be provided via the children prop.
           <div className="flex-1" />
         )}
       </div>

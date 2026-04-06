@@ -50,3 +50,4 @@ storage/
 
 # developer-specific IDE/agent metadata
 .omc/
+.superpowers/
