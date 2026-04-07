@@ -4,7 +4,10 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/layout/Sidebar';
 import Header from '@/components/layout/Header';
+import MobileNav from '@/components/layout/MobileNav';
+import MobileHeader from '@/components/layout/MobileHeader';
 import type { Role } from '@/types/auth';
+import ErrorBoundary from '@/components/ui/ErrorBoundary';
 
 interface UserData {
   id: number;
@@ -44,12 +47,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || !user) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-neutral-50 to-neutral-100">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center animate-glow">
-            <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
+      <div className="flex h-screen items-center justify-center bg-surface">
+        <div className="flex flex-col items-center gap-5">
+          <img src="/goldbell-logo.svg" alt="Goldbell" className="w-12 h-12 rounded-xl animate-glow" />
+          <div className="flex flex-col items-center gap-2">
+            <div className="animate-spin w-5 h-5 border-2 border-charcoal border-t-transparent rounded-full" />
+            <p className="text-[12px] text-neutral-400 font-medium uppercase tracking-widest">Loading</p>
           </div>
-          <p className="text-sm text-neutral-400 font-medium">Loading platform...</p>
         </div>
       </div>
     );
@@ -59,11 +63,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="flex h-screen overflow-hidden">
       <Sidebar userRole={user.role} />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header user={user} />
-        <main className="flex-1 overflow-y-auto p-6">
-          {children}
+        {/* Desktop header */}
+        <div className="hidden md:block">
+          <Header user={user} />
+        </div>
+        {/* Mobile header */}
+        <div className="md:hidden">
+          <MobileHeader user={user} />
+        </div>
+        <main className="flex-1 overflow-y-auto p-3 md:p-6 pb-[calc(var(--mobile-nav-height)+1rem)] md:pb-6">
+          <ErrorBoundary>{children}</ErrorBoundary>
         </main>
       </div>
+      <MobileNav userRole={user.role} />
     </div>
   );
 }

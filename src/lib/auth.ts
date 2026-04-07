@@ -3,7 +3,11 @@ import { SignJWT, jwtVerify } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 import type { AuthUser, Role } from '@/types/auth';
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-me');
+function getJwtSecret() {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) throw new Error('JWT_SECRET environment variable is required');
+  return new TextEncoder().encode(raw);
+}
 const COOKIE_NAME = 'gbcr_token';
 const COOKIE_MAX_AGE = 60 * 60 * 24; // 24 hours
 
@@ -19,12 +23,12 @@ export async function signToken(payload: AuthUser): Promise<string> {
   return new SignJWT(payload as unknown as Record<string, unknown>)
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime('24h')
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyToken(token: string): Promise<AuthUser | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return payload as unknown as AuthUser;
   } catch {
     return null;
@@ -34,7 +38,7 @@ export async function verifyToken(token: string): Promise<AuthUser | null> {
 export function setTokenCookie(response: NextResponse, token: string): NextResponse {
   response.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: 'lax', // lax required for SSO redirects from Microsoft
     secure: process.env.NODE_ENV === 'production' && process.env.USE_HTTPS === 'true',
     maxAge: COOKIE_MAX_AGE,
     path: '/',

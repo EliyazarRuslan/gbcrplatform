@@ -1,0 +1,190 @@
+<h2>Technical Design Details</h2>
+<p class="subtitle">Offline sync, push notifications, and key libraries</p>
+
+<div class="mockup">
+  <div class="mockup-header">Offline Inspection Sync Flow</div>
+  <div class="mockup-body" style="padding: 2rem;">
+    <div style="display: flex; flex-direction: column; gap: 1rem; max-width: 600px; margin: 0 auto;">
+      <!-- Step 1 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #6366f1; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">1</div>
+        <div style="flex: 1; background: #f0f0ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Inspector fills out form</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Photos, damage marks, signatures, readings — all captured natively</div>
+        </div>
+      </div>
+      <!-- Step 2 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">2</div>
+        <div style="flex: 1; background: #fffbeb; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Saved to local SQLite (encrypted)</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Inspection data + photos stored locally with status: <code>pending_sync</code>. A client-generated UUID is assigned to each inspection before first sync. The local SQLite DB is opened with SQLCipher encryption; the DB key is derived from the device keychain (iOS Keychain / Android Keystore) and never stored in plaintext. Photos saved alongside records are AES-encrypted at rest using the same derived key.</div>
+        </div>
+      </div>
+      <!-- Step 3 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #10b981; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">3</div>
+        <div style="flex: 1; background: #ecfdf5; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Network available?</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">NetInfo API detects connectivity. If online → sync immediately. If offline → queue for later.</div>
+        </div>
+      </div>
+      <!-- Step 4 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #3b82f6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">4</div>
+        <div style="flex: 1; background: #eff6ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Background sync (expo-task-manager)</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">
+            expo-task-manager runs the sync task when connectivity returns. Each inspection is identified by a client-generated UUID included in the sync payload; the server deduplicates by UUID so retries never create duplicates. Photos reference the same UUID to tie assets to the idempotent upload.
+            <ul style="margin: 6px 0 0 0; padding-left: 1.2rem;">
+              <li><strong>Retry policy:</strong> max 5 attempts with exponential backoff (1 s, 2 s, 4 s, 8 s, 16 s). Respects battery-saver mode and network type (WiFi preferred) before retrying. After 5 failures the inspection is marked &ldquo;failed&rdquo; and a manual retry action is surfaced in the UI.</li>
+              <li><strong>iOS 30 s limit:</strong> iOS background fetch windows are ~30 s and system-controlled (not on-demand). Large photo batches risk being cut off. Mitigation: upload metadata first, then photos in chunks; use resumable uploads with checkpoints; batch no more than a few photos per task window; fall back to prompting the user to keep the app foregrounded for large uploads.</li>
+              <li><strong>Batching:</strong> processes inspections in bounded pages (max 50 per pass) to avoid OOM; uploads inspection data before photos per item.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <!-- Step 5 -->
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="min-width: 40px; height: 40px; background: #8b5cf6; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">5</div>
+        <div style="flex: 1; background: #f5f3ff; border-radius: 10px; padding: 12px 16px;">
+          <div style="font-weight: 600; color: #333;">Status updated</div>
+          <div style="font-size: 12px; color: #666; margin-top: 4px;">Local record marked <code>synced</code>. Inspector sees green checkmark in the offline queue screen.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Push Notification Architecture</div>
+  <div class="mockup-body" style="padding: 2rem;">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.8rem; flex-wrap: wrap;">
+      <div style="background: #6366f1; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Next.js API</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Event trigger</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #ef4444; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Expo Push</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Server SDK</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #f59e0b; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">APNs / FCM</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">Apple / Google</div>
+      </div>
+      <div style="font-size: 1.5rem; color: #888;">→</div>
+      <div style="background: #3b82f6; color: white; padding: 1rem; border-radius: 12px; text-align: center; min-width: 110px;">
+        <div style="font-weight: bold; font-size: 0.9rem;">Device</div>
+        <div style="font-size: 0.75rem; opacity: 0.8;">iOS / Android</div>
+      </div>
+    </div>
+    <div style="margin-top: 1.5rem; padding: 1rem; background: #f8f9fc; border-radius: 8px; font-size: 13px; line-height: 1.8;">
+      <strong>Notification triggers:</strong>
+      <ul style="margin: 4px 0 0 0; padding-left: 1.2rem;">
+        <li>Inspection approved/rejected by reviewer</li>
+        <li>New inspection assigned to user</li>
+        <li>Offline sync completed/failed</li>
+        <li>System alerts from admin</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 2rem;"></div>
+
+<div class="mockup">
+  <div class="mockup-header">Key Libraries & APIs</div>
+  <div class="mockup-body" style="padding: 1.5rem;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="text-align: left; border-bottom: 2px solid #e5e7eb;">
+          <th style="padding: 8px 12px; color: #666;">Purpose</th>
+          <th style="padding: 8px 12px; color: #666;">Library</th>
+          <th style="padding: 8px 12px; color: #666;">Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Navigation</td>
+          <td style="padding: 10px 12px;"><code>expo-router</code></td>
+          <td style="padding: 10px 12px; color: #666;">File-based routing (like Next.js)</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Camera</td>
+          <td style="padding: 10px 12px;"><code>expo-camera</code></td>
+          <td style="padding: 10px 12px; color: #666;">Photo capture for inspections</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Location</td>
+          <td style="padding: 10px 12px;"><code>expo-location</code></td>
+          <td style="padding: 10px 12px; color: #666;">GPS coordinates for photos</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Offline DB</td>
+          <td style="padding: 10px 12px;"><code>expo-sqlite</code></td>
+          <td style="padding: 10px 12px; color: #666;">Local inspection storage</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Push</td>
+          <td style="padding: 10px 12px;"><code>expo-notifications</code></td>
+          <td style="padding: 10px 12px; color: #666;">Cross-platform push via EAS</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Background Sync</td>
+          <td style="padding: 10px 12px;"><code>expo-task-manager</code></td>
+          <td style="padding: 10px 12px; color: #666;">Sync inspections when online</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Network</td>
+          <td style="padding: 10px 12px;"><code>@react-native-community/netinfo</code></td>
+          <td style="padding: 10px 12px; color: #666;">Detect connectivity changes</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Signatures</td>
+          <td style="padding: 10px 12px;"><code>react-native-signature-canvas</code></td>
+          <td style="padding: 10px 12px; color: #666;">Touch-based signature capture</td>
+        </tr>
+        <tr style="border-bottom: 1px solid #f0f0f0;">
+          <td style="padding: 10px 12px; font-weight: 600;">Damage Diagram</td>
+          <td style="padding: 10px 12px;"><code>react-native-svg</code></td>
+          <td style="padding: 10px 12px; color: #666;">Interactive vehicle damage marking</td>
+        </tr>
+        <tr>
+          <td style="padding: 10px 12px; font-weight: 600;">Real-time</td>
+          <td style="padding: 10px 12px;"><code>socket.io-client</code></td>
+          <td style="padding: 10px 12px; color: #666;">Same as web app</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.05); border-radius: 12px;">
+  <h3 style="margin-top: 0;">New API Endpoints Needed</h3>
+  <ul style="line-height: 2; font-size: 14px;">
+    <li><code>POST /api/push/register</code> &mdash; Register device push token. <strong>Auth required</strong> (Bearer JWT). Token must belong to the authenticated user.</li>
+    <li><code>DELETE /api/push/unregister</code> &mdash; Remove push token on logout. <strong>Auth required</strong> (Bearer JWT). Users may only unregister their own tokens.</li>
+    <li>
+      <code>POST /api/inspections/sync</code> &mdash; Batch upload offline inspections. <strong>Auth required</strong> (Bearer JWT).
+      <ul style="margin-top: 4px; font-size: 13px; color: #555;">
+        <li><strong>Batch limits:</strong> MAX_INSPECTIONS_PER_BATCH = 50; MAX_SYNC_REQUEST_BYTES = 10 MB. Returns HTTP 413 if exceeded. Clients must paginate large syncs.</li>
+        <li><strong>Idempotency:</strong> each inspection must include a client-generated <code>client_uuid</code>. The server deduplicates by <code>(user_id, client_uuid)</code>; duplicate submissions return the original <code>server_id</code> without re-inserting.</li>
+        <li><strong>Conflict resolution &mdash; Pure last-write-wins:</strong> Clients include <code>updated_at</code> in each item. The server always applies the incoming data unconditionally (no version comparison), then returns the authoritative <code>updated_at</code> that was stored. HTTP <code>409</code> is <em>never</em> returned for conflicts &mdash; it is only used for authentication/authorisation errors or malformed requests. Per-item result shape: <code>{ local_id, status: &quot;synced&quot;|&quot;failed&quot;, server_id?, authoritative_updated_at?, error? }</code>. On <code>status: &quot;synced&quot;</code> the client should overwrite its local <code>updated_at</code> with the returned <code>authoritative_updated_at</code> to stay in sync with the server. On <code>status: &quot;failed&quot;</code> the item should be retried (respecting the 5-attempt backoff). There is no <code>status: &quot;conflict&quot;</code>.</li>
+        <li><strong>Authorization:</strong> <code>inspector_id</code> is always set to the authenticated user&rsquo;s ID &mdash; client-supplied value is ignored. Returns HTTP 401/403 for invalid/expired tokens.</li>
+      </ul>
+    </li>
+    <li>
+      <code>POST /api/inspections/photos/upload</code> &mdash; Multipart photo upload (mobile-optimised). <strong>Auth required</strong> (Bearer JWT). Users may only upload photos for their own inspections.
+      <ul style="margin-top: 4px; font-size: 13px; color: #555;">
+        <li><strong>Validation:</strong> maxFileSize = 10 MB per file; maxPhotosPerRequest = 20; allowed MIME types: image/jpeg, image/png, image/heic. Returns HTTP 400 for wrong type, HTTP 413 for oversized files.</li>
+        <li><strong>Processing:</strong> files are streamed to OneDrive &mdash; not buffered into memory &mdash; to prevent OOM on large or concurrent uploads. A per-request timeout/cancellation is applied.</li>
+        <li><strong>Client guidance:</strong> compress images client-side before upload (target &le; 2 MB). Photos reference the same <code>client_uuid</code> as the parent inspection for idempotent linking.</li>
+      </ul>
+    </li>
+  </ul>
+  <p style="font-size: 13px; color: #666; margin-top: 0.5rem;"><strong>Auth scheme for all endpoints:</strong> Bearer JWT in <code>Authorization</code> header (or session cookie for web). Token refresh window: 2 hours before expiry. Expired/invalid tokens return HTTP 401 with <code>{ success: false, error: &quot;Unauthorized&quot; }</code>; forbidden actions return HTTP 403.</p>
+</div>

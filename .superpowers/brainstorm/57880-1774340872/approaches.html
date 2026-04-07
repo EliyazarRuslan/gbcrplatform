@@ -1,0 +1,113 @@
+<h2>Three Approaches for GBCR Mobile App</h2>
+<p class="subtitle">Field-focused Expo app — Inspections, AI Chat, Push Notifications</p>
+
+<div class="options">
+  <button class="option" data-choice="a" aria-pressed="false">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Monorepo — Shared Code</h3>
+      <p>Add Expo app inside the existing gbcr-platform repo using a monorepo structure (Turborepo or npm workspaces). Share TypeScript types, API client, and utilities between web and mobile.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Single repo — shared types, no drift</li>
+            <li>Reuse existing API route definitions</li>
+            <li>One CI/CD pipeline to manage</li>
+            <li>Easy to keep web + mobile in sync</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Repo gets larger and more complex</li>
+            <li>Build tooling needs monorepo setup</li>
+            <li>Web deploys could be affected by mobile changes</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </button>
+
+  <button class="option" data-choice="b" aria-pressed="false">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Separate Repo — Independent App</h3>
+      <p>New standalone Expo repo that consumes the existing Next.js API. Copy shared types via a package or manual sync. Fully independent deployments.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Clean separation — no impact on web app</li>
+            <li>Independent release cycles</li>
+            <li>Simpler repo structure</li>
+            <li>Can hand off to separate team</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>Type definitions can drift between repos</li>
+            <li>API changes need manual coordination</li>
+            <li>Duplicate some shared logic</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </button>
+
+  <button class="option" data-choice="c" aria-pressed="false">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Expo in Subfolder — Lightweight Integration</h3>
+      <p>Add an <code>/mobile</code> folder to the existing repo without full monorepo tooling. Import shared types directly via relative paths. Simple and pragmatic.</p>
+      <div class="pros-cons">
+        <div class="pros">
+          <h4>Pros</h4>
+          <ul>
+            <li>Simplest setup — no monorepo tooling</li>
+            <li>Direct access to shared types</li>
+            <li>Single repo, easy to navigate</li>
+            <li>Good for small teams</li>
+          </ul>
+        </div>
+        <div class="cons">
+          <h4>Cons</h4>
+          <ul>
+            <li>No workspace isolation — dependency conflicts possible</li>
+            <li>Less scalable long-term</li>
+            <li>Expo and Next.js dependencies may clash</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </button>
+</div>
+
+<script>
+  function toggleSelect(element) {
+    document.querySelectorAll('.option').forEach(function(opt) {
+      opt.classList.remove('selected');
+      opt.setAttribute('aria-pressed', 'false');
+    });
+    element.classList.add('selected');
+    element.setAttribute('aria-pressed', 'true');
+  }
+
+  document.querySelector('.options').addEventListener('click', function(e) {
+    var option = e.target.closest('.option');
+    if (option) toggleSelect(option);
+  });
+
+  document.querySelector('.options').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') {
+      var option = e.target.closest('.option');
+      if (option) { e.preventDefault(); toggleSelect(option); }
+    }
+  });
+</script>
+
+<div class="section" style="margin-top: 2rem; padding: 1.5rem; background: rgba(99, 102, 241, 0.08); border-radius: 12px; border-left: 4px solid #6366f1;">
+  <h3 style="margin-top:0; color: #6366f1;">Recommendation: Option A — Monorepo</h3>
+  <p style="margin:0;">For a project where both web and mobile hit the same APIs and share the same data models, a monorepo keeps everything in sync. Turborepo makes the setup lightweight, and you avoid type drift between codebases. The complexity cost is manageable for a team working on both platforms.</p>
+</div>

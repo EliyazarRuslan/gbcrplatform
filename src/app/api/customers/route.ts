@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
       const listReq = pool.request();
       const conditions: string[] = [
         "c.gb_siteid = 'GBCR'",
-        "c.STATUS = 'ACTIVE'",
+        "c.status = 'ACTIVE'",
       ];
 
       if (search) {
-        conditions.push(`(c.CUSTOMER LIKE @search OR c.NAME LIKE @search OR c.gb_email LIKE @search)`);
+        conditions.push(`(c.customer LIKE @search OR c.name LIKE @search OR c.gb_email LIKE @search)`);
         listReq.input('search', sql.NVarChar, `%${search}%`);
       }
 
@@ -30,9 +30,9 @@ export async function GET(request: NextRequest) {
       const countReq = pool.request();
       if (search) countReq.input('search', sql.NVarChar, `%${search}%`);
       const countResult = await countReq.query(`
-        SELECT COUNT(DISTINCT c.CUSTOMER) as total
-        FROM PLUSPCUSTOMER c
-        INNER JOIN ASSET a ON a.PLUSPCUSTOMER = c.CUSTOMER AND a.SITEID = 'GBCR' AND a.STATUS = 'HIRED OUT'
+        SELECT COUNT(DISTINCT c.customer) as total
+        FROM pluspcustomer c
+        INNER JOIN asset a ON a.pluspcustomer = c.customer AND a.siteid = 'GBCR' AND a.status = 'HIRED OUT'
         WHERE ${whereClause}
       `);
       const total = countResult.recordset[0].total;
@@ -41,20 +41,20 @@ export async function GET(request: NextRequest) {
       listReq.input('pageSize', sql.Int, pageSize);
       const result = await listReq.query(`
         SELECT
-          c.CUSTOMER as customer_code,
-          c.NAME as name,
-          c.COMPANYPHONE as phone,
+          c.customer as customer_code,
+          c.name as name,
+          c.companyphone as phone,
           c.gb_email as email,
-          c.STREETADDRESS as address,
-          c.POSTALCODE as postal_code,
+          c.streetaddress as address,
+          c.postalcode as postal_code,
           c.gb_payterm as pay_term,
-          c.STATUS as status,
-          COUNT(a.ASSETNUM) as active_rentals
-        FROM PLUSPCUSTOMER c
-        INNER JOIN ASSET a ON a.PLUSPCUSTOMER = c.CUSTOMER AND a.SITEID = 'GBCR' AND a.STATUS = 'HIRED OUT'
+          c.status as status,
+          COUNT(a.assetnum) as active_rentals
+        FROM pluspcustomer c
+        INNER JOIN asset a ON a.pluspcustomer = c.customer AND a.siteid = 'GBCR' AND a.status = 'HIRED OUT'
         WHERE ${whereClause}
-        GROUP BY c.CUSTOMER, c.NAME, c.COMPANYPHONE, c.gb_email, c.STREETADDRESS, c.POSTALCODE, c.gb_payterm, c.STATUS
-        ORDER BY COUNT(a.ASSETNUM) DESC, c.NAME
+        GROUP BY c.customer, c.name, c.companyphone, c.gb_email, c.streetaddress, c.postalcode, c.gb_payterm, c.status
+        ORDER BY COUNT(a.assetnum) DESC, c.name
         OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
       `);
 
@@ -67,12 +67,12 @@ export async function GET(request: NextRequest) {
     // All active customers
     const conditions: string[] = [
       "c.gb_siteid = 'GBCR'",
-      "c.STATUS = 'ACTIVE'",
+      "c.status = 'ACTIVE'",
     ];
     const listReq = pool.request();
 
     if (search) {
-      conditions.push(`(c.CUSTOMER LIKE @search OR c.NAME LIKE @search OR c.gb_email LIKE @search OR c.COMPANYPHONE LIKE @search)`);
+      conditions.push(`(c.customer LIKE @search OR c.name LIKE @search OR c.gb_email LIKE @search OR c.companyphone LIKE @search)`);
       listReq.input('search', sql.NVarChar, `%${search}%`);
     }
 
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
 
     const countReq = pool.request();
     if (search) countReq.input('search', sql.NVarChar, `%${search}%`);
-    const countResult = await countReq.query(`SELECT COUNT(*) as total FROM PLUSPCUSTOMER c WHERE ${whereClause}`);
+    const countResult = await countReq.query(`SELECT COUNT(*) as total FROM pluspcustomer c WHERE ${whereClause}`);
     const total = countResult.recordset[0].total;
 
     listReq.input('offset', sql.Int, offset);
@@ -88,21 +88,21 @@ export async function GET(request: NextRequest) {
 
     const result = await listReq.query(`
       SELECT
-        c.CUSTOMER as customer_code,
-        c.NAME as name,
-        c.COMPANYPHONE as phone,
+        c.customer as customer_code,
+        c.name as name,
+        c.companyphone as phone,
         c.gb_email as email,
-        c.STREETADDRESS as address,
-        c.POSTALCODE as postal_code,
+        c.streetaddress as address,
+        c.postalcode as postal_code,
         c.gb_payterm as pay_term,
-        c.STATUS as status,
-        (SELECT COUNT(*) FROM ASSET a
-         WHERE a.PLUSPCUSTOMER = c.CUSTOMER
-         AND a.SITEID = 'GBCR'
-         AND a.STATUS = 'HIRED OUT') as active_rentals
-      FROM PLUSPCUSTOMER c
+        c.status as status,
+        (SELECT COUNT(*) FROM asset a
+         WHERE a.pluspcustomer = c.customer
+         AND a.siteid = 'GBCR'
+         AND a.status = 'HIRED OUT') as active_rentals
+      FROM pluspcustomer c
       WHERE ${whereClause}
-      ORDER BY c.NAME
+      ORDER BY c.name
       OFFSET @offset ROWS FETCH NEXT @pageSize ROWS ONLY
     `);
 

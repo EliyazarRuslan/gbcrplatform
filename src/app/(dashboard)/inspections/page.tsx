@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import DataTable, { Column } from '@/components/ui/data-table';
+import { Column } from '@/components/ui/data-table';
+import ResponsiveTable from '@/components/ui/responsive-table';
+import FAB from '@/components/ui/fab';
 import Badge from '@/components/ui/badge';
 import Button from '@/components/ui/button';
 import Input from '@/components/ui/input';
@@ -92,7 +94,7 @@ export default function InspectionsPage() {
   const [statusFilter, setStatusFilter] = useState('');
   const [page, setPage] = useState(1);
 
-  const fetchInspections = async (p = page, showLoading = true) => {
+  const fetchInspections = async (p = page, showLoading = true, signal?: AbortSignal) => {
     if (showLoading) setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -102,13 +104,14 @@ export default function InspectionsPage() {
       if (typeFilter) params.set('type', typeFilter);
       if (statusFilter) params.set('status', statusFilter);
 
-      const res = await fetch(`/api/inspections?${params}`);
+      const res = await fetch(`/api/inspections?${params}`, signal ? { signal } : undefined);
       const json = await res.json();
       if (json.success) {
         setInspections(json.data.inspections);
         setPagination(json.data.pagination);
       }
-    } catch {
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') return;
       // silently fail
     } finally {
       setLoading(false);
@@ -116,13 +119,23 @@ export default function InspectionsPage() {
   };
 
   useEffect(() => {
-    fetchInspections(page);
+    const controller = new AbortController();
+    fetchInspections(page, true, controller.signal);
+    return () => controller.abort();
   }, [page]);
 
   // Auto-refresh every 10 seconds
   useEffect(() => {
-    const interval = setInterval(() => fetchInspections(page, false), 10000);
-    return () => clearInterval(interval);
+    let currentController: AbortController | null = null;
+    const interval = setInterval(() => {
+      currentController?.abort();
+      currentController = new AbortController();
+      fetchInspections(page, false, currentController.signal);
+    }, 10000);
+    return () => {
+      clearInterval(interval);
+      currentController?.abort();
+    };
   }, [page, typeFilter, statusFilter, search]);
 
   const handleSearch = () => {
@@ -139,18 +152,18 @@ export default function InspectionsPage() {
       key: 'id',
       header: 'ID',
       sortable: true,
-      render: (row) => <span className="font-medium text-primary">#{row.id}</span>,
+      render: (row) => <span className="font-bold text-primary text-[14px]">#{row.id}</span>,
     },
     {
       key: 'vehicle_assetnum',
       header: 'Vehicle',
       sortable: true,
-      render: (row) => <span className="font-medium">{row.vehicle_assetnum}</span>,
+      render: (row) => <span className="font-bold text-[14px]">{row.vehicle_assetnum}</span>,
     },
     {
       key: 'vehicle_regno',
       header: 'Reg No',
-      render: (row) => row.vehicle_regno || '-',
+      render: (row) => <span className="text-[14px] font-medium">{row.vehicle_regno || '-'}</span>,
     },
     {
       key: 'inspection_type',
@@ -173,24 +186,24 @@ export default function InspectionsPage() {
     {
       key: 'inspector_name',
       header: 'Inspector',
-      render: (row) => row.inspector_name || '-',
+      render: (row) => <span className="text-[14px] font-medium">{row.inspector_name || '-'}</span>,
     },
     {
       key: 'inspection_date',
       header: 'Date',
       sortable: true,
-      render: (row) => formatDate(row.inspection_date),
+      render: (row) => <span className="text-[14px] font-medium">{formatDate(row.inspection_date)}</span>,
     },
     {
       key: 'mileage_reading',
       header: 'Mileage',
-      render: (row) => row.mileage_reading != null ? row.mileage_reading.toLocaleString() : '-',
+      render: (row) => <span className="text-[14px] font-medium">{row.mileage_reading != null ? row.mileage_reading.toLocaleString() : '-'}</span>,
     },
     {
       key: 'damage_count',
       header: 'Damages',
       render: (row) => (
-        <span className={row.damage_count > 0 ? 'text-red-600 font-medium' : ''}>
+        <span className={row.damage_count > 0 ? 'text-red-600 font-bold text-[14px]' : 'text-[14px] font-medium'}>
           {row.damage_count}
         </span>
       ),
@@ -198,7 +211,7 @@ export default function InspectionsPage() {
     {
       key: 'photo_count',
       header: 'Photos',
-      render: (row) => row.photo_count,
+      render: (row) => <span className="text-[14px] font-medium">{row.photo_count}</span>,
     },
   ];
 
@@ -206,64 +219,76 @@ export default function InspectionsPage() {
     <div className="space-y-4 animate-fade-in">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-neutral-900">Inspections</h1>
-        <Button onClick={() => setShowCreate(true)}>New Inspection</Button>
+        <h1 className="text-3xl font-bold text-neutral-900">Inspections</h1>
+        <Button onClick={() => setShowCreate(true)} className="text-[15px] font-bold">New Inspection</Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-3 items-end">
+      <div className="space-y-2">
         <Input
           placeholder="Search vehicle assetnum or reg no..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="w-64"
         />
-        <Select
-          options={typeOptions}
-          value={typeFilter}
-          onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-44"
-        />
-        <Select
-          options={statusOptions}
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="w-44"
-        />
-        <Button variant="secondary" onClick={handleSearch}>
-          Search
-        </Button>
+        <div className="flex overflow-x-auto gap-2 pb-1 scrollbar-none">
+          <Select
+            options={typeOptions}
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="shrink-0 w-44 text-[14px] font-medium"
+          />
+          <Select
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="shrink-0 w-44 text-[14px] font-medium"
+          />
+          <Button variant="secondary" onClick={handleSearch} className="shrink-0 text-[15px] font-bold">
+            Search
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
-      <div
-        className="cursor-pointer"
-        onClick={(e) => {
-          const target = e.target as HTMLElement;
-          const row = target.closest('tr');
-          if (!row) return;
-          const tbody = row.closest('tbody');
-          if (!tbody) return;
-          const idx = Array.from(tbody.children).indexOf(row);
-          if (idx >= 0 && idx < inspections.length) {
-            router.push(`/inspections/${inspections[idx].id}`);
-          }
+      <ResponsiveTable<Inspection>
+        columns={columns}
+        data={inspections}
+        loading={loading}
+        emptyMessage="No inspections found. Create your first inspection to get started."
+        pagination={{
+          page: pagination.page,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          onPageChange: (p) => setPage(p),
         }}
-      >
-        <DataTable<Inspection>
-          columns={columns}
-          data={inspections}
-          loading={loading}
-          emptyMessage="No inspections found. Create your first inspection to get started."
-          pagination={{
-            page: pagination.page,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
-            onPageChange: (p) => setPage(p),
-          }}
-        />
-      </div>
+        onRowClick={(row) => router.push(`/inspections/${row.id}`)}
+        mobileCard={(row) => (
+          <div className="rounded-2xl">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="font-bold text-primary text-[15px]">#{row.id}</p>
+                <p className="text-[13px] font-medium text-neutral-500 mt-0.5">{row.vehicle_regno || row.vehicle_assetnum}</p>
+              </div>
+              <Badge variant={statusBadgeVariant[row.status] || 'default'}>
+                {statusLabels[row.status] || row.status}
+              </Badge>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Badge variant={typeBadgeVariant[row.inspection_type] || 'default'}>
+                {typeLabels[row.inspection_type] || row.inspection_type}
+              </Badge>
+              <span className="text-[13px] font-medium text-neutral-500">{formatDate(row.inspection_date)}</span>
+            </div>
+            {row.inspector_name && (
+              <p className="text-[13px] font-bold text-neutral-400 mt-1">Inspector: {row.inspector_name}</p>
+            )}
+          </div>
+        )}
+      />
+
+      {/* FAB for mobile */}
+      <FAB label="New Inspection" onClick={() => setShowCreate(true)} />
 
       {/* Create Modal */}
       {showCreate && (
@@ -335,7 +360,7 @@ function CreateInspectionModal({
     <Modal open={true} onClose={onClose} title="New Inspection" size="md">
       <form onSubmit={handleSubmit} className="space-y-5">
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+          <div className="p-3 bg-red-50 border border-red-200 rounded-2xl text-[15px] font-medium text-red-700">
             {error}
           </div>
         )}
@@ -346,6 +371,7 @@ function CreateInspectionModal({
           value={form.vehicle_regno}
           onChange={(e) => setForm({ ...form, vehicle_regno: e.target.value.toUpperCase() })}
           placeholder="e.g. SBA1234A"
+          className="text-[14px] font-medium"
         />
 
         <Select
@@ -358,6 +384,7 @@ function CreateInspectionModal({
             { label: 'Post-Return', value: 'post_return' },
             { label: 'Ad-Hoc', value: 'ad_hoc' },
           ]}
+          className="text-[14px] font-medium"
         />
 
         <Input
@@ -366,13 +393,14 @@ function CreateInspectionModal({
           onChange={(e) => setForm({ ...form, booking_id: e.target.value })}
           placeholder="Optional"
           hint="Leave empty for standalone inspection"
+          className="text-[14px] font-medium"
         />
 
         <div className="flex gap-3 justify-end pt-2">
-          <Button variant="outline" onClick={onClose} type="button">
+          <Button variant="outline" onClick={onClose} type="button" className="text-[15px] font-bold">
             Cancel
           </Button>
-          <Button type="submit" loading={submitting}>
+          <Button type="submit" loading={submitting} className="text-[15px] font-bold">
             Create
           </Button>
         </div>

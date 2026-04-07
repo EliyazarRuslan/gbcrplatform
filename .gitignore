@@ -41,5 +41,13 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# runtime pid files
+*.pid
+.server.pid
+
 # file storage
 storage/
+
+# developer-specific IDE/agent metadata
+.omc/
+.superpowers/

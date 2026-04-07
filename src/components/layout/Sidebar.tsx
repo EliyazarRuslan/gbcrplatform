@@ -4,69 +4,51 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { Role } from '@/types/auth';
-
-interface NavItem {
-  href: string;
-  label: string;
-  icon: string;
-  visibleTo: Role[] | 'all';
-}
-
-const navItems: NavItem[] = [
-  { href: '/', label: 'Dashboard', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6', visibleTo: 'all' },
-  { href: '/fleet', label: 'Fleet', icon: 'M8 7h8m-8 4h8m-4 4h4M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z', visibleTo: ['super_admin', 'branch_manager', 'customer_service', 'rental_officer'] },
-  { href: '/bookings', label: 'Bookings', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', visibleTo: ['super_admin', 'branch_manager', 'customer_service', 'rental_officer'] },
-  { href: '/inspections', label: 'Inspections', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', visibleTo: ['super_admin', 'branch_manager', 'rental_officer', 'inspector'] },
-  { href: '/services', label: 'Services', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z', visibleTo: ['super_admin', 'branch_manager', 'rental_officer', 'inspector'] },
-  { href: '/customers', label: 'Customers', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', visibleTo: ['super_admin', 'branch_manager', 'customer_service', 'rental_officer'] },
-  { href: '/analytics', label: 'Analytics', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', visibleTo: ['super_admin', 'branch_manager', 'finance'] },
-  { href: '/ai', label: 'AI Insights', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', visibleTo: ['super_admin', 'branch_manager'] },
-  { href: '/settings', label: 'Settings', icon: 'M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4', visibleTo: ['super_admin'] },
-];
+import { getVisibleItems, type NavItem } from '@/lib/nav-items';
 
 export default function Sidebar({ userRole }: { userRole: Role }) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
+  const [visibleItems, setVisibleItems] = useState<NavItem[]>(() => getVisibleItems(userRole));
 
   useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  const visibleItems = navItems.filter((item) =>
-    item.visibleTo === 'all' || item.visibleTo.includes(userRole)
-  );
+    const controller = new AbortController();
+    fetch('/api/nav-items', { signal: controller.signal })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data?.length > 0) {
+          setVisibleItems(data.data);
+        }
+      })
+      .catch((err) => {
+        if (err.name === 'AbortError') return;
+        // Use hardcoded defaults on failure
+      });
+    return () => controller.abort();
+  }, [userRole]);
 
   const sidebarContent = (
     <>
       {/* Logo */}
       <div className="flex items-center h-16 px-4 border-b border-white/[0.06]">
         {!collapsed ? (
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center shadow-md shadow-primary/20">
-              <img src="/goldbell-logo.svg" alt="Goldbell" className="w-5 h-5 brightness-0 invert" />
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#c8a04a] to-[#a07830] flex items-center justify-center">
+              <span className="text-[15px] font-bold text-[#0e0e10]">G</span>
             </div>
-            <div>
-              <span className="font-semibold text-sm text-white tracking-tight">GBCR</span>
-              <span className="text-xs text-neutral-500 block leading-none">Platform</span>
+            <div className="leading-tight">
+              <span className="font-bold text-[14px] text-white tracking-wide uppercase">Goldbell</span>
+              <span className="text-[11px] text-neutral-500 block tracking-widest uppercase font-medium">Fleet Platform</span>
             </div>
           </div>
         ) : (
-          <div className="w-8 h-8 bg-gradient-to-br from-primary to-primary-dark rounded-lg flex items-center justify-center mx-auto shadow-md shadow-primary/20">
-            <img src="/goldbell-logo.svg" alt="Goldbell" className="w-5 h-5 brightness-0 invert" />
+          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#c8a04a] to-[#a07830] flex items-center justify-center mx-auto">
+            <span className="text-[15px] font-bold text-[#0e0e10]">G</span>
           </div>
         )}
         <button
-          onClick={() => setMobileOpen(false)}
-          className="md:hidden p-1.5 rounded-lg hover:bg-white/5 transition-colors ml-auto text-neutral-400 hover:text-white"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
-        <button
           onClick={() => setCollapsed(!collapsed)}
-          className={`hidden md:flex p-1.5 rounded-lg hover:bg-white/5 transition-colors text-neutral-500 hover:text-neutral-300 ${collapsed ? 'mx-auto' : 'ml-auto'}`}
+          className={`hidden md:flex p-1.5 rounded-lg hover:bg-white/[0.06] transition-colors text-neutral-500 hover:text-neutral-300 ${collapsed ? 'mx-auto mt-1' : 'ml-auto'}`}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={collapsed ? 'M13 5l7 7-7 7M5 5l7 7-7 7' : 'M11 19l-7-7 7-7m8 14l-7-7 7-7'} />
@@ -74,74 +56,60 @@ export default function Sidebar({ userRole }: { userRole: Role }) {
         </button>
       </div>
 
+      {/* Section label */}
+      {!collapsed && (
+        <div className="px-5 pt-5 pb-2">
+          <span className="text-[11px] font-bold text-[#68686f] uppercase tracking-[0.15em]">Navigation</span>
+        </div>
+      )}
+
       {/* Navigation */}
-      <nav className="flex-1 py-3 space-y-0.5 px-2.5 overflow-y-auto">
+      <nav className="flex-1 py-1 space-y-0.5 px-2.5 overflow-y-auto">
         {visibleItems.map((item) => {
           const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm group relative ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-[14px] group relative ${
                 isActive
-                  ? 'bg-gradient-to-r from-primary/20 to-primary/10 text-white shadow-sm'
-                  : 'text-neutral-400 hover:bg-white/[0.04] hover:text-neutral-200'
+                  ? 'bg-[#c8a04a]/[0.10] text-white'
+                  : 'text-[#a0a0a8] hover:bg-white/[0.06] hover:text-white'
               }`}
               title={collapsed ? item.label : undefined}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-[#c8a04a] rounded-r-full" />
               )}
-              <svg className={`w-[18px] h-[18px] shrink-0 transition-colors ${isActive ? 'text-primary-light' : 'text-neutral-500 group-hover:text-neutral-300'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className={`w-[20px] h-[20px] shrink-0 transition-colors ${isActive ? 'text-[#c8a04a]' : 'text-[#78787f] group-hover:text-white'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={item.icon} />
               </svg>
-              {!collapsed && <span className={`${isActive ? 'font-medium' : 'font-normal'}`}>{item.label}</span>}
+              {!collapsed && <span className={isActive ? 'font-semibold' : 'font-medium'}>{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
-      {!collapsed && (
-        <div className="p-4 border-t border-white/[0.06]">
-          <div className="flex items-center gap-2 text-[11px] text-neutral-600">
-            <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full pulse-dot" />
-            <span>System Online</span>
+      {/* Footer */}
+      <div className="p-4 border-t border-white/[0.06]">
+        {!collapsed ? (
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-[11px] text-[#68686f] font-medium">
+              <div className="w-2 h-2 bg-emerald-400 rounded-full pulse-dot" />
+              <span className="tracking-wide uppercase">System Online</span>
+            </div>
+            <span className="text-[11px] text-[#58585f] font-mono font-medium">v2.0</span>
           </div>
-        </div>
-      )}
+        ) : (
+          <div className="w-2 h-2 bg-emerald-400 rounded-full pulse-dot mx-auto" />
+        )}
+      </div>
     </>
   );
 
   return (
-    <>
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-sidebar text-white rounded-xl shadow-lg shadow-black/20"
-        aria-label="Open menu"
-      >
-        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      {mobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      <aside
-        className={`md:hidden fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient text-white flex flex-col transform transition-transform duration-300 ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        {sidebarContent}
-      </aside>
-
-      <aside className={`hidden md:flex sidebar-gradient text-white flex-col transition-all duration-300 ${collapsed ? 'w-[60px]' : 'w-[230px]'}`}>
-        {sidebarContent}
-      </aside>
-    </>
+    <aside className={`hidden md:flex sidebar-gradient text-white flex-col transition-all duration-300 ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
+      {sidebarContent}
+    </aside>
   );
 }

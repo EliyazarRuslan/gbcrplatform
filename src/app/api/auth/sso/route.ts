@@ -1,0 +1,56 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { SignJWT } from 'jose';
+
+const TENANT_ID = process.env.AZURE_AD_TENANT_ID;
+const CLIENT_ID = process.env.AZURE_AD_CLIENT_ID;
+const STATIC_REDIRECT_URI = process.env.AZURE_AD_REDIRECT_URI!;
+
+function sanitizeRedirect(url: string | null): string {
+  if (!url) return '/';
+  // Allow only relative paths starting with a single '/' (reject '//' and absolute URLs)
+  if (url.startsWith('/') && !url.startsWith('//') && !/^[a-z][a-z\d+\-.]*:/i.test(url)) return url;
+  return '/';
+}
+
+function getStateSecret() {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) throw new Error('JWT_SECRET environment variable is required');
+  return new TextEncoder().encode(raw);
+}
+
+async function signState(redirect: string): Promise<string> {
+  return new SignJWT({ redirect })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('10m')
+    .sign(getStateSecret());
+}
+
+export async function GET(request: NextRequest) {
+  if (!TENANT_ID || !CLIENT_ID) {
+    return NextResponse.json(
+      { error: 'SSO not configured: missing AZURE_AD_TENANT_ID or AZURE_AD_CLIENT_ID' },
+      { status: 500 }
+    );
+  }
+
+  const safeRedirect = sanitizeRedirect(request.nextUrl.searchParams.get('redirect'));
+
+  // Build redirect URI from the Host header so SSO works from any host
+  const host = request.headers.get('host') || 'localhost:3000';
+  const protocol = request.headers.get('x-forwarded-proto') || 'http';
+  const redirectUri = `${protocol}://${host}/api/auth/sso/callback`;
+
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: redirectUri,
+    response_mode: 'query',
+    scope: 'openid profile email User.Read',
+    state: await signState(safeRedirect),
+    prompt: 'select_account',
+  });
+
+  const authUrl = `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/authorize?${params}`;
+
+  return NextResponse.redirect(authUrl);
+}

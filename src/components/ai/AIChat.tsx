@@ -9,8 +9,13 @@ export default function AIChat() {
   const [input, setInput] = useState('');
   const [streaming, setStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
+  useEffect(() => {
+    return () => { abortControllerRef.current?.abort(); };
+  }, []);
 
   const handleSend = async () => {
     if (!input.trim() || streaming) return;
@@ -20,11 +25,16 @@ export default function AIChat() {
     setInput('');
     setStreaming(true);
 
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ messages: newMessages.map(m => ({ role: m.role, content: m.content })) }),
+        signal: controller.signal,
       });
 
       if (!res.ok) throw new Error('Failed');
@@ -49,8 +59,10 @@ export default function AIChat() {
           } catch { /* skip */ }
         }
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, AI service is currently unavailable. Please check your OpenAI API key.' }]);
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, AI service is currently unavailable. Please check your OpenAI API key.' }]);
+      }
     }
     setStreaming(false);
   };
@@ -63,7 +75,7 @@ export default function AIChat() {
   ];
 
   return (
-    <div className="flex flex-col h-[calc(100vh-280px)]">
+    <div className="flex flex-col h-[calc(100vh-220px)] md:h-[calc(100vh-280px)]">
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
@@ -72,9 +84,9 @@ export default function AIChat() {
             </svg>
             <h3 className="font-semibold text-neutral-700 mb-2">AI Fleet Assistant</h3>
             <p className="text-sm text-neutral-400 mb-6">Ask me anything about your fleet, bookings, costs, or optimization.</p>
-            <div className="flex flex-wrap gap-2 justify-center max-w-xl mx-auto">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 md:px-0 md:flex-wrap md:justify-center md:max-w-xl md:mx-auto scrollbar-none">
               {suggestions.map(s => (
-                <button key={s} onClick={() => { setInput(s); }} className="px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-full hover:bg-neutral-200 transition-colors">
+                <button key={s} onClick={() => { setInput(s); }} className="flex-shrink-0 px-3 py-1.5 text-xs bg-neutral-100 text-neutral-600 rounded-full hover:bg-neutral-200 transition-colors whitespace-nowrap">
                   {s}
                 </button>
               ))}
@@ -83,7 +95,7 @@ export default function AIChat() {
         )}
         {messages.map((msg, i) => (
           <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[70%] px-4 py-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}>
+            <div className={`max-w-[85%] md:max-w-[70%] px-4 py-3 rounded-2xl text-sm ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-white border border-neutral-200 text-neutral-700'}`}>
               <div className="whitespace-pre-wrap">{msg.content}</div>
             </div>
           </div>

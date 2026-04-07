@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 
 type DiagramView = 'top' | 'front' | 'rear' | 'left' | 'right';
 

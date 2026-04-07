@@ -1,129 +1,182 @@
 import { NextResponse } from 'next/server';
+import { getAxPool } from '@/lib/axdb';
 import { getMaxPool } from '@/lib/maxdb';
 
+// D365 SALESSTATUS: 1=Open/Active, 3=Invoiced, 4=Cancelled
+// DATAAREAID 'gbe' = Goldbell Engineering (GBCR)
+
+export const maxDuration = 120;
+
 export async function GET() {
-  try {
-    const pool = await getMaxPool();
+  const empty = {
+    revenue: [] as { month: string; invoices: number; revenue: number }[],
+    agreementStatus: [] as { status: string; count: number; total_invoiced: number }[],
+    activeValue: { active_count: 0, invoice_count: 0, total_invoiced: 0 },
+    topCustomers: [] as { customer_id: string }[],
+    revenueByCustomer: [] as { month: string; segment: string; revenue: number }[],
+    topOrders: [] as unknown[],
+    woByType: [] as { worktype: string; count: number }[],
+    statusDistribution: [] as { status: string; count: number }[],
+  };
 
-    // Monthly rental revenue from active agreements (pluspagreement)
-    const revenueResult = await pool.request().query(`
-      SELECT FORMAT(startdate, 'yyyy-MM') as month,
-        COUNT(*) as agreements,
-        SUM(gb_rentalamount) as revenue
-      FROM pluspagreement
-      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
-        AND status IN ('ACTIVE', 'COMPLETE')
-        AND startdate >= DATEADD(MONTH, -12, GETDATE())
-      GROUP BY FORMAT(startdate, 'yyyy-MM')
-      ORDER BY month
-    `);
+  // Run Maximo and AX independently so one failing doesn't kill the other
+  const [mxData, axData] = await Promise.all([
+    // Maximo queries (fast)
+    (async () => {
+      try {
+        const mx = await getMaxPool();
+        const mxReq = () => { const r = mx.request(); (r as unknown as { timeout: number }).timeout = 60000; return r; };
+        const [woTypeResult, statusDist] = await Promise.all([
+          mxReq().query(`
+            SELECT worktype, COUNT(*) as count
+            FROM workorder WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
+            GROUP BY worktype ORDER BY count DESC
+          `),
+          mxReq().query(`
+            SELECT status, COUNT(*) as count
+            FROM asset WHERE siteid = 'GBCR'
+              AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
+            GROUP BY status ORDER BY count DESC
+          `),
+        ]);
+        return { woByType: woTypeResult.recordset, statusDistribution: statusDist.recordset };
+      } catch (error: unknown) {
+        console.error('Analytics Maximo error:', error instanceof Error ? error.message : error);
+        return { woByType: empty.woByType, statusDistribution: empty.statusDistribution };
+      }
+    })(),
 
-    // Agreement status summary
-    const agreementStatusResult = await pool.request().query(`
-      SELECT status, COUNT(*) as count,
-        SUM(gb_rentalamount) as total_rental
-      FROM pluspagreement
-      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
-      GROUP BY status
-      ORDER BY count DESC
-    `);
+    // AX queries (slower)
+    (async () => {
+      try {
+        const ax = await getAxPool();
+        const axReq = () => { const r = ax.request(); (r as unknown as { timeout: number }).timeout = 120000; return r; };
 
-    // Active agreements total value
-    const activeValueResult = await pool.request().query(`
-      SELECT
-        COUNT(*) as active_count,
-        SUM(gb_rentalamount) as active_rental,
-        SUM(gb_depositamount) as active_deposits
-      FROM pluspagreement
-      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR' AND status = 'ACTIVE'
-    `);
+        const [
+          revenueResult,
+          agreementStatusResult,
+          activeValueResult,
+          topCustomersResult,
+          topOrdersResult,
+        ] = await Promise.all([
+          axReq().query(`
+            SELECT FORMAT(i.invoicedate, 'yyyy-MM') as month,
+              COUNT(DISTINCT i.invoiceid) as invoices,
+              SUM(i.invoiceamountmst) as revenue
+            FROM custinvoicejour i
+            WHERE i.dataareaid = 'gbe'
+              AND i.invoicedate >= DATEADD(MONTH, -12, GETDATE())
+              AND EXISTS (SELECT 1 FROM salestable s WHERE s.salesid = i.salesid AND s.dataareaid = 'gbe' AND s.salesstatus = 1)
+            GROUP BY FORMAT(i.invoicedate, 'yyyy-MM')
+            ORDER BY month
+          `),
 
-    // PV vs CV breakdown
-    const productBreakdownResult = await pool.request().query(`
-      SELECT
-        CASE
-          WHEN gb_product = 'PV' THEN 'Passenger Vehicle (PV)'
-          WHEN gb_product = 'CV' THEN 'Commercial Vehicle (CV)'
-          WHEN gb_product = 'BV' THEN 'Bus/Van (BV)'
-          ELSE 'Unclassified'
-        END as product,
-        gb_product as product_code,
-        COUNT(*) as count,
-        SUM(gb_rentalamount) as total_rental
-      FROM pluspagreement
-      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR' AND status = 'ACTIVE'
-      GROUP BY gb_product
-      ORDER BY COUNT(*) DESC
-    `);
+          axReq().query(`
+            SELECT
+              CASE s.salesstatus
+                WHEN 1 THEN 'Active'
+                WHEN 2 THEN 'Delivered'
+                WHEN 3 THEN 'Invoiced'
+                WHEN 4 THEN 'Cancelled'
+                ELSE 'Unknown'
+              END as status,
+              COUNT(*) as count,
+              COALESCE(SUM(s.smmsalesamounttotal), 0) as total_invoiced
+            FROM salestable s
+            WHERE s.dataareaid = 'gbe'
+            GROUP BY s.salesstatus
+            ORDER BY count DESC
+          `),
 
-    // Monthly revenue split by PV/CV
-    const revenueBySplitResult = await pool.request().query(`
-      SELECT
-        FORMAT(startdate, 'yyyy-MM') as month,
-        ISNULL(gb_product, 'Other') as product,
-        COUNT(*) as agreements,
-        SUM(gb_rentalamount) as revenue
-      FROM pluspagreement
-      WHERE orgid = 'GOLDBELL' AND gb_entity = 'GBCR'
-        AND status IN ('ACTIVE', 'COMPLETE')
-        AND startdate >= DATEADD(MONTH, -12, GETDATE())
-        AND gb_product IN ('PV', 'CV')
-      GROUP BY FORMAT(startdate, 'yyyy-MM'), gb_product
-      ORDER BY month, product
-    `);
+          axReq().query(`
+            SELECT
+              (SELECT COUNT(*) FROM salestable WHERE dataareaid = 'gbe' AND salesstatus = 1) as active_count,
+              COUNT(DISTINCT i.invoiceid) as invoice_count,
+              COALESCE(SUM(i.invoiceamountmst), 0) as total_invoiced
+            FROM custinvoicejour i
+            WHERE i.dataareaid = 'gbe'
+              AND EXISTS (SELECT 1 FROM salestable s WHERE s.salesid = i.salesid AND s.dataareaid = 'gbe' AND s.salesstatus = 1)
+          `),
 
-    // WO counts by type - GBCR site
-    const woTypeResult = await pool.request().query(`
-      SELECT worktype, COUNT(*) as count
-      FROM workorder WHERE reportdate >= DATEADD(MONTH, -12, GETDATE()) AND siteid = 'GBCR'
-      GROUP BY worktype ORDER BY count DESC
-    `);
+          axReq().query(`
+            SELECT TOP 10
+              s.custaccount as customer_id,
+              MAX(s.salesname) as customer_name,
+              COUNT(DISTINCT s.salesid) as agreement_count,
+              COUNT(DISTINCT i.invoiceid) as invoice_count,
+              SUM(i.invoiceamountmst) as total_invoiced
+            FROM custinvoicejour i
+            INNER JOIN salestable s ON s.salesid = i.salesid AND s.dataareaid = 'gbe'
+            WHERE i.dataareaid = 'gbe' AND s.salesstatus = 1
+            GROUP BY s.custaccount
+            ORDER BY total_invoiced DESC
+          `),
 
-    // Top vehicles by rental amount (active agreements)
-    const topVehiclesResult = await pool.request().query(`
-      SELECT TOP 10
-        a.assetnum,
-        a.gb_assetregistrationno as gb_regno,
-        a.description,
-        COUNT(ag.agreement) as agreement_count,
-        SUM(ag.gb_rentalamount) as total_rental
-      FROM pluspagreement ag
-      INNER JOIN asset a ON ag.assetnum COLLATE DATABASE_DEFAULT = a.assetnum COLLATE DATABASE_DEFAULT AND a.siteid = 'GBCR'
-      WHERE ag.orgid = 'GOLDBELL' AND ag.gb_entity = 'GBCR' AND ag.status = 'ACTIVE'
-      GROUP BY a.assetnum, a.gb_assetregistrationno, a.description
-      ORDER BY total_rental DESC
-    `);
+          axReq().query(`
+            SELECT TOP 10
+              i.salesid,
+              MAX(s.custaccount) as customer_id,
+              MAX(s.salesname) as customer_name,
+              COUNT(DISTINCT i.invoiceid) as invoice_count,
+              SUM(i.invoiceamountmst) as total_invoiced,
+              MIN(i.invoicedate) as first_invoice,
+              MAX(i.invoicedate) as last_invoice
+            FROM custinvoicejour i
+            INNER JOIN salestable s ON s.salesid = i.salesid AND s.dataareaid = 'gbe'
+            WHERE i.dataareaid = 'gbe' AND s.salesstatus = 1
+            GROUP BY i.salesid
+            ORDER BY total_invoiced DESC
+          `),
+        ]);
 
-    // Fleet status distribution - GBCR site (active fleet only)
-    const statusDist = await pool.request().query(`
-      SELECT status, COUNT(*) as count
-      FROM asset WHERE siteid = 'GBCR'
-        AND status NOT IN ('SOLD', 'DECOMMISSIONED', 'LAID UP')
-      GROUP BY status ORDER BY count DESC
-    `);
+        // Build revenue by customer segment from topCustomers
+        const topNames = topCustomersResult.recordset.slice(0, 3).map((c: { customer_id: string }) => c.customer_id);
+        let revenueByCustomer: { month: string; segment: string; revenue: number }[] = [];
+        if (topNames.length > 0) {
+          const segRequest = ax.request();
+          (segRequest as unknown as { timeout: number }).timeout = 120000;
+          topNames.forEach((name: string, i: number) => segRequest.input(`p${i}`, name));
+          const caseWhen = topNames.map((_: string, i: number) => `WHEN s.custaccount = @p${i} THEN s.salesname`).join(' ');
+          const segResult = await segRequest.query(`
+            SELECT
+              FORMAT(i.invoicedate, 'yyyy-MM') as month,
+              CASE ${caseWhen} ELSE 'Others' END as segment,
+              SUM(i.invoiceamountmst) as revenue
+            FROM custinvoicejour i
+            INNER JOIN salestable s ON s.salesid = i.salesid AND s.dataareaid = 'gbe'
+            WHERE i.dataareaid = 'gbe' AND s.salesstatus = 1
+              AND i.invoicedate >= DATEADD(MONTH, -12, GETDATE())
+            GROUP BY FORMAT(i.invoicedate, 'yyyy-MM'),
+              CASE ${caseWhen} ELSE 'Others' END
+            ORDER BY month, segment
+          `);
+          revenueByCustomer = segResult.recordset;
+        }
 
-    return NextResponse.json({
-      revenue: revenueResult.recordset,
-      agreementStatus: agreementStatusResult.recordset,
-      activeValue: activeValueResult.recordset[0],
-      productBreakdown: productBreakdownResult.recordset,
-      revenueBySplit: revenueBySplitResult.recordset,
-      woByType: woTypeResult.recordset,
-      topVehicles: topVehiclesResult.recordset,
-      statusDistribution: statusDist.recordset,
-    });
-  } catch (error: unknown) {
-    console.error('Analytics API error:', error instanceof Error ? error.message : error);
-    console.error('Analytics API stack:', error instanceof Error ? error.stack : '');
-    return NextResponse.json({
-      revenue: [],
-      agreementStatus: [],
-      activeValue: { active_count: 0, active_rental: 0, active_deposits: 0 },
-      productBreakdown: [],
-      revenueBySplit: [],
-      woByType: [],
-      topVehicles: [],
-      statusDistribution: [],
-    });
-  }
+        return {
+          revenue: revenueResult.recordset,
+          agreementStatus: agreementStatusResult.recordset,
+          activeValue: activeValueResult.recordset.length > 0 ? activeValueResult.recordset[0] : empty.activeValue,
+          topCustomers: topCustomersResult.recordset,
+          revenueByCustomer,
+          topOrders: topOrdersResult.recordset,
+        };
+      } catch (error: unknown) {
+        console.error('Analytics AX error:', error instanceof Error ? error.message : error);
+        return {
+          revenue: empty.revenue,
+          agreementStatus: empty.agreementStatus,
+          activeValue: empty.activeValue,
+          topCustomers: empty.topCustomers,
+          revenueByCustomer: empty.revenueByCustomer,
+          topOrders: empty.topOrders,
+        };
+      }
+    })(),
+  ]);
+
+  return NextResponse.json({
+    ...mxData,
+    ...axData,
+  });
 }

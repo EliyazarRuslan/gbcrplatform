@@ -8,36 +8,34 @@ interface StatCardProps {
 }
 
 const colorMap = {
-  blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
-  green: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
-  yellow: { bg: 'bg-amber-50', text: 'text-amber-600', border: 'border-amber-100' },
-  red: { bg: 'bg-red-50', text: 'text-red-600', border: 'border-red-100' },
-  purple: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100' },
-  indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100' },
-  orange: { bg: 'bg-orange-50', text: 'text-orange-600', border: 'border-orange-100' },
+  blue: 'bg-blue-500',
+  green: 'bg-emerald-500',
+  yellow: 'bg-amber-500',
+  red: 'bg-red-500',
+  purple: 'bg-violet-500',
+  indigo: 'bg-indigo-500',
+  orange: 'bg-primary',
 };
 
 export default function StatCard({ title, value, subtitle, icon, color, trend }: StatCardProps) {
-  const c = colorMap[color];
   return (
-    <div className="bg-white rounded-xl border border-neutral-200/80 p-5 hover:shadow-lg hover:shadow-neutral-900/5 transition-all duration-300 group">
-      <div className="flex items-start justify-between">
-        <div className="space-y-1.5">
-          <p className="text-xs font-medium text-neutral-400 uppercase tracking-wider">{title}</p>
-          <p className="text-2xl font-bold text-neutral-900 tracking-tight">{value}</p>
-          {subtitle && <p className="text-xs text-neutral-400 font-medium">{subtitle}</p>}
-          {trend && (
-            <p className={`text-xs font-semibold ${trend.value >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-              {trend.value >= 0 ? '+' : ''}{trend.value}% {trend.label}
-            </p>
-          )}
-        </div>
-        <div className={`p-2.5 rounded-xl ${c.bg} ${c.text} border ${c.border} group-hover:scale-105 transition-transform duration-300`}>
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <div className="card-industrial p-5 group relative overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
+      <div className="flex items-start justify-between mb-3">
+        <p className="text-[12px] font-bold text-neutral-400 uppercase tracking-[0.12em] leading-tight">{title}</p>
+        <div className={`w-9 h-9 ${colorMap[color]} rounded-lg flex items-center justify-center opacity-90 group-hover:opacity-100 transition-opacity`}>
+          <svg className="w-[18px] h-[18px] text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={icon} />
           </svg>
         </div>
       </div>
+      <p className="text-[28px] md:text-[42px] font-bold text-neutral-900 tracking-tight leading-none">{value}</p>
+      {subtitle && <p className="text-[13px] font-medium text-neutral-400 mt-2">{subtitle}</p>}
+      {trend && (
+        <p className={`text-[13px] font-bold mt-2 ${trend.value >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
+          {trend.value >= 0 ? '+' : ''}{trend.value}% {trend.label}
+        </p>
+      )}
     </div>
   );
 }

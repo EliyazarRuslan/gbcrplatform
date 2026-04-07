@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Midnight Lux (Light) — Dashboard Mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@200;300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  :root {
+    --bg-deep: #ffffff;
+    --bg-surface: #f8f8fa;
+    --bg-card: #ffffff;
+    --bg-sidebar: #0e0e10;
+    --gold: #b8892a;
+    --gold-dim: rgba(184,137,42,0.7);
+    --gold-subtle: rgba(184,137,42,0.12);
+    --gold-ghost: rgba(184,137,42,0.05);
+    --gold-glow: rgba(184,137,42,0.06);
+    --text-primary: #111111;
+    --text-secondary: rgba(17,17,17,0.6);
+    --text-tertiary: rgba(17,17,17,0.35);
+    --text-ghost: rgba(17,17,17,0.15);
+    --border: rgba(0,0,0,0.07);
+    --border-hover: rgba(184,137,42,0.25);
+    --success: #16a34a;
+    --warning: #ca8a04;
+    --danger: #dc2626;
+    --info: #2563eb;
+    --violet: #7c3aed;
+  }
+
+  body {
+    font-family: 'Sora', sans-serif;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Sidebar — stays dark */
+  .sidebar {
+    width: 68px;
+    background: var(--bg-sidebar);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 10;
+  }
+
+  .sidebar-logo {
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #c8a04a, #a07830);
+    border-radius: 9px;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-logo::after {
+    content: 'G';
+    font-size: 15px;
+    font-weight: 600;
+    color: #0e0e10;
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+  }
+
+  .nav-item {
+    width: 42px;
+    height: 42px;
+    border-radius: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    color: rgba(245,240,232,0.3);
+  }
+  .nav-item:hover {
+    background: rgba(200,160,74,0.1);
+    color: rgba(245,240,232,0.6);
+  }
+  .nav-item.active {
+    background: rgba(200,160,74,0.1);
+    color: #c8a04a;
+  }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -13px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 22px;
+    background: #c8a04a;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-icon { width: 21px; height: 21px; }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 4px rgba(74,222,128,0.3); }
+    50% { box-shadow: 0 0 12px rgba(74,222,128,0.5); }
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #2a2520, #1a1816);
+    border: 1px solid rgba(200,160,74,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #c8a04a;
+    cursor: pointer;
+  }
+
+  /* Main content */
+  .main {
+    margin-left: 68px;
+    flex: 1;
+    min-height: 100vh;
+    padding: 32px 36px;
+    position: relative;
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 32px;
+  }
+
+  .header-left h1 {
+    font-size: 30px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
+
+  .header-date {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .header-tabs {
+    display: flex;
+    gap: 28px;
+  }
+
+  .header-tab {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    padding: 4px 0;
+    transition: color 0.3s;
+    position: relative;
+  }
+  .header-tab:hover { color: var(--text-secondary); }
+  .header-tab.active { color: var(--gold); }
+  .header-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gold);
+    border-radius: 1px;
+  }
+
+  .search-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    padding: 10px 16px;
+    font-family: 'Sora', sans-serif;
+    font-size: 13px;
+    color: var(--text-primary);
+    width: 220px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .search-box::placeholder { color: var(--text-ghost); }
+  .search-box:focus { border-color: var(--gold-subtle); box-shadow: 0 0 0 3px rgba(184,137,42,0.06); }
+
+  /* KPI Grid */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .kpi-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-subtle), transparent);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .kpi-card:hover {
+    border-color: var(--border-hover);
+    box-shadow: 0 4px 24px rgba(184,137,42,0.06);
+  }
+  .kpi-card:hover::before { opacity: 1; }
+
+  .kpi-label {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-tertiary);
+    margin-bottom: 10px;
+  }
+
+  .kpi-value {
+    font-size: 36px;
+    font-weight: 200;
+    letter-spacing: -1px;
+    line-height: 1;
+  }
+  .kpi-value .unit {
+    font-size: 18px;
+    color: var(--text-tertiary);
+    font-weight: 300;
+  }
+
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+  }
+
+  .kpi-accent { color: var(--gold); }
+  .kpi-success { color: var(--success); }
+  .kpi-danger { color: var(--danger); }
+  .kpi-warning { color: var(--warning); }
+  .kpi-info { color: var(--info); }
+
+  /* Content grid */
+  .content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s ease;
+  }
+  .card:hover { border-color: var(--border-hover); }
+
+  .card-header {
+    padding: 18px 24px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+  }
+
+  .card-action {
+    font-size: 12px;
+    color: var(--gold-dim);
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  .card-action:hover { color: var(--gold); }
+
+  /* Table */
+  .table { width: 100%; }
+  .table-head {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr 0.8fr 1fr 0.6fr;
+    padding: 12px 24px;
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-ghost);
+    background: var(--bg-surface);
+  }
+
+  .table-row {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr 0.8fr 1fr 0.6fr;
+    padding: 14px 24px;
+    font-size: 14px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.3s;
+    cursor: pointer;
+  }
+  .table-row:hover { background: var(--gold-ghost); }
+
+  .reg-no {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    color: var(--gold);
+    font-weight: 500;
+  }
+
+  .vehicle-name { color: var(--text-secondary); }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .status-dot-inline {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .customer { color: var(--text-tertiary); font-size: 13px; }
+  .rate { color: var(--text-tertiary); font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+
+  /* Quick links */
+  .quick-link {
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .quick-link:first-child { border-top: none; }
+  .quick-link:hover { background: var(--gold-ghost); }
+
+  .quick-link-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .quick-link-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .quick-link-text h4 {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+  }
+  .quick-link-text p {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  .quick-link-arrow {
+    color: var(--text-ghost);
+    font-size: 16px;
+    transition: color 0.3s, transform 0.3s;
+  }
+  .quick-link:hover .quick-link-arrow {
+    color: var(--gold);
+    transform: translateX(3px);
+  }
+
+  /* Chart */
+  .chart-area {
+    padding: 24px;
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 170px;
+  }
+
+  .chart-bar {
+    flex: 1;
+    border-radius: 5px 5px 0 0;
+    transition: all 0.4s ease;
+  }
+  .chart-bar:hover { opacity: 0.75; }
+
+  /* Bottom row */
+  .bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  .mini-stat { padding: 14px 24px; }
+
+  .mini-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .mini-stat-row:last-child { border-bottom: none; }
+
+  .mini-stat-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .mini-stat-value {
+    font-size: 13px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* Animations */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .animate-in { animation: fade-up 0.5s ease forwards; opacity: 0; }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+  .delay-5 { animation-delay: 0.25s; }
+  .delay-6 { animation-delay: 0.3s; }
+  .delay-7 { animation-delay: 0.35s; }
+  .delay-8 { animation-delay: 0.4s; }
+  .delay-9 { animation-delay: 0.45s; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .mockup-badge {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: var(--gold);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 5px;
+    z-index: 100;
+  }
+
+  .chart-legend {
+    padding: 0 24px 16px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .chart-legend span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .legend-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+</style>
+</head>
+<body>
+
+<div class="mockup-badge">Mockup — Light</div>
+
+<!-- Sidebar (stays dark) -->
+<nav class="sidebar">
+  <div class="sidebar-logo"></div>
+  <div class="sidebar-nav">
+    <div class="nav-item active">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0H18.375a1.125 1.125 0 01-1.125-1.125V14.25M3.375 14.25h17.25M3.375 14.25V11.25a3.375 3.375 0 013.375-3.375h10.5a3.375 3.375 0 013.375 3.375v3z"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M11.42 15.17l-5.1-3.94a.75.75 0 010-1.18l5.1-3.94a.75.75 0 011.08.04l4.5 5.25a.75.75 0 010 .98l-4.5 5.25a.75.75 0 01-1.08.04z"/></svg>
+    </div>
+    <div class="nav-item">
+      <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="status-dot"></div>
+    <div class="avatar">EY</div>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main">
+
+  <div class="header animate-in delay-1">
+    <div class="header-left">
+      <h1>Good Morning</h1>
+      <div class="header-date">Wednesday, 1 April 2026</div>
+    </div>
+    <div class="header-right">
+      <div class="header-tabs">
+        <span class="header-tab active">Overview</span>
+        <span class="header-tab">Fleet</span>
+        <span class="header-tab">Bookings</span>
+        <span class="header-tab">Services</span>
+        <span class="header-tab">Analytics</span>
+      </div>
+      <input class="search-box" placeholder="Search..." />
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card animate-in delay-2">
+      <div class="kpi-label">Total Fleet</div>
+      <div class="kpi-value kpi-info">542</div>
+      <div class="kpi-sub">+12 this month</div>
+    </div>
+    <div class="kpi-card animate-in delay-3">
+      <div class="kpi-label">Hired Out</div>
+      <div class="kpi-value kpi-accent">387</div>
+      <div class="kpi-sub">71.4% of fleet</div>
+    </div>
+    <div class="kpi-card animate-in delay-4">
+      <div class="kpi-label">Not Ready</div>
+      <div class="kpi-value kpi-danger">28</div>
+      <div class="kpi-sub">5 pending parts</div>
+    </div>
+    <div class="kpi-card animate-in delay-5">
+      <div class="kpi-label">Idle</div>
+      <div class="kpi-value kpi-warning">89</div>
+      <div class="kpi-sub">Available now</div>
+    </div>
+    <div class="kpi-card animate-in delay-6">
+      <div class="kpi-label">Booked</div>
+      <div class="kpi-value kpi-info">38</div>
+      <div class="kpi-sub">Next 7 days</div>
+    </div>
+    <div class="kpi-card animate-in delay-7">
+      <div class="kpi-label">Utilization</div>
+      <div class="kpi-value">71<span class="unit">%</span></div>
+      <div class="kpi-sub" style="color:var(--success);">+2.3% vs last month</div>
+    </div>
+  </div>
+
+  <div class="content-grid animate-in delay-8">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Recent Fleet Activity</span>
+        <span class="card-action">View All &rarr;</span>
+      </div>
+      <div class="table">
+        <div class="table-head">
+          <span>Reg No</span>
+          <span>Description</span>
+          <span>Status</span>
+          <span>Customer</span>
+          <span>Rate</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 1234 A</span>
+          <span class="vehicle-name">Toyota Corolla Altis 1.6</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--success);"></span> Hired</span>
+          <span class="customer">Acme Corp Pte Ltd</span>
+          <span class="rate">$85/d</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 5678 B</span>
+          <span class="vehicle-name">Honda Civic 1.5T</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--warning);"></span> Idle</span>
+          <span class="customer">&mdash;</span>
+          <span class="rate">&mdash;</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 9012 C</span>
+          <span class="vehicle-name">BMW 320i Sport</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--info);"></span> Booked</span>
+          <span class="customer">Beta Industries</span>
+          <span class="rate">$145/d</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 3456 D</span>
+          <span class="vehicle-name">Toyota Hiace Van</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--success);"></span> Hired</span>
+          <span class="customer">Delta Logistics</span>
+          <span class="rate">$120/d</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 7890 E</span>
+          <span class="vehicle-name">Mazda 3 Sedan</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--danger);"></span> Service</span>
+          <span class="customer">&mdash;</span>
+          <span class="rate">&mdash;</span>
+        </div>
+        <div class="table-row">
+          <span class="reg-no">SGX 2345 F</span>
+          <span class="vehicle-name">Hyundai Avante 1.6</span>
+          <span class="status"><span class="status-dot-inline" style="background:var(--success);"></span> Hired</span>
+          <span class="customer">Gamma Tech Pte</span>
+          <span class="rate">$78/d</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="card" style="flex:1;">
+        <div class="card-header">
+          <span class="card-title">Fleet Status</span>
+          <span class="card-action">Details</span>
+        </div>
+        <div class="chart-area">
+          <div class="chart-bar" style="height:70%; background:linear-gradient(180deg, var(--success), rgba(22,163,74,0.2)); flex:2;"></div>
+          <div class="chart-bar" style="height:22%; background:linear-gradient(180deg, var(--warning), rgba(202,138,4,0.2));"></div>
+          <div class="chart-bar" style="height:10%; background:linear-gradient(180deg, var(--danger), rgba(220,38,38,0.2));"></div>
+          <div class="chart-bar" style="height:12%; background:linear-gradient(180deg, var(--info), rgba(37,99,235,0.2));"></div>
+          <div class="chart-bar" style="height:5%; background:linear-gradient(180deg, var(--violet), rgba(124,58,237,0.2));"></div>
+        </div>
+        <div class="chart-legend">
+          <span><span class="legend-dot" style="background:var(--success);"></span> Hired 71%</span>
+          <span><span class="legend-dot" style="background:var(--warning);"></span> Idle 16%</span>
+          <span><span class="legend-dot" style="background:var(--danger);"></span> Service 5%</span>
+          <span><span class="legend-dot" style="background:var(--info);"></span> Booked 7%</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Quick Actions</span>
+        </div>
+        <div class="quick-link">
+          <div class="quick-link-left">
+            <div class="quick-link-icon" style="background:var(--gold-ghost); color:var(--gold);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+            </div>
+            <div class="quick-link-text">
+              <h4>New Booking</h4>
+              <p>Create a reservation</p>
+            </div>
+          </div>
+          <span class="quick-link-arrow">&rarr;</span>
+        </div>
+        <div class="quick-link">
+          <div class="quick-link-left">
+            <div class="quick-link-icon" style="background:rgba(37,99,235,0.06); color:var(--info);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08"/></svg>
+            </div>
+            <div class="quick-link-text">
+              <h4>Start Inspection</h4>
+              <p>Pre-rental or post-return</p>
+            </div>
+          </div>
+          <span class="quick-link-arrow">&rarr;</span>
+        </div>
+        <div class="quick-link">
+          <div class="quick-link-left">
+            <div class="quick-link-icon" style="background:rgba(124,58,237,0.06); color:var(--violet);">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75z"/></svg>
+            </div>
+            <div class="quick-link-text">
+              <h4>View Analytics</h4>
+              <p>Revenue & fleet insights</p>
+            </div>
+          </div>
+          <span class="quick-link-arrow">&rarr;</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom-grid animate-in delay-9">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">By Category</span>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-row"><span class="mini-stat-label">Economy Sedan</span><span class="mini-stat-value">186</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Standard Sedan</span><span class="mini-stat-value">142</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Premium</span><span class="mini-stat-value">68</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">SUV</span><span class="mini-stat-value">52</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Van / Light Truck</span><span class="mini-stat-value">94</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Upcoming Returns</span>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-row"><span class="mini-stat-label">Today</span><span class="mini-stat-value" style="color:var(--gold);">8</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Tomorrow</span><span class="mini-stat-value">12</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">This Week</span><span class="mini-stat-value">34</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Overdue</span><span class="mini-stat-value" style="color:var(--danger);">3</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-title">Service Overview</span>
+      </div>
+      <div class="mini-stat">
+        <div class="mini-stat-row"><span class="mini-stat-label">Active Work Orders</span><span class="mini-stat-value" style="color:var(--warning);">15</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Awaiting Parts</span><span class="mini-stat-value">5</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Completed (MTD)</span><span class="mini-stat-value" style="color:var(--success);">42</span></div>
+        <div class="mini-stat-row"><span class="mini-stat-label">Avg Turnaround</span><span class="mini-stat-value">3.2d</span></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+</body>
+</html>
